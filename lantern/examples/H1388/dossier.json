@@ -1,0 +1,1341 @@
+{
+ "target": "H1388",
+ "stage": "PLAN_REVIEW",
+ "created": "2026-11-23T08:20:13+09:00",
+ "sequence": {
+  "fasta": "/gpfs/deepfold/casp/casp17/targets/H1388/target.fasta",
+  "text": ">H1388,subunit1|\nPKGLSASLPDL\n>H1388,subunit2|\nSDREQLVQKARLAEQAERYDDMAAAMKNVTELNEPLSNEERNLLSVAYKNVVGARRSSWRVISSIEQKTSADGNEKKIEMVRAYREKIEKELEAVCQDVLSLLDNYLIKNCSETQYESKVFYLKMKGDYYRYLAEVATGEKRATVVESSEKAYSEAHEISKEHMQPTHPIRLGLALNYSVFYYEIQNAPEQACHLAKTAFDDAIAELDTLNEDSYKDSTLIMQLLRDNLTLWT\n",
+  "source_dir": "/gpfs/deepfold/casp/casp17/targets/H1388"
+ },
+ "stoichiometry": {
+  "given": "A1B1"
+ },
+ "deadlines": {},
+ "evidence": {
+  "construct": [
+   {
+    "time": "2026-11-23T08:22:00+09:00",
+    "by": "agent",
+    "value": {
+     "chains": {
+      "A (subunit1, 11 aa)": {
+       "seq": "PKGLSASLPDL",
+       "maps_to": "human LARP1 (UniProt Q6PKG0) residues 542-552, exact match",
+       "note": "No modification in FASTA. Two serines: S5 = LARP1 S546, S7 = LARP1 S548. UniProt annotates S548 as Phosphoserine (modified-residue feature).",
+       "source": "UniProt Q6PKG0 REST json, /store/deepfold/lantern/targets/H1388/dl/Q6PKG0.json"
+      },
+      "B (subunit2, 232 aa)": {
+       "maps_to": "human 14-3-3 gamma (YWHAG, UniProt P61981, 247 aa); target residues 2-232 = native 3-233 identical",
+       "differences": "target S1 replaces native M1-V2 (likely cloning/protease scar, e.g. remnant of a tag); native C-terminal tail 234-247 (SDQQDDDGGEGNN, acidic, disordered in 14-3-3 crystals) is truncated",
+       "numbering": "input residue i (i>=2) = native i+1",
+       "source": "UniProt P61981 REST json, /store/deepfold/lantern/targets/H1388/dl/P61981.json"
+      }
+     },
+     "given_stoichiometry": "A1B1"
+    }
+   }
+  ],
+  "identity": [
+   {
+    "time": "2026-11-23T08:22:00+09:00",
+    "by": "agent",
+    "value": {
+     "B": {
+      "uniprot": "P61981",
+      "name": "14-3-3 protein gamma (YWHAG), Homo sapiens",
+      "family": "14-3-3 protein family; Pfam PF00244; InterPro IPR000308, IPR023409, IPR023410, IPR036815",
+      "fold": "all-alpha, 9 antiparallel helices; amphipathic groove binds phospho-Ser/Thr peptides; obligate dimer via helices A-D",
+      "hhpred_top": "4ZQ0_C 14-3-3 Prob 100, 3IQU 14-3-3 sigma, 2BR9 14-3-3 epsilon ... (B/hhpred.hhr)",
+      "source": "UniProt P61981; /gpfs/deepfold/casp/casp17/targets/H1388/B/hhpred.hhr"
+     },
+     "A": {
+      "uniprot": "Q6PKG0",
+      "name": "La-related protein 1 (LARP1), Homo sapiens, residues 542-552",
+      "context": "LARP1 is an mTORC1 substrate regulating TOP mRNA translation; S548 annotated phosphoserine in UniProt",
+      "source": "UniProt Q6PKG0"
+     }
+    }
+   }
+  ],
+  "public_structures": [
+   {
+    "time": "2026-11-23T08:23:24+09:00",
+    "by": "agent",
+    "value": {
+     "exact_sequence_sweep": {
+      "method": "RCSB sequence search, chain B, identity>=95%, e<1e-10, 2026-11-23",
+      "n_entities": 23,
+      "ids": "2B05 3UZD 4E2E 4J6S 4O46 5D3E 6A5S 6BYJ 6BYL 6BZD 6FEL 6GKF 6GKG 6S9K 6SAD 6Y4K 6Y6B 6ZBT 6ZC9 7A6R 7A6Y 8XI3 9CI3",
+      "note": "human 14-3-3 gamma, many as dimer with a bound phosphopeptide in the amphipathic groove: 2B05 (pSer peptide, 2.55 A), 6A5S (TFEB motif, 2.10 A), 6FEL/6Y4K (CaMKK2 motifs), 6GKG (caspase-2), 7A6R (DAPK2), 6BYL (O-GlcNAc-Thr peptide)",
+      "source": "RCSB search API; entry titles from data.rcsb.org"
+     },
+     "peptide": {
+      "method": "RCSB seqmotif GLSASLPD + full-text 'LARP1 14-3-3'",
+      "hits": "LARP1 present in 9T76/9T77 (LARP1 bound to mTORC1, cryo-EM, released 2026-11-18) and 11HG/11JJ/8XP2/8XP3/9ED0 (large assemblies); none is a 14-3-3:LARP1 complex. No public structure of this complex found.",
+      "source": "RCSB search API 2026-11-23"
+     },
+     "foldseek": "not run: chain B has 23 exact-sequence (100% coverage of 3-233) structures; family fold unambiguous (hhpred top hits 4ZQ0, 3IQU, 2BR9 all Prob 100).",
+     "hhpred_caveat": "B/hhpred.hhr top hits are 14-3-3 of other isoforms/species; no gamma entries listed (clustered DB), so templates must be added explicitly if wanted."
+    }
+   }
+  ],
+  "literature": [
+   {
+    "time": "2026-11-23T08:23:24+09:00",
+    "by": "agent",
+    "value": {
+     "claims": [
+      {
+       "claim": "14-3-3 proteins bind phosphoserine motifs; mode I consensus R-S-X-pS-X-P, mode II R-X-[Y/F]-X-pS-X-P; the phosphopeptide lies in the amphipathic groove of each monomer in extended conformation",
+       "source": "Yaffe et al. 1997 Cell, PMID 9428519"
+      },
+      {
+       "claim": "14-3-3 is a cup-shaped dimer; each monomer has its own peptide-binding groove; dimer interface formed by N-terminal helices",
+       "source": "Liu et al. 1995 Nature, PMID 7603574 (14-3-3 zeta crystal structure)"
+      },
+      {
+       "claim": "The phosphate is coordinated by a conserved basic pocket: zeta K49, R56, R127, Y128 -> in 14-3-3 gamma native K50, R57, R132, Y133 = input chain B K49, R56, R131, Y132 (residue identities checked against FASTA)",
+       "source": "Yaffe 1997 PMID 9428519; many 14-3-3 gamma:phosphopeptide structures e.g. 2B05, 6A5S, 6GKG"
+      },
+      {
+       "claim": "LARP1 S548 is an annotated phosphoserine (large-scale phosphoproteomics); peptide PKGLSApSLPDL fits pS-X-P (S548-L549-P550) with R/K upstream at -5 not -3 (G545 at -3, L544 at -4); S546 (S-A-S) does not fit pS-X-P",
+       "source": "UniProt Q6PKG0 modified-residue feature; motif from PMID 9428519"
+      },
+      {
+       "claim": "LARP1 is an mTORC1 substrate controlling 5'TOP mRNA translation; recent cryo-EM 9T76/9T77/9T7A/9T7B show LARP1 TOS/XTOS motif bound to mTORC1 (RAPTOR), a different region from 542-552",
+       "source": "RCSB 9T76-9T7B titles, 'mTORC1 recruits substrates via an expanded TOS (XTOS) motif' (2026)"
+      }
+     ],
+     "not_known": "No paper or structure found on the 14-3-3:LARP1 complex itself (Europe PMC 'LARP1 14-3-3' 50 hits, none on the complex; one web search). The FASTA names no modification; the CASP description text was not available to this step - if it says phosphopeptide, the pSer is S7. Whether one or two peptides bind the 14-3-3 dimer in the experiment is not known; given stoichiometry A1B1.",
+     "searched": "Europe PMC REST 2026-11-23; WebSearch; target_notes/H1388/papers does not exist"
+    }
+   }
+  ],
+  "binding_site": [
+   {
+    "time": "2026-11-23T08:23:24+09:00",
+    "by": "agent",
+    "value": {
+     "chain": "B",
+     "residues": [
+      49,
+      56,
+      131,
+      132
+     ],
+     "what": "phosphate pocket of 14-3-3 gamma (input numbering; native K50 R57 R132 Y133); peptide chain A pS7 expected here, peptide in amphipathic groove",
+     "source": "Yaffe et al. 1997 PMID 9428519; conserved in 14-3-3 gamma:phosphopeptide crystals 2B05, 6A5S"
+    }
+   }
+  ],
+  "motif": [
+   {
+    "time": "2026-11-23T08:23:24+09:00",
+    "by": "agent",
+    "value": {
+     "chain": "A",
+     "residues": [
+      7
+     ],
+     "what": "LARP1 S548 = peptide S7, 14-3-3 mode-I-like pS-X-P (S7-L8-P9); S5 rejected (S-A-S, no Pro at +2)",
+     "source": "UniProt Q6PKG0 (S548 phosphoserine); PMID 9428519"
+    }
+   }
+  ],
+  "chemistry": [
+   {
+    "time": "2026-11-23T08:23:24+09:00",
+    "by": "agent",
+    "value": {
+     "modification": "phosphoserine (CCD SEP) on chain A residue 7 (LARP1 S548)",
+     "candidates": {
+      "S7": "chosen: pS-X-P motif, UniProt-annotated phosphosite",
+      "S5": "rejected: S-A-S has no Pro at +2; not annotated"
+     },
+     "basis": "14-3-3 binds phosphorylated motifs only (PMID 9428519); FASTA carries no PTM",
+     "run_as": "variant next to unmodified input"
+    }
+   }
+  ],
+  "stoichiometry_evidence": [
+   {
+    "time": "2026-11-23T08:23:31+09:00",
+    "by": "agent",
+    "value": {
+     "given": "A1B1",
+     "family_prior": "14-3-3 proteins are obligate homodimers (PMID 7603574); all 14-3-3 gamma:peptide crystals listed in public_structures contain the dimer, one peptide per groove",
+     "implication": "A1B1 is the scored unit; a modelling variant A2B2 (dimer, a peptide in each groove) mimics the native environment and may stabilise the groove geometry. Inputs A1B1 and A2B2 already exist under /gpfs/deepfold/casp/casp17/targets/H1388/inputs/",
+     "seq2symm": "not run"
+    }
+   },
+   {
+    "time": "2026-11-23T08:25:25+09:00",
+    "by": "agent",
+    "value": {
+     "given": "A1B1 (CASP; chain A = LARP1 peptide 11 aa, chain B = 14-3-3 gamma 3-233)",
+     "homolog_assemblies": {
+      "method": "RCSB assembly 1 + rcsb_struct_symmetry, 2026-11-23",
+      "entries": {
+       "2B05": "tetrameric, A2B2 C2 (PISA)",
+       "6A5S": "tetrameric, A2B2 C2 (PISA)",
+       "6FEL": "tetrameric, A2B2 C2 (PISA)",
+       "7A6R": "tetrameric, A2B2 C2 (PISA)",
+       "6GKG": "tetrameric, 14-3-3 A2 + 2 peptides",
+       "6BYL": "tetrameric, 14-3-3 A2 + 2 peptides"
+      },
+      "summary": "6/6 human 14-3-3 gamma:phosphopeptide structures = 14-3-3 homodimer with one peptide per groove (2:2); no 1:1 assembly"
+     },
+     "family_prior": "14-3-3 obligate homodimer via N-terminal helices (Liu 1995 PMID 7603574); one peptide per monomer groove (Yaffe 1997 PMID 9428519); the dimer interface (helices A-D) is in the construct (residues 3-233 keep the N-terminus)",
+     "seq2symm": "not run: family assembly unambiguous from 6/6 PDB assemblies",
+     "n_sweep": "not run as a scan; the pertinent hypotheses are A1B1 (scored unit) and A2B2 (native context). A 14-3-3 dimer with a single peptide (A1B2) is a third option",
+     "interpretation": "The CASP A1B1 is the scored unit (one groove + one peptide), almost certainly an ASU or interface chosen from a 2:2 crystal. Modelling A2B2 and extracting one 14-3-3:peptide pair is the biological environment; groove geometry of the monomer is the same either way, so A1B1 and A2B2 should agree on peptide placement. Use A2B2 as a cross-check / source for alternatives, not as the submitted stoichiometry.",
+     "hindsight_caveat": "results for A1B1 and A2B2 already exist on disk from the team run; not read for this decision"
+    }
+   }
+  ],
+  "msa_depth": [
+   {
+    "time": "2026-11-23T08:23:38+09:00",
+    "by": "agent",
+    "value": {
+     "af3/uniref90.a3m": {
+      "path": "/gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/uniref90.a3m",
+      "length": 233,
+      "n": 6536,
+      "n_cov50": 4692,
+      "coverage_min": 456,
+      "coverage_median": 4982,
+      "median_identity": 0.627,
+      "thin_regions": []
+     },
+     "af3/uniprot.a3m": {
+      "path": "/gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/uniprot.a3m",
+      "length": 233,
+      "n": 16347,
+      "n_cov50": 13544,
+      "coverage_min": 1454,
+      "coverage_median": 13908,
+      "median_identity": 0.643,
+      "thin_regions": []
+     },
+     "af3/mgnify.a3m": {
+      "path": "/gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/mgnify.a3m",
+      "length": 233,
+      "n": 4332,
+      "n_cov50": 1860,
+      "coverage_min": 74,
+      "coverage_median": 2374,
+      "median_identity": 0.547,
+      "thin_regions": []
+     },
+     "af3/bfd.a3m": {
+      "path": "/gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/bfd.a3m",
+      "length": 233,
+      "n": 1607,
+      "n_cov50": 957,
+      "coverage_min": 34,
+      "coverage_median": 993,
+      "median_identity": 0.305,
+      "thin_regions": []
+     }
+    }
+   },
+   {
+    "time": "2026-11-23T08:23:48+09:00",
+    "by": "agent",
+    "value": {
+     "B": {
+      "msas": "/gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3",
+      "uniref90": {
+       "N": 6536,
+       "cov50": 4692
+      },
+      "uniprot": {
+       "N": 16347,
+       "cov50": 13544
+      },
+      "mgnify": {
+       "N": 4332,
+       "cov50": 1860
+      },
+      "bfd": {
+       "N": 1607,
+       "cov50": 957
+      },
+      "thin_regions": "none",
+      "verdict": "deep; no crawl/plm needed"
+     },
+     "A": {
+      "msas": "/gpfs/deepfold/casp/casp17/targets/H1388/A/msas/af3",
+      "N": 0,
+      "note": "11-aa peptide: all a3m files are query-only (19 bytes); expected for a short peptide, run single-sequence"
+     },
+     "plot": "/store/deepfold/lantern/targets/H1388/report/figs/msa_coverage.svg"
+    }
+   },
+   {
+    "time": "2026-11-23T08:32:22+09:00",
+    "by": "agent",
+    "value": {
+     "af3/uniref90.a3m": {
+      "path": "/gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/uniref90.a3m",
+      "length": 233,
+      "n": 6536,
+      "n_cov50": 4692,
+      "coverage_min": 456,
+      "coverage_median": 4982,
+      "median_identity": 0.627,
+      "thin_regions": []
+     },
+     "af3/uniprot.a3m": {
+      "path": "/gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/uniprot.a3m",
+      "length": 233,
+      "n": 16347,
+      "n_cov50": 13544,
+      "coverage_min": 1454,
+      "coverage_median": 13908,
+      "median_identity": 0.643,
+      "thin_regions": []
+     },
+     "af3/mgnify.a3m": {
+      "path": "/gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/mgnify.a3m",
+      "length": 233,
+      "n": 4332,
+      "n_cov50": 1860,
+      "coverage_min": 74,
+      "coverage_median": 2374,
+      "median_identity": 0.547,
+      "thin_regions": []
+     },
+     "af3/bfd.a3m": {
+      "path": "/gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/bfd.a3m",
+      "length": 233,
+      "n": 1607,
+      "n_cov50": 957,
+      "coverage_min": 34,
+      "coverage_median": 993,
+      "median_identity": 0.305,
+      "thin_regions": []
+     }
+    }
+   }
+  ],
+  "templates": [
+   {
+    "time": "2026-11-23T08:23:48+09:00",
+    "by": "agent",
+    "value": {
+     "B": "23 exact human 14-3-3 gamma PDB structures (see public_structures); best peptide-bound: 6A5S 2.10 A, 2B05 2.55 A, 6GKG, 6FEL. AF3 default template search (A/B msas/af3/templates_hmmsearch.a3m) - check the B one contains gamma entries; the near-identity filter may hide 100% matches, so a custom template of 6A5S/2B05 with peptide pocket is an option",
+     "A": "no template; peptide placement comes from the 14-3-3 groove (binding_site/motif gates)",
+     "source": "RCSB search 2026-11-23"
+    }
+   }
+  ],
+  "existing_pool": [
+   {
+    "time": "2026-11-23T08:29:03+09:00",
+    "by": "agent",
+    "value": {
+     "root": "/gpfs/deepfold/casp/casp17/targets/H1388/results",
+     "found": "existing pool (CASP17 run, 2026-06) for A1B1 and A2B2; input variants af3_msa, af3_msa_pS548, mmseqs2_gpu",
+     "per_combo": "af3: 25 seeds x 5 samples per sto/variant (af3_msa, af3_msa_pS548, mmseqs2_gpu); bt2_jax and of3: af3_msa and mmseqs2_gpu (no pS548 variant); pt2: inference.log ends 'done' but no model files (only ERR/log) in every sto/variant",
+     "templates_B": "af3 default hmmsearch: 1578 hits, 91 are 14-3-3 gamma, so close templates are present without a custom template",
+     "msa_A": "peptide (11 aa): uniref90/uniprot/mgnify contain only the query (expected for a peptide); A templates_hmmsearch 34 lines, irrelevant"
+    }
+   }
+  ],
+  "report": [
+   {
+    "time": "2026-11-23T08:32:23+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T09:02:44+09:00",
+    "by": "deepfold",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T09:03:07+09:00",
+    "by": "deepfold",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T09:03:25+09:00",
+    "by": "deepfold",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T09:07:42+09:00",
+    "by": "deepfold",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T12:45:55+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T12:46:39+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T12:51:20+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T12:53:59+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T12:54:47+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T12:55:44+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "A1B1_chains.jpg",
+      "A1B1_plddt.jpg",
+      "A2B2_chains.jpg",
+      "A2B2_plddt.jpg",
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T12:56:13+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "A1B1_chains.jpg",
+      "A1B1_plddt.jpg",
+      "A2B2_chains.jpg",
+      "A2B2_plddt.jpg",
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T12:57:39+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "A1B1_chains.jpg",
+      "A1B1_plddt.jpg",
+      "A2B2_chains.jpg",
+      "A2B2_plddt.jpg",
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T13:02:06+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "A1B1_chains.jpg",
+      "A1B1_plddt.jpg",
+      "A2B2_chains.jpg",
+      "A2B2_plddt.jpg",
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T13:11:09+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "A1B1_chains.jpg",
+      "A1B1_plddt.jpg",
+      "A2B2_chains.jpg",
+      "A2B2_plddt.jpg",
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T13:12:58+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "A1B1_chains.jpg",
+      "A1B1_plddt.jpg",
+      "A2B2_chains.jpg",
+      "A2B2_plddt.jpg",
+      "C0_chains.jpg",
+      "C0_plddt.jpg",
+      "C1_chains.jpg",
+      "C1_plddt.jpg",
+      "C2_chains.jpg",
+      "C2_plddt.jpg",
+      "C3_chains.jpg",
+      "C3_plddt.jpg",
+      "C5_chains.jpg",
+      "C5_plddt.jpg",
+      "C6_chains.jpg",
+      "C6_plddt.jpg",
+      "C7_chains.jpg",
+      "C7_plddt.jpg",
+      "C8_chains.jpg",
+      "C8_plddt.jpg",
+      "overlay.jpg",
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T13:13:50+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "A1B1_chains.jpg",
+      "A1B1_plddt.jpg",
+      "A2B2_chains.jpg",
+      "A2B2_plddt.jpg",
+      "C0_chains.jpg",
+      "C0_plddt.jpg",
+      "C1_chains.jpg",
+      "C1_plddt.jpg",
+      "C2_chains.jpg",
+      "C2_plddt.jpg",
+      "C3_chains.jpg",
+      "C3_plddt.jpg",
+      "C5_chains.jpg",
+      "C5_plddt.jpg",
+      "C6_chains.jpg",
+      "C6_plddt.jpg",
+      "C7_chains.jpg",
+      "C7_plddt.jpg",
+      "C8_chains.jpg",
+      "C8_plddt.jpg",
+      "overlay.jpg",
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T13:15:46+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "A1B1_chains.jpg",
+      "A1B1_plddt.jpg",
+      "A2B2_chains.jpg",
+      "A2B2_plddt.jpg",
+      "C0_chains.jpg",
+      "C0_plddt.jpg",
+      "C1_chains.jpg",
+      "C1_plddt.jpg",
+      "C2_chains.jpg",
+      "C2_plddt.jpg",
+      "C3_chains.jpg",
+      "C3_plddt.jpg",
+      "C5_chains.jpg",
+      "C5_plddt.jpg",
+      "C6_chains.jpg",
+      "C6_plddt.jpg",
+      "C7_chains.jpg",
+      "C7_plddt.jpg",
+      "C8_chains.jpg",
+      "C8_plddt.jpg",
+      "overlay.jpg",
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T13:16:23+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "A1B1_chains.jpg",
+      "A1B1_plddt.jpg",
+      "A2B2_chains.jpg",
+      "A2B2_plddt.jpg",
+      "C0_chains.jpg",
+      "C0_plddt.jpg",
+      "C1_chains.jpg",
+      "C1_plddt.jpg",
+      "C2_chains.jpg",
+      "C2_plddt.jpg",
+      "C3_chains.jpg",
+      "C3_plddt.jpg",
+      "C5_chains.jpg",
+      "C5_plddt.jpg",
+      "C6_chains.jpg",
+      "C6_plddt.jpg",
+      "C7_chains.jpg",
+      "C7_plddt.jpg",
+      "C8_chains.jpg",
+      "C8_plddt.jpg",
+      "overlay.jpg",
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T13:21:21+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "A1B1_chains.jpg",
+      "A1B1_plddt.jpg",
+      "A2B2_chains.jpg",
+      "A2B2_plddt.jpg",
+      "C0_chains.jpg",
+      "C0_plddt.jpg",
+      "C1_chains.jpg",
+      "C1_plddt.jpg",
+      "C2_chains.jpg",
+      "C2_plddt.jpg",
+      "C3_chains.jpg",
+      "C3_plddt.jpg",
+      "C5_chains.jpg",
+      "C5_plddt.jpg",
+      "C6_chains.jpg",
+      "C6_plddt.jpg",
+      "C7_chains.jpg",
+      "C7_plddt.jpg",
+      "C8_chains.jpg",
+      "C8_plddt.jpg",
+      "overlay.jpg",
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T13:21:53+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "A1B1_chains.jpg",
+      "A1B1_plddt.jpg",
+      "A2B2_chains.jpg",
+      "A2B2_plddt.jpg",
+      "C0_chains.jpg",
+      "C0_plddt.jpg",
+      "C1_chains.jpg",
+      "C1_plddt.jpg",
+      "C2_chains.jpg",
+      "C2_plddt.jpg",
+      "C3_chains.jpg",
+      "C3_plddt.jpg",
+      "C5_chains.jpg",
+      "C5_plddt.jpg",
+      "C6_chains.jpg",
+      "C6_plddt.jpg",
+      "C7_chains.jpg",
+      "C7_plddt.jpg",
+      "C8_chains.jpg",
+      "C8_plddt.jpg",
+      "overlay.jpg",
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T13:24:17+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "A1B1_chains.jpg",
+      "A1B1_plddt.jpg",
+      "A2B2_chains.jpg",
+      "A2B2_plddt.jpg",
+      "C0_chains.jpg",
+      "C0_plddt.jpg",
+      "C1_chains.jpg",
+      "C1_plddt.jpg",
+      "C2_chains.jpg",
+      "C2_plddt.jpg",
+      "C3_chains.jpg",
+      "C3_plddt.jpg",
+      "C5_chains.jpg",
+      "C5_plddt.jpg",
+      "C6_chains.jpg",
+      "C6_plddt.jpg",
+      "C7_chains.jpg",
+      "C7_plddt.jpg",
+      "C8_chains.jpg",
+      "C8_plddt.jpg",
+      "overlay.jpg",
+      "template_6a5s.jpg"
+     ]
+    }
+   },
+   {
+    "time": "2026-11-23T13:25:07+09:00",
+    "by": "agent",
+    "value": {
+     "pdf": "/store/deepfold/lantern/targets/H1388/report/report.pdf",
+     "with_retro": false,
+     "figures": [
+      "A1B1_chains.jpg",
+      "A1B1_plddt.jpg",
+      "A2B2_chains.jpg",
+      "A2B2_plddt.jpg",
+      "C0_chains.jpg",
+      "C0_plddt.jpg",
+      "C1_chains.jpg",
+      "C1_plddt.jpg",
+      "C2_chains.jpg",
+      "C2_plddt.jpg",
+      "C3_chains.jpg",
+      "C3_plddt.jpg",
+      "C5_chains.jpg",
+      "C5_plddt.jpg",
+      "C6_chains.jpg",
+      "C6_plddt.jpg",
+      "C7_chains.jpg",
+      "C7_plddt.jpg",
+      "C8_chains.jpg",
+      "C8_plddt.jpg",
+      "overlay.jpg",
+      "template_6a5s.jpg"
+     ]
+    }
+   }
+  ],
+  "pool": [
+   {
+    "time": "2026-11-23T12:33:16+09:00",
+    "by": "agent",
+    "value": {
+     "dir": "/gpfs/deepfold/casp/casp17/targets/H1388",
+     "n_models": 1750,
+     "csv": "/store/deepfold/lantern/targets/H1388/pool.csv",
+     "by_sto_variant_runner": {
+      "A1B1/af3_msa/af3": {
+       "n": 125,
+       "ranking_score_median": 0.67,
+       "ranking_score_max": 0.77,
+       "iptm_median": 0.58,
+       "iptm_max": 0.7,
+       "top": [
+        "seed 6 sample 0 rs 0.77 ipTM 0.7",
+        "seed 3 sample 0 rs 0.76 ipTM 0.68",
+        "seed 12 sample 0 rs 0.75 ipTM 0.68"
+       ]
+      },
+      "A1B1/af3_msa/bt2_jax": {
+       "n": 125,
+       "ranking_score_median": 0.915,
+       "ranking_score_max": 0.931,
+       "iptm_median": 0.865,
+       "iptm_max": 0.914,
+       "top": [
+        "seed 12 sample 0 rs 0.931 ipTM 0.911",
+        "seed 22 sample 0 rs 0.931 ipTM 0.912",
+        "seed 3 sample 0 rs 0.931 ipTM 0.888"
+       ]
+      },
+      "A1B1/af3_msa/of3": {
+       "n": 125,
+       "ranking_score_median": 0.501,
+       "ranking_score_max": 0.707,
+       "iptm_median": 0.37,
+       "iptm_max": 0.623,
+       "top": [
+        "seed 5 sample 0 rs 0.707 ipTM 0.623",
+        "seed 15 sample 0 rs 0.703 ipTM 0.619",
+        "seed 15 sample 1 rs 0.686 ipTM 0.598"
+       ]
+      },
+      "A1B1/af3_msa_pS548/af3": {
+       "n": 125,
+       "ranking_score_median": 0.95,
+       "ranking_score_max": 0.96,
+       "iptm_median": 0.92,
+       "iptm_max": 0.94,
+       "top": [
+        "seed 1 sample 0 rs 0.96 ipTM 0.94",
+        "seed 13 sample 0 rs 0.96 ipTM 0.93",
+        "seed 14 sample 0 rs 0.96 ipTM 0.94"
+       ]
+      },
+      "A1B1/mmseqs2_gpu/af3": {
+       "n": 125,
+       "ranking_score_median": 0.68,
+       "ranking_score_max": 0.77,
+       "iptm_median": 0.59,
+       "iptm_max": 0.7,
+       "top": [
+        "seed 24 sample 0 rs 0.77 ipTM 0.7",
+        "seed 10 sample 0 rs 0.76 ipTM 0.69",
+        "seed 16 sample 0 rs 0.76 ipTM 0.68"
+       ]
+      },
+      "A1B1/mmseqs2_gpu/bt2_jax": {
+       "n": 125,
+       "ranking_score_median": 0.915,
+       "ranking_score_max": 0.925,
+       "iptm_median": 0.887,
+       "iptm_max": 0.914,
+       "top": [
+        "seed 16 sample 0 rs 0.925 ipTM 0.908",
+        "seed 1 sample 0 rs 0.923 ipTM 0.86",
+        "seed 18 sample 0 rs 0.923 ipTM 0.852"
+       ]
+      },
+      "A1B1/mmseqs2_gpu/of3": {
+       "n": 125,
+       "ranking_score_median": 0.576,
+       "ranking_score_max": 0.793,
+       "iptm_median": 0.463,
+       "iptm_max": 0.731,
+       "top": [
+        "seed 7 sample 0 rs 0.793 ipTM 0.731",
+        "seed 23 sample 0 rs 0.767 ipTM 0.695",
+        "seed 14 sample 0 rs 0.727 ipTM 0.649"
+       ]
+      },
+      "A2B2/af3_msa/af3": {
+       "n": 125,
+       "ranking_score_median": 0.88,
+       "ranking_score_max": 0.9,
+       "iptm_median": 0.85,
+       "iptm_max": 0.88,
+       "top": [
+        "seed 11 sample 0 rs 0.9 ipTM 0.88",
+        "seed 12 sample 0 rs 0.89 ipTM 0.86",
+        "seed 13 sample 0 rs 0.89 ipTM 0.86"
+       ]
+      },
+      "A2B2/af3_msa/bt2_jax": {
+       "n": 125,
+       "ranking_score_median": 0.929,
+       "ranking_score_max": 0.936,
+       "iptm_median": 0.928,
+       "iptm_max": 0.936,
+       "top": [
+        "seed 11 sample 0 rs 0.936 ipTM 0.929",
+        "seed 14 sample 0 rs 0.935 ipTM 0.932",
+        "seed 5 sample 0 rs 0.935 ipTM 0.933"
+       ]
+      },
+      "A2B2/af3_msa/of3": {
+       "n": 125,
+       "ranking_score_median": 0.918,
+       "ranking_score_max": 0.922,
+       "iptm_median": 0.891,
+       "iptm_max": 0.895,
+       "top": [
+        "seed 10 sample 0 rs 0.922 ipTM 0.895",
+        "seed 18 sample 0 rs 0.922 ipTM 0.895",
+        "seed 1 sample 0 rs 0.921 ipTM 0.894"
+       ]
+      },
+      "A2B2/af3_msa_pS548/af3": {
+       "n": 125,
+       "ranking_score_median": 0.94,
+       "ranking_score_max": 0.95,
+       "iptm_median": 0.91,
+       "iptm_max": 0.93,
+       "top": [
+        "seed 1 sample 0 rs 0.95 ipTM 0.92",
+        "seed 10 sample 0 rs 0.95 ipTM 0.92",
+        "seed 15 sample 0 rs 0.95 ipTM 0.92"
+       ]
+      },
+      "A2B2/mmseqs2_gpu/af3": {
+       "n": 125,
+       "ranking_score_median": 0.88,
+       "ranking_score_max": 0.89,
+       "iptm_median": 0.85,
+       "iptm_max": 0.86,
+       "top": [
+        "seed 1 sample 0 rs 0.89 ipTM 0.86",
+        "seed 1 sample 1 rs 0.89 ipTM 0.86",
+        "seed 11 sample 0 rs 0.89 ipTM 0.86"
+       ]
+      },
+      "A2B2/mmseqs2_gpu/bt2_jax": {
+       "n": 125,
+       "ranking_score_median": 0.931,
+       "ranking_score_max": 0.938,
+       "iptm_median": 0.932,
+       "iptm_max": 0.942,
+       "top": [
+        "seed 7 sample 0 rs 0.938 ipTM 0.937",
+        "seed 18 sample 0 rs 0.937 ipTM 0.936",
+        "seed 9 sample 0 rs 0.937 ipTM 0.936"
+       ]
+      },
+      "A2B2/mmseqs2_gpu/of3": {
+       "n": 125,
+       "ranking_score_median": 0.903,
+       "ranking_score_max": 0.924,
+       "iptm_median": 0.875,
+       "iptm_max": 0.898,
+       "top": [
+        "seed 13 sample 0 rs 0.924 ipTM 0.898",
+        "seed 13 sample 1 rs 0.923 ipTM 0.897",
+        "seed 13 sample 2 rs 0.92 ipTM 0.894"
+       ]
+      }
+     },
+     "empty_models": {
+      "n": 0,
+      "first": []
+     }
+    }
+   }
+  ]
+ },
+ "decisions": [
+  {
+   "id": "D1",
+   "time": "2026-11-23T08:23:31+09:00",
+   "actor": "agent",
+   "type": "variant",
+   "chose": "af3 input with SEP at chain A position 7 (LARP1 pS548), run next to the unmodified input",
+   "alternatives": [
+    "no modification only: kept as baseline control, 14-3-3 binding requires the phosphate"
+   ],
+   "evidence": [
+    "chemistry",
+    "motif",
+    "literature",
+    "construct"
+   ],
+   "confidence": "medium",
+   "reversible_until": null,
+   "outcome": null
+  },
+  {
+   "id": "D2",
+   "time": "2026-11-23T08:25:29+09:00",
+   "actor": "agent",
+   "type": "stoichiometry",
+   "chose": "A1B1 submitted (given; one 14-3-3 gamma groove + LARP1 pS548 peptide). Run A1B1 and A2B2 (native 14-3-3 dimer, a peptide in each groove); A2B2 models are cut to one B:A pair for selection/submission",
+   "alternatives": [
+    "A1B2 (dimer, one peptide): rejected as primary, no precedent in 6/6 assemblies; low-value extra"
+   ],
+   "evidence": [
+    "stoichiometry_evidence",
+    "public_structures",
+    "literature",
+    "construct"
+   ],
+   "confidence": "high",
+   "reversible_until": null,
+   "outcome": null
+  },
+  {
+   "id": "D3",
+   "time": "2026-11-23T08:29:20+09:00",
+   "actor": "agent",
+   "type": "variant",
+   "chose": "MSA: use the existing deep chain-B MSAs (af3_msa: uniref90 N=6536, uniprot N=16347; plus mmseqs2_gpu variant). No crawl/plmMSA. Peptide A runs single-sequence (11 aa; placement comes from the 14-3-3 groove)",
+   "alternatives": [
+    "family crawl / plmMSA for B (MSA already deep)",
+    "paired MSA for LARP1 peptide (meaningless for 11 aa)"
+   ],
+   "evidence": [
+    "msa_depth",
+    "construct",
+    "existing_pool"
+   ],
+   "confidence": "high",
+   "reversible_until": null,
+   "outcome": null
+  },
+  {
+   "id": "D4",
+   "time": "2026-11-23T08:29:20+09:00",
+   "actor": "agent",
+   "type": "variant",
+   "chose": "Templates: AF3 default template search (91 of 1578 hits are 14-3-3 gamma, peptide-bound gamma included); no custom template now. Fallback if peptide register/groove placement splits at review: custom 6A5S/2B05 template (loop:HYPOTHESES)",
+   "alternatives": [
+    "custom 6A5S/2B05 template now",
+    "MODELLER assembly (dimer is easy for predictors)"
+   ],
+   "evidence": [
+    "templates",
+    "public_structures",
+    "existing_pool"
+   ],
+   "confidence": "medium",
+   "reversible_until": null,
+   "outcome": null
+  },
+  {
+   "id": "D5",
+   "time": "2026-11-23T08:29:20+09:00",
+   "actor": "agent",
+   "type": "variant",
+   "chose": "No ligand or metal: 14-3-3 binds the phosphopeptide without cofactors. Only chemistry variant is pS548 SEP (D1)",
+   "alternatives": [
+    "add free phosphate/ions (no evidence)"
+   ],
+   "evidence": [
+    "literature",
+    "chemistry"
+   ],
+   "confidence": "high",
+   "reversible_until": null,
+   "outcome": null
+  },
+  {
+   "id": "D6",
+   "time": "2026-11-23T08:29:20+09:00",
+   "actor": "agent",
+   "type": "sampling",
+   "chose": "No new GPU now: CASP17 pool already holds af3 25 seeds x5 for A1B1 and A2B2 x (af3_msa, af3_msa_pS548, mmseqs2_gpu) plus bt2_jax and of3 (unmodified), ~1.4k models. Import with lantern pool, gate on peptide S7 in the B phosphate pocket (K49/R56/R131/Y132). Reserve <=40 GPU-h of the 400 h: rerun pt2 (no model files in any variant) and, if pS548 vs unmodified registers differ, of3/bt2 with SEP",
+   "alternatives": [
+    "fresh 100+ seed sweep (pool already large for an 11-aa peptide on rigid 14-3-3)",
+    "drop pt2 entirely"
+   ],
+   "evidence": [
+    "existing_pool",
+    "binding_site",
+    "motif",
+    "stoichiometry_evidence"
+   ],
+   "confidence": "medium",
+   "reversible_until": null,
+   "outcome": null
+  }
+ ],
+ "runs": [
+  {
+   "time": "2026-11-23T08:30:16+09:00",
+   "by": "agent",
+   "job": "328984",
+   "scheduler": "slurm",
+   "what": "render: template_6a5s.pml",
+   "state": "COMPLETED",
+   "out": "/store/deepfold/lantern/targets/H1388/report/figs"
+  },
+  {
+   "time": "2026-11-23T08:30:58+09:00",
+   "by": "agent",
+   "job": "328985",
+   "scheduler": "slurm",
+   "what": "render: template_6a5s.pml",
+   "state": "COMPLETED",
+   "out": "/store/deepfold/lantern/targets/H1388/report/figs"
+  },
+  {
+   "time": "2026-11-23T12:33:25+09:00",
+   "by": "agent",
+   "job": "329092",
+   "scheduler": "slurm",
+   "what": "lantern-qa cluster A1B1",
+   "state": "submitted",
+   "cmd": "<RESIDUDES>/lantern-qa/bin/lantern-qa cluster /gpfs/deepfold/casp/casp17/targets/H1388 --sto A1B1 --method tm --gpu 0 --no-medoid-pdbs --output-base /store/deepfold/lantern/targets/H1388/qa/cluster_A1B1",
+   "out": "/store/deepfold/lantern/targets/H1388/qa/cluster_A1B1"
+  },
+  {
+   "time": "2026-11-23T12:33:25+09:00",
+   "by": "agent",
+   "job": "329093",
+   "scheduler": "slurm",
+   "what": "lantern-qa interface A1B1",
+   "state": "submitted",
+   "cmd": "<RESIDUDES>/lantern-qa/bin/lantern-qa interface run-ppi-v4 --target-dir /gpfs/deepfold/casp/casp17/targets/H1388 --sto A1B1 --targets dockq,ics,ips -o /store/deepfold/lantern/targets/H1388/qa/interface_A1B1",
+   "out": "/store/deepfold/lantern/targets/H1388/qa/interface_A1B1"
+  },
+  {
+   "time": "2026-11-23T12:41:33+09:00",
+   "by": "agent",
+   "job": "329098",
+   "scheduler": "slurm",
+   "what": "lantern-qa cluster A1B1",
+   "state": "submitted",
+   "cmd": "<RESIDUDES>/lantern-qa/bin/lantern-qa cluster /gpfs/deepfold/casp/casp17/targets/H1388 --sto A1B1 --method tm --gpu 0 --no-medoid-pdbs --output-base /store/deepfold/lantern/targets/H1388/qa/cluster_A1B1 --variants af3_msa,af3_msa_pS548,mmseqs2_gpu",
+   "out": "/store/deepfold/lantern/targets/H1388/qa/cluster_A1B1"
+  },
+  {
+   "time": "2026-11-23T12:54:46+09:00",
+   "by": "agent",
+   "job": "329107",
+   "scheduler": "slurm",
+   "what": "render: scenes.pml",
+   "state": "submitted",
+   "out": "/store/deepfold/lantern/targets/H1388/report/figs"
+  },
+  {
+   "time": "2026-11-23T13:11:08+09:00",
+   "by": "agent",
+   "job": "329120",
+   "scheduler": "slurm",
+   "what": "render: scenes.pml",
+   "state": "submitted",
+   "out": "/store/deepfold/lantern/targets/H1388/report/figs"
+  },
+  {
+   "time": "2026-11-23T13:13:49+09:00",
+   "by": "agent",
+   "job": "329123",
+   "scheduler": "slurm",
+   "what": "render: scenes.pml",
+   "state": "submitted",
+   "out": "/store/deepfold/lantern/targets/H1388/report/figs"
+  },
+  {
+   "time": "2026-11-23T13:16:22+09:00",
+   "by": "agent",
+   "job": "329129",
+   "scheduler": "slurm",
+   "what": "render: scenes.pml",
+   "state": "submitted",
+   "out": "/store/deepfold/lantern/targets/H1388/report/figs"
+  }
+ ],
+ "slate": {},
+ "approvals": [],
+ "checkpoints": [
+  {
+   "id": "C1",
+   "kind": "plan",
+   "stage": "PLAN_REVIEW",
+   "time": "2026-11-23T08:32:28+09:00",
+   "by": "agent",
+   "brief": "/store/deepfold/lantern/targets/H1388/checkpoints/C1_plan.md",
+   "questions": [
+    "Phosphorylation: (a) A7 = pS548 (SEP), lead with SEP models, unmodified as control [recommended: pS-L-P motif, 14-3-3 needs a phosphate], (b) unmodified only, (c) equal weight",
+    "Stoichiometry: (a) submit A1B1, run A2B2 as dimer-context hedge cut to one B:A pair [recommended], (b) A1B1 runs only, (c) submit the A2B2 dimer",
+    "GPU: (a) only <=40 of 400 GPU-h (pt2 rerun, of3/bt2 with SEP) on top of the existing ~1.4k-model pool [recommended], (b) none, (c) +100 GPU-h af3 seeds with a custom 6A5S template",
+    "Selection gate: (a) A7 phosphate within 4 A of B K49/R56/R131/Y132 first, then confidence [recommended], (b) confidence only"
+   ],
+   "status": "open",
+   "thread": [
+    {
+     "time": "2026-11-23T09:12:38+09:00",
+     "by": "agent",
+     "text": "Correction to my question 4. Since writing it I measured 6A5S (notes/target.md section 4): nearest side-chain atom of B K49/R56/R131/Y132 to the phosphoserine is 2.4-2.8 A from the phosphate oxygens, 3.6-3.9 A from the phosphorus, and 4.2-5.1 A from the serine OG. So a 4 A cut-off passes the reference only when measured from the phosphate O or P. Measured from OG, the only atom the unmodified runs have, the reference itself fails, and so would every unmodified model. This changes my recommendation: (a) as written should not be used. Revised (a): the gate spec names the atom - SEP models: A7 phosphate oxygens within 4 A of those side chains; unmodified models: A7 OG within about 5.5 A - then confidence. (b) is unchanged."
+    }
+   ],
+   "resolution": null
+  }
+ ],
+ "log": [
+  {
+   "time": "2026-11-23T08:20:13+09:00",
+   "actor": "deepfold",
+   "note": "dossier created"
+  },
+  {
+   "time": "2026-11-23T08:20:13+09:00",
+   "actor": "person",
+   "note": "OPERATOR: this run is an example of the pipeline from the start, so do the analysis yourself. The team's own submission for this target is on disk at /gpfs/deepfold/casp/casp17/targets/H1388/submit/ - do not read it, and do not read any native structure, until RETROSPECTIVE. Everything else under targets/H1388 (target.fasta, inputs/, results/, msas/) is yours to use, as is the literature. Record what you find as you go."
+  },
+  {
+   "time": "2026-11-23T08:21:03+09:00",
+   "actor": "agent",
+   "note": "FYI: replay hindsight - the lantern-intake skill quotes H2388 (14-3-3 gamma + LARP1 phosphopeptide PKGLSASLPDL, SEP at peptide position 7) which looks like the same complex as H1388. Those outcome lines are hindsight; decisions here cite evidence collected in this step."
+  },
+  {
+   "time": "2026-11-23T08:23:49+09:00",
+   "actor": "agent",
+   "note": "stage NEW -> IDENTIFIED"
+  },
+  {
+   "time": "2026-11-23T08:23:49+09:00",
+   "actor": "agent",
+   "note": "Intake done: chain B = human 14-3-3 gamma 3-233 (S1 scar, C-tail 234-247 truncated), chain A = LARP1 542-552; pS548 (=A7) chosen as SEP variant (D1). 23 exact 14-3-3 gamma structures, none with LARP1; no paper on the complex found. B MSA deep, A peptide MSA empty. A1B1 given; A2B2 dimer variant suggested (14-3-3 obligate dimer)."
+  },
+  {
+   "time": "2026-11-23T08:24:02+09:00",
+   "actor": "lantern",
+   "note": "agent step: success, $0.8866804999999999, turns 24, log /store/deepfold/lantern/targets/H1388/agent_logs/20261123-082033_NEW.log"
+  },
+  {
+   "time": "2026-11-23T08:25:29+09:00",
+   "actor": "agent",
+   "note": "stage IDENTIFIED -> HYPOTHESES"
+  },
+  {
+   "time": "2026-11-23T08:25:32+09:00",
+   "actor": "agent",
+   "note": "Stoichiometry step done (D2): submit A1B1 as given; run A1B1 and A2B2 inputs (both already exist under inputs/), cut A2B2 to one pair. Based on 6/6 PDB 14-3-3 gamma:peptide assemblies being 2:2 C2. Existing A1B1/A2B2 results on disk were not read (hindsight). Next: HYPOTHESES (variants, sampling plan)."
+  },
+  {
+   "time": "2026-11-23T08:25:38+09:00",
+   "actor": "lantern",
+   "note": "agent step: success, $0.28990809999999995, turns 11, log /store/deepfold/lantern/targets/H1388/agent_logs/20261123-082445_IDENTIFIED.log"
+  },
+  {
+   "time": "2026-11-23T08:29:25+09:00",
+   "actor": "agent",
+   "note": "stage HYPOTHESES -> PLAN_REVIEW"
+  },
+  {
+   "time": "2026-11-23T08:29:25+09:00",
+   "actor": "agent",
+   "note": "HYPOTHESES done: D3 MSA (existing deep B MSAs, peptide single-seq), D4 templates (AF3 default, 91 gamma hits; custom 6A5S/2B05 as fallback), D5 no ligands (pS548 only), D6 sampling: reuse existing CASP17 pool (~1.4k models, A1B1+A2B2, af3/bt2/of3), reserve <=40 GPU-h for pt2 rerun (pt2 left no model files) and SEP runs on other predictors. Next: plan brief + consult."
+  },
+  {
+   "time": "2026-11-23T08:29:33+09:00",
+   "actor": "lantern",
+   "note": "agent step: success, $0.34794100000000006, turns 12, log /store/deepfold/lantern/targets/H1388/agent_logs/20261123-082834_HYPOTHESES.log"
+  },
+  {
+   "time": "2026-11-23T08:30:16+09:00",
+   "actor": "agent",
+   "note": "render template_6a5s.pml: job 328984"
+  },
+  {
+   "time": "2026-11-23T08:30:58+09:00",
+   "actor": "agent",
+   "note": "render template_6a5s.pml: job 328985"
+  },
+  {
+   "time": "2026-11-23T08:31:02+09:00",
+   "actor": "agent",
+   "note": "FYI: lantern-consult skill quotes a CASP17 'H2388' phosphopeptide case (pS-X-P picked S7, DockQ 0.24->0.82) that matches this target's motif; if this is a replay, that line is hindsight and is not used to drive D1 - D1 rests on the motif/chemistry/literature evidence. Template 6A5S downloaded to /store/deepfold/lantern/targets/H1388/dl/pdb/6A5S.cif (928 kB) for the plan slide."
+  },
+  {
+   "time": "2026-11-23T08:32:23+09:00",
+   "actor": "agent",
+   "note": "FYI: msa_depth re-recorded in lantern msa --depth shape (chain B af3 MSAs; same numbers) because the per-chain summary shape broke lantern slides; peptide A is query-only (11 aa), see existing_pool.msa_A."
+  },
+  {
+   "time": "2026-11-23T08:32:28+09:00",
+   "actor": "agent",
+   "note": "CHECKPOINT C1 (plan) opened: Phosphorylation: (a) A7 = pS548 (SEP), lead with SEP models, unmodified as control [recommended: pS-L-P motif, 14-3-3 needs a phosphate], (b) unmodified only, (c) equal weight | Stoichiometry: (a) submit A1B1, run A2B2 as dimer-context hedge cut to one B:A pair [recommended], (b) A1B1 runs only, (c)"
+  },
+  {
+   "time": "2026-11-23T08:32:40+09:00",
+   "actor": "lantern",
+   "note": "agent step: success, $0.6296013, turns 24, log /store/deepfold/lantern/targets/H1388/agent_logs/20261123-082951_PLAN_REVIEW.log"
+  },
+  {
+   "time": "2026-11-23T09:12:38+09:00",
+   "actor": "agent",
+   "note": "C1 reply: Correction to my question 4. Since writing it I measured 6A5S (notes/target.md section 4): nearest side-chain atom of B K49/R56/R131/Y132 to the phosphoserine is 2.4-2.8 A from the phosphate oxygens, 3.6-3.9 A from the phosphorus, and 4.2-5.1 A from the serine OG. So a 4 A cut-off passes the referen"
+  },
+  {
+   "time": "2026-11-23T12:33:16+09:00",
+   "actor": "agent",
+   "note": "pool imported: 1750 models from /gpfs/deepfold/casp/casp17/targets/H1388"
+  },
+  {
+   "time": "2026-11-23T12:33:25+09:00",
+   "actor": "agent",
+   "note": "submitted lantern-qa cluster for A1B1: job 329092"
+  },
+  {
+   "time": "2026-11-23T12:33:25+09:00",
+   "actor": "agent",
+   "note": "submitted lantern-qa interface for A1B1: job 329093"
+  },
+  {
+   "time": "2026-11-23T12:41:33+09:00",
+   "actor": "agent",
+   "note": "submitted lantern-qa cluster for A1B1: job 329098"
+  },
+  {
+   "time": "2026-11-23T12:54:46+09:00",
+   "actor": "agent",
+   "note": "render scenes.pml: job 329107"
+  },
+  {
+   "time": "2026-11-23T13:11:08+09:00",
+   "actor": "agent",
+   "note": "render scenes.pml: job 329120"
+  },
+  {
+   "time": "2026-11-23T13:13:49+09:00",
+   "actor": "agent",
+   "note": "render scenes.pml: job 329123"
+  },
+  {
+   "time": "2026-11-23T13:16:22+09:00",
+   "actor": "agent",
+   "note": "render scenes.pml: job 329129"
+  }
+ ]
+}

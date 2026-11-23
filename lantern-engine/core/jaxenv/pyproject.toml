@@ -1,0 +1,81 @@
+# Modern JAX environment for the `jax` backend: fused triangle kernels
+# (cuEquivariance-JAX) and tokamax flash attention on top of JAX 0.11 / CUDA 13.
+#
+# Separate from ../pyproject.toml (the TensorRT runtime, numpy < 2, JAX 0.5)
+# because every JAX >= 0.8 requires numpy >= 2 while Boltz pins numpy < 2 and
+# scipy == 1.13.1; both pins are relaxed here via override-dependencies, which
+# the smoke test below verifies at build time.
+#
+#   bash core/jaxenv/build.sh          # → core/jaxenv/.venv  (or: lantern-engine setup jaxenv)
+#   site file: venv_jax = "{lantern_engine_root}/core/jaxenv/.venv", [jax].venv = { bt2 = "venv_jax", ... }
+[project]
+name = "lantern-engine-jaxenv"
+version = "0.1.0"
+description = "JAX 0.11 + cuEquivariance-JAX + tokamax environment for lantern-engine --backend jax and AlphaFold 3"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # JAX stack
+    "jax[cuda13]>=0.11.1,<0.12",
+    "tokamax[cuda]>=0.0.17",
+    "jax-triton>=0.5.0",          # tokamax 0.0.17 calls triton_call(out_type=...); jax-triton 0.3.x only knows out_shape
+    "cuequivariance-jax>=0.13.0",
+    "cuequivariance-ops-jax-cu13>=0.13.0",
+    "dm-haiku>=0.0.16",
+    "optax>=0.2.5",
+    "chex>=0.1.91",
+    # torch host side (input embedders, samplers, Boltz/OF3 shells) + its kernels
+    "torch>=2.6",
+    "triton>=3.0",
+    "cuequivariance>=0.9.1",
+    "cuequivariance-torch>=0.9.1",
+    "cuequivariance-ops-torch-cu13>=0.9.1",
+    # shared runtime deps (mirror of ../pyproject.toml, numpy>=2)
+    "numpy>=2.1",
+    "safetensors>=0.4",
+    "einops>=0.8",
+    "nvtx>=0.2",
+    "packaging>=24",
+    "pydantic>=2.0",
+    "psutil>=5",
+    "huggingface-hub>=1.9.0",
+    "fair-esm>=2.0.0",
+    "scikit-learn>=1.6.1",
+    "biopython>=1.84",
+    "biotite==1.6.0",             # same as the main runtime; 1.8/2.0 break Protenix/OF3 AtomArray handling
+    "modelcif>=1.2",
+    "gemmi>=0.6.5",
+    "pdbeccdutils>=0.8.5",
+    "ml-collections>=1.1.0",
+    "rdkit>=2026.3.1,<2026.9",     # keep the main runtime's rdkit series
+    "optree>=0.19.0",
+    "pandas>=2.3.3",
+    # models
+    "boltz>=2.2",
+    "openfold3",
+    "alphafold3",                 # core/models/alphafold3: DeepMind AF3 3.0.2 plus the CASP17 fork (unified writer, cross-chain templates)
+    "zstandard>=0.23",
+    # TensorRT for the AlphaFold 3 engines (the main runtime's pin; the engine plugin is built against it)
+    "tensorrt==10.16.1.11",
+    "tensorrt-cu12==10.16.1.11",
+    "tensorrt-cu12-libs==10.16.1.11",
+    "tensorrt-cu12-bindings==10.16.1.11",
+]
+
+[tool.uv]
+package = false
+# Boltz 2.2.x pins numpy<2 and scipy==1.13.1; JAX >= 0.11 needs numpy>=2.1, scipy>=1.15.
+# jax-triton >= 0.4 needs triton >= 3.7 (its 3.6 shim breaks: '_Stub' has no attribute 'backend') while torch 2.11
+# pins triton == 3.6.0 for torch.compile, which this environment never uses; the newer triton wins (checked at build time).
+override-dependencies = ["numpy>=2.1,<2.2", "scipy>=1.15", "triton>=3.7"]   # numba 0.61 needs numpy<=2.1
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
+torchaudio = { index = "pytorch-cu128" }
+openfold3 = { path = "../models/openfold-3", editable = true }
+alphafold3 = { path = "../models/alphafold3", editable = false }   # scikit-build-core: compiles the C++ extension and installs the libcifpp data

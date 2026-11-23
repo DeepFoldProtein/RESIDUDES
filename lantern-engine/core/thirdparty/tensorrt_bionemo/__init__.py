@@ -1,0 +1,46 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from ._torch import (_load_cuequivariance_lib, _load_kernels_lib)
+from ._trt.plugin import (_load_cuequivariance_trt_plugins, _load_plugin_lib,
+                          _load_trifast_trt_plugins)
+from .version import __version__
+
+_inited = False
+
+
+def _init() -> None:
+    global _inited
+    if _inited:
+        return
+    _inited = True
+    # Silently attempt to load optional native libraries.
+    # VANILLA triangle attention and chunk_loop work without them.
+    _load_cuequivariance_lib()
+    _load_kernels_lib()
+    _load_plugin_lib()
+    # Register cuEquivariance Python TRT plugins (trtp.register API).
+    # These provide identity_2, triangle_attention_mask, etc. under the
+    # 'cuequivariance' namespace and do NOT require any pre-built .so files.
+    _load_cuequivariance_trt_plugins()
+    # Register trifast Triton-based TRT plugins under the 'trifast' namespace.
+    _load_trifast_trt_plugins()
+
+
+_init()
+
+import tensorrt_bionemo._trt.layers as layers
+
+__all__ = ["layers", "__version__"]

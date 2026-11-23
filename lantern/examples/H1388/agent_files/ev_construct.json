@@ -1,0 +1,4 @@
+{"chains":{
+ "A (subunit1, 11 aa)":{"seq":"PKGLSASLPDL","maps_to":"human LARP1 (UniProt Q6PKG0) residues 542-552, exact match","note":"No modification in FASTA. Two serines: S5 = LARP1 S546, S7 = LARP1 S548. UniProt annotates S548 as Phosphoserine (modified-residue feature).","source":"UniProt Q6PKG0 REST json, /store/deepfold/lantern/targets/H1388/dl/Q6PKG0.json"},
+ "B (subunit2, 232 aa)":{"maps_to":"human 14-3-3 gamma (YWHAG, UniProt P61981, 247 aa); target residues 2-232 = native 3-233 identical","differences":"target S1 replaces native M1-V2 (likely cloning/protease scar, e.g. remnant of a tag); native C-terminal tail 234-247 (SDQQDDDGGEGNN, acidic, disordered in 14-3-3 crystals) is truncated","numbering":"input residue i (i>=2) = native i+1","source":"UniProt P61981 REST json, /store/deepfold/lantern/targets/H1388/dl/P61981.json"}},
+ "given_stoichiometry":"A1B1"}

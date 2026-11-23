@@ -1,0 +1,12 @@
+# Kept in git: the white sheets and logo/source.png, because nothing can regenerate them, and the sizes the docs
+# actually load (thumb/, fig/, the small logos). Everything below is derived — `python3 split_mascots.py .` and
+# `python3 make_logo.py .` rebuild it in one go — so it stays out of the history.
+cells/
+cutout/
+small/
+logo/logo.png
+logo/logo_1024.png
+
+# The first set, drawn on navy with the stage name painted on. Superseded by the white sheets; 24 MB, and the
+# current script no longer reads them. Ask the team if you need them.
+sheets/navy_with_captions/

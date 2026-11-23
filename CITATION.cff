@@ -1,0 +1,78 @@
+cff-version: 1.2.0
+message: "If you use RESIDUDES — lantern, lantern-engine, lantern-qa — or the lantern-decoy pool, please cite the CASP17 abstract below."
+title: "Protein Complex Structure Prediction with RESIDUDES in CASP17"
+abstract: >-
+  The DeepFold team's CASP17 entry (group 077, RESIDUDES-X): lantern, a campaign agent that takes a
+  target from its sequence to a slate of five models and stops wherever a person has to approve;
+  lantern-engine, which builds the inputs and runs Protenix v2, OpenFold 3, Boltz-2 and AlphaFold 3;
+  and lantern-qa, which scores, clusters and plots the pool. The sampling pool itself is released as
+  lantern-decoy.
+type: software
+license: MIT
+repository-code: "https://github.com/DeepFoldProtein/RESIDUDES"
+url: "https://lantern-decoy.deepfold.org"
+keywords:
+  - CASP17
+  - protein structure prediction
+  - protein complexes
+  - model selection
+  - AlphaFold 3
+authors:
+  - family-names: Bae
+    given-names: Hanjin
+  - family-names: Park
+    given-names: Gunwoong
+  - family-names: Jo
+    given-names: Gyeonpil
+  - family-names: Kim
+    given-names: Kunwoo
+  - family-names: Kim
+    given-names: Minsoo
+  - family-names: Yoo
+    given-names: Jaemin
+  - family-names: Kim
+    given-names: Beomseok
+  - family-names: Shin
+    given-names: Jaeoh
+  - family-names: Kim
+    given-names: Hosung
+  - family-names: Kim
+    given-names: Iljung
+  - family-names: Noh
+    given-names: Yung-Kyun
+  - family-names: Yoo
+    given-names: Jejoong
+  - family-names: Joo
+    given-names: Keehyoung
+preferred-citation:
+  type: generic
+  title: "Protein Complex Structure Prediction with RESIDUDES in CASP17"
+  year: 2026
+  notes: "CASP17 abstract"
+  authors:
+    - family-names: Bae
+      given-names: Hanjin
+    - family-names: Park
+      given-names: Gunwoong
+    - family-names: Jo
+      given-names: Gyeonpil
+    - family-names: Kim
+      given-names: Kunwoo
+    - family-names: Kim
+      given-names: Minsoo
+    - family-names: Yoo
+      given-names: Jaemin
+    - family-names: Kim
+      given-names: Beomseok
+    - family-names: Shin
+      given-names: Jaeoh
+    - family-names: Kim
+      given-names: Hosung
+    - family-names: Kim
+      given-names: Iljung
+    - family-names: Noh
+      given-names: Yung-Kyun
+    - family-names: Yoo
+      given-names: Jejoong
+    - family-names: Joo
+      given-names: Keehyoung

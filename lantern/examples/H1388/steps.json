@@ -1,0 +1,38 @@
+[
+ {
+  "step": 1,
+  "time": "2026-11-23T08:24:02+09:00",
+  "stage": "NEW",
+  "subtype": "success",
+  "cost_usd": 0.8867,
+  "turns": 24,
+  "log": "20261123-082033_NEW.log"
+ },
+ {
+  "step": 2,
+  "time": "2026-11-23T08:25:38+09:00",
+  "stage": "IDENTIFIED",
+  "subtype": "success",
+  "cost_usd": 0.2899,
+  "turns": 11,
+  "log": "20261123-082445_IDENTIFIED.log"
+ },
+ {
+  "step": 3,
+  "time": "2026-11-23T08:29:33+09:00",
+  "stage": "HYPOTHESES",
+  "subtype": "success",
+  "cost_usd": 0.3479,
+  "turns": 12,
+  "log": "20261123-082834_HYPOTHESES.log"
+ },
+ {
+  "step": 4,
+  "time": "2026-11-23T08:32:40+09:00",
+  "stage": "PLAN_REVIEW",
+  "subtype": "success",
+  "cost_usd": 0.6296,
+  "turns": 24,
+  "log": "20261123-082951_PLAN_REVIEW.log"
+ }
+]

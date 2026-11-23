@@ -1,0 +1,19 @@
+{
+  "_comment": "Benchmark inputs: prepared CASP17 AF3-dialect input.json files on the ada cluster (shared GPFS). Token counts are summed sequence lengths.",
+  "root": "/gpfs/deepfold/casp/casp17/targets",
+  "targets": [
+    {"name": "T1430", "sto": "A1",     "tokens": 36},
+    {"name": "T1372", "sto": "A1",     "tokens": 202},
+    {"name": "T2455", "sto": "A1",     "tokens": 299},
+    {"name": "T1358", "sto": "A4",     "tokens": 604},
+    {"name": "H1424", "sto": "C1E1",   "tokens": 1002},
+    {"name": "T1404", "sto": "A5",     "tokens": 1315},
+    {"name": "H1335", "sto": "A1B1C2", "tokens": 1627},
+    {"name": "E2375", "sto": "A3B3",   "tokens": 2004}
+  ],
+  "models": ["pt2", "of3", "bt2", "af3"],
+  "v2_only": ["af3"],
+  "backends": ["trt", "torch", "jax"],
+  "gpu": "rtx6000ada",
+  "seed": 1
+}

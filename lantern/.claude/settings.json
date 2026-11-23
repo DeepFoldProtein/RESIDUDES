@@ -1,0 +1,31 @@
+{
+  "env": {
+    "LANTERN_ACTOR": "agent"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(lantern --help)",
+      "Bash(lantern target list:*)",
+      "Bash(lantern target show:*)",
+      "Bash(lantern next:*)",
+      "Bash(lantern jobs:*)",
+      "Bash(lantern doctor:*)",
+      "Bash(bin/lantern --help)",
+      "Bash(bin/lantern target list:*)",
+      "Bash(bin/lantern target show:*)",
+      "Bash(bin/lantern next:*)",
+      "Bash(bin/lantern jobs:*)",
+      "Bash(bin/lantern doctor:*)",
+      "Bash(lantern checkpoints:*)",
+      "Bash(lantern report:*)",
+      "Bash(bin/lantern checkpoints:*)",
+      "Bash(bin/lantern report:*)"
+    ],
+    "deny": [
+      "Bash(lantern approve:*)",
+      "Bash(bin/lantern approve:*)",
+      "Bash(lantern resolve:*)",
+      "Bash(bin/lantern resolve:*)"
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+# Example PPI mode configuration.
+# Used as documentation / hint sheet; the CLI does not currently parse YAML —
+# pass the equivalent --flags to run_scoring.sh / `xgbdimer run-all`.
+mode: ppi
+
+# CASP target directory + stoichiometry.
+target_dir: /gpfs/deepfold/casp/casp17/targets/T1234
+sto: A1B1
+variants: []
+methods:  []
+
+# In PPI mode there is no Ab / Ag distinction — use ab_chains: [] and put all
+# chains under ag_chains for interface counting purposes.
+ab_chains: ''
+ag_chains: AB        # all chains
+heavy:     null
+light:     null
+
+# COM clustering chain set (which chain's COM defines the binding pose).
+probe_chains:   B
+anchor_chains:  A    # leave null to skip Kabsch alignment
+ref_cif:        null  # optional reference for anchor alignment
+
+filter:
+  iface_n_contacts_total_min: 80
+  mpnn_iface_n_residues_min:  15
+  json_iptm_min:              0.30
+  n_chain_breaks_max:         0
+
+cluster:
+  k_range: [2, 3, 4, 5, 6]
+  random_state: 0
+
+pick:
+  n_top_xgb: 1
+  n_final:   5
+
+workers: 8

@@ -1,0 +1,13 @@
+{
+    "queries": {
+        "5xgo": {
+            "chains": [
+                {
+                    "molecule_type": "protein",
+                    "chain_ids": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+                    "sequence": "MAHHHHHHVDDDDKMSTAKLVKSKATNLLYTRNDVSDSEKKATVELLNRQVIQFIDLSLITKQAHWNMRGANFIAVHEMLDGFRTALIDHLDTMAERAVQLGGVALGTTQVINSKTPLKSYPLDIHNVQDHLKELADRYAIVANDVRKAIGEAKDDDTADILTAASRDLDKFLWFIECNLDLIQKMGLQNYLQAQIREEG"
+                }
+            ]
+        }
+    }
+}

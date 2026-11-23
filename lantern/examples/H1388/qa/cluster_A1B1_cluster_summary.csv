@@ -1,0 +1,16 @@
+# Target: H1388_A1B1_tm
+# Reference Type: Native Structure
+# Clustering Metric: tm
+# Metrics: TM
+# Total Structures: 875
+# Clusters: 9
+Cluster,Size,%,Intra-TM,Native-Score,Medoid
+C0,133,15.2%,0.989,N/A,bt2_jax_seed10_sample0__mmseqs2_gpu.pdb
+C1,125,14.3%,0.989,N/A,af3_seed21_sample2__af3_msa_pS548.pdb
+C2,87,9.9%,0.978,N/A,of3_seed15_sample1__mmseqs2_gpu.pdb
+C3,95,10.9%,0.987,N/A,of3_seed15_sample4__mmseqs2_gpu.pdb
+C4,31,3.5%,0.990,N/A,of3_seed19_sample1__af3_msa.pdb
+C5,101,11.5%,0.983,N/A,af3_seed19_sample3__mmseqs2_gpu.pdb
+C6,58,6.6%,0.993,N/A,of3_seed10_sample0__af3_msa.pdb
+C7,122,13.9%,0.973,N/A,bt2_jax_seed17_sample0__af3_msa.pdb
+C8,123,14.1%,0.981,N/A,af3_seed13_sample0__mmseqs2_gpu.pdb

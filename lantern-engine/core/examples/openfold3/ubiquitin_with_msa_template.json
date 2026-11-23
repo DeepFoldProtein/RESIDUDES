@@ -1,0 +1,15 @@
+{
+    "queries": {
+        "ubiquitin": {
+            "chains": [
+                {
+                    "molecule_type": "protein",
+                    "chain_ids": ["A"],
+                    "sequence": "MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG",
+                    "main_msa_file_paths": ["examples/openfold3/ubiquitin.a3m"],
+                    "template_entry_chain_ids": ["1UBQ_A"]
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "name": "ubiquitin",
+    "sequences": [
+      {
+        "proteinChain": {
+          "count": 1,
+          "sequence": "MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG",
+          "unpairedMsaPath": "./examples/protenix/ubiquitin.a3m"
+        }
+      }
+    ]
+  }
+]

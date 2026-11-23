@@ -1,0 +1,47 @@
+# Unit tests that need no GPU and no cluster: lantern (the agent: dossier, gates, checkpoints, harness layout)
+# and lantern-engine (input building and run planning). lantern-qa needs its CUDA stack and is tested on the cluster.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 docs/check_links.py
+
+  lantern:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lantern
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.4.0     # no floating major tag: pin the release
+        with:
+          python-version: "3.12"
+      - uses: typst-community/setup-typst@v5     # the deck test compiles a generated report
+        with:
+          typst-version: 0.13.1
+      - run: uvx ruff@0.8.6 check src tests skills docs
+      - run: uv sync --frozen
+      - run: uv run --frozen pytest -q
+
+  lantern-engine:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lantern-engine
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.4.0     # no floating major tag: pin the release
+        with:
+          python-version: "3.12"
+      - run: uvx ruff@0.8.6 check src tests
+      - run: uv run --no-project --with pytest==9.0.3 python -m pytest -q tests
+        env:
+          PYTHONPATH: src

@@ -1,0 +1,3 @@
+[submodule "references/boltz-cp"]
+	path = references/boltz-cp
+	url = https://github.com/NVIDIA-Digital-Bio/boltz-cp

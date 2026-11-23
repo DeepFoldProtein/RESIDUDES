@@ -1,0 +1,179 @@
+{
+ "dir": "/gpfs/deepfold/casp/casp17/targets/H1388",
+ "n_models": 1750,
+ "csv": "/store/deepfold/lantern/targets/H1388/pool.csv",
+ "by_sto_variant_runner": {
+  "A1B1/af3_msa/af3": {
+   "n": 125,
+   "ranking_score_median": 0.67,
+   "ranking_score_max": 0.77,
+   "iptm_median": 0.58,
+   "iptm_max": 0.7,
+   "top": [
+    "seed 6 sample 0 rs 0.77 ipTM 0.7",
+    "seed 3 sample 0 rs 0.76 ipTM 0.68",
+    "seed 12 sample 0 rs 0.75 ipTM 0.68"
+   ]
+  },
+  "A1B1/af3_msa/bt2_jax": {
+   "n": 125,
+   "ranking_score_median": 0.915,
+   "ranking_score_max": 0.931,
+   "iptm_median": 0.865,
+   "iptm_max": 0.914,
+   "top": [
+    "seed 12 sample 0 rs 0.931 ipTM 0.911",
+    "seed 22 sample 0 rs 0.931 ipTM 0.912",
+    "seed 3 sample 0 rs 0.931 ipTM 0.888"
+   ]
+  },
+  "A1B1/af3_msa/of3": {
+   "n": 125,
+   "ranking_score_median": 0.501,
+   "ranking_score_max": 0.707,
+   "iptm_median": 0.37,
+   "iptm_max": 0.623,
+   "top": [
+    "seed 5 sample 0 rs 0.707 ipTM 0.623",
+    "seed 15 sample 0 rs 0.703 ipTM 0.619",
+    "seed 15 sample 1 rs 0.686 ipTM 0.598"
+   ]
+  },
+  "A1B1/af3_msa_pS548/af3": {
+   "n": 125,
+   "ranking_score_median": 0.95,
+   "ranking_score_max": 0.96,
+   "iptm_median": 0.92,
+   "iptm_max": 0.94,
+   "top": [
+    "seed 1 sample 0 rs 0.96 ipTM 0.94",
+    "seed 13 sample 0 rs 0.96 ipTM 0.93",
+    "seed 14 sample 0 rs 0.96 ipTM 0.94"
+   ]
+  },
+  "A1B1/mmseqs2_gpu/af3": {
+   "n": 125,
+   "ranking_score_median": 0.68,
+   "ranking_score_max": 0.77,
+   "iptm_median": 0.59,
+   "iptm_max": 0.7,
+   "top": [
+    "seed 24 sample 0 rs 0.77 ipTM 0.7",
+    "seed 10 sample 0 rs 0.76 ipTM 0.69",
+    "seed 16 sample 0 rs 0.76 ipTM 0.68"
+   ]
+  },
+  "A1B1/mmseqs2_gpu/bt2_jax": {
+   "n": 125,
+   "ranking_score_median": 0.915,
+   "ranking_score_max": 0.925,
+   "iptm_median": 0.887,
+   "iptm_max": 0.914,
+   "top": [
+    "seed 16 sample 0 rs 0.925 ipTM 0.908",
+    "seed 1 sample 0 rs 0.923 ipTM 0.86",
+    "seed 18 sample 0 rs 0.923 ipTM 0.852"
+   ]
+  },
+  "A1B1/mmseqs2_gpu/of3": {
+   "n": 125,
+   "ranking_score_median": 0.576,
+   "ranking_score_max": 0.793,
+   "iptm_median": 0.463,
+   "iptm_max": 0.731,
+   "top": [
+    "seed 7 sample 0 rs 0.793 ipTM 0.731",
+    "seed 23 sample 0 rs 0.767 ipTM 0.695",
+    "seed 14 sample 0 rs 0.727 ipTM 0.649"
+   ]
+  },
+  "A2B2/af3_msa/af3": {
+   "n": 125,
+   "ranking_score_median": 0.88,
+   "ranking_score_max": 0.9,
+   "iptm_median": 0.85,
+   "iptm_max": 0.88,
+   "top": [
+    "seed 11 sample 0 rs 0.9 ipTM 0.88",
+    "seed 12 sample 0 rs 0.89 ipTM 0.86",
+    "seed 13 sample 0 rs 0.89 ipTM 0.86"
+   ]
+  },
+  "A2B2/af3_msa/bt2_jax": {
+   "n": 125,
+   "ranking_score_median": 0.929,
+   "ranking_score_max": 0.936,
+   "iptm_median": 0.928,
+   "iptm_max": 0.936,
+   "top": [
+    "seed 11 sample 0 rs 0.936 ipTM 0.929",
+    "seed 14 sample 0 rs 0.935 ipTM 0.932",
+    "seed 5 sample 0 rs 0.935 ipTM 0.933"
+   ]
+  },
+  "A2B2/af3_msa/of3": {
+   "n": 125,
+   "ranking_score_median": 0.918,
+   "ranking_score_max": 0.922,
+   "iptm_median": 0.891,
+   "iptm_max": 0.895,
+   "top": [
+    "seed 10 sample 0 rs 0.922 ipTM 0.895",
+    "seed 18 sample 0 rs 0.922 ipTM 0.895",
+    "seed 1 sample 0 rs 0.921 ipTM 0.894"
+   ]
+  },
+  "A2B2/af3_msa_pS548/af3": {
+   "n": 125,
+   "ranking_score_median": 0.94,
+   "ranking_score_max": 0.95,
+   "iptm_median": 0.91,
+   "iptm_max": 0.93,
+   "top": [
+    "seed 1 sample 0 rs 0.95 ipTM 0.92",
+    "seed 10 sample 0 rs 0.95 ipTM 0.92",
+    "seed 15 sample 0 rs 0.95 ipTM 0.92"
+   ]
+  },
+  "A2B2/mmseqs2_gpu/af3": {
+   "n": 125,
+   "ranking_score_median": 0.88,
+   "ranking_score_max": 0.89,
+   "iptm_median": 0.85,
+   "iptm_max": 0.86,
+   "top": [
+    "seed 1 sample 0 rs 0.89 ipTM 0.86",
+    "seed 1 sample 1 rs 0.89 ipTM 0.86",
+    "seed 11 sample 0 rs 0.89 ipTM 0.86"
+   ]
+  },
+  "A2B2/mmseqs2_gpu/bt2_jax": {
+   "n": 125,
+   "ranking_score_median": 0.931,
+   "ranking_score_max": 0.938,
+   "iptm_median": 0.932,
+   "iptm_max": 0.942,
+   "top": [
+    "seed 7 sample 0 rs 0.938 ipTM 0.937",
+    "seed 18 sample 0 rs 0.937 ipTM 0.936",
+    "seed 9 sample 0 rs 0.937 ipTM 0.936"
+   ]
+  },
+  "A2B2/mmseqs2_gpu/of3": {
+   "n": 125,
+   "ranking_score_median": 0.903,
+   "ranking_score_max": 0.924,
+   "iptm_median": 0.875,
+   "iptm_max": 0.898,
+   "top": [
+    "seed 13 sample 0 rs 0.924 ipTM 0.898",
+    "seed 13 sample 1 rs 0.923 ipTM 0.897",
+    "seed 13 sample 2 rs 0.92 ipTM 0.894"
+   ]
+  }
+ },
+ "empty_models": {
+  "n": 0,
+  "first": []
+ }
+}
