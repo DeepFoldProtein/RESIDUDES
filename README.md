@@ -200,7 +200,9 @@ Two things it does **not** cover, and both matter before you reuse anything:
   `lantern-engine/core/models/alphafold3/` (CC BY-NC-SA 4.0 — **non-commercial**),
   `lantern-engine/core/models/protenix/` and `…/openfold-3/` (Apache-2.0), ProteinMPNN and MassiveClustering under
   `lantern-qa/licenses/` (MIT). Model weights and databases are not in this repository and carry their own terms;
-  the Dunbrack rotamer libraries need an academic licence and are not included.
+  the Dunbrack rotamer libraries need an academic licence and are not included. The three harness marks in the
+  overview figures belong to their owners and say which harnesses read the same instructions, nothing more; their
+  paths come from [simple-icons](https://simpleicons.org) (CC0-1.0) and Wikimedia Commons (public domain).
 - **The [lantern-decoy](docs/lantern-decoy.md) dataset, which is licensed separately from this repository.** The
   MIT licence here says nothing about it. Each structure keeps the terms of the predictor that made it — the
   194,183 AlphaFold 3 structures are non-commercial and **may not be used to train structure-prediction, scoring

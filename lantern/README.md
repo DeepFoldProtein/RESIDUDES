@@ -49,9 +49,11 @@ target from its sequence to a slate of five models.
 **Figure 1. The stage line.** Thirteen stages from a sequence to a packaged slate. The two ringed stations
 are the checkpoints, where the agent writes a brief and stops until a person resolves it; orange marks every
 move reserved for a person. The dashed curves are the three loops back, and the bands above show which stretch
-drives lantern-engine and which drives lantern-qa. The line under the title is where it runs: **Claude Code,
-Codex and Antigravity all read the same `AGENTS.md` and skills**, and so does the Claude Agent SDK runner
-(`lantern agent step`, `lantern daemon`) — what each harness was actually tried in is
+drives lantern-engine and which drives lantern-qa. Under the title is where it runs: **Claude Code, Codex and
+Antigravity all read the same `AGENTS.md` and skills**, and so does the Claude Agent SDK runner that `lantern
+agent step` and `lantern daemon` use. The three marks say which harnesses read those files, not which have been
+exercised:
+what each was actually tried in is
 [below](#built-for-claude-code-codex-and-antigravity-run-in-claude-code).
 
 In a real dossier every decision cites the priors the analysis found, and `lantern report` prints that map:
