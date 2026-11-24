@@ -135,6 +135,19 @@ while the other 531,914 are Apache-2.0 or MIT and carry no such restriction.
 [`docs/residudes-decoy.md`](docs/residudes-decoy.md) has the layout, the index columns, the record linkage and the
 caveats; the [terms page](https://residudes-decoy.deepfold.org/terms) has the licences in full.
 
+## Assessing the field: ema.deepfold.org
+
+**[ema.deepfold.org](https://ema.deepfold.org)** shows the model-quality assessment (EMA) we submitted to CASP17 as
+QA077 (RESIDUDES-X), and how it held up once the structures were released. It is a classical, training-free consensus
+method: a gate removes broken molecules, each group's model_1 is read as a vote and clustered into binding modes,
+the leading mode gives the reference (a hedge over the top modes when the vote splits), and a predicted difficulty,
+computed before the answer, says how far to trust that vote.
+
+- the premise as five testable hypotheses, each checked against the released structures;
+- every target's binding-mode map, with each mode's binder drawn on the antigen;
+- where our scores stand among the CASP17 EMA groups, re-scored from the public QA files: by team, 3rd of 18 on
+  the server models, 2nd of 13 on the interfaces of the MassiveFold pools, and first on the protein–RNA interfaces.
+
 ## Tests
 
 GitHub Actions ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)) lints and tests residudes and
