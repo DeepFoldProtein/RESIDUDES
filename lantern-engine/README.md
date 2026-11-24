@@ -18,7 +18,7 @@ run time except model weights, which `lantern-engine setup checkpoints` download
 from each publisher (AlphaFold 3's are licensed per user by Google DeepMind
 and are placed by hand).
 
-![From a sequence to a structure](docs/figures/overview.svg)
+[![From a sequence to a structure](docs/figures/overview.png)](docs/figures/overview.svg)
 
 **Figure 1. One input file, four models, three backends.** A sequence becomes MSAs and templates, then one
 `input.json` that every model reads; each model runs on PyTorch, TensorRT or JAX and writes the same output
@@ -26,7 +26,7 @@ layout. The ratios on the tracks are forward-pass speed-ups over that model's ow
 
 ## Speed
 
-![Forward-pass speed-up over PyTorch per model and backend](docs/figures/speed.svg)
+[![Forward-pass speed-up over PyTorch per model and backend](docs/figures/speed.png)](docs/figures/speed.svg)
 
 **Figure 2. Forward-pass speed-up over PyTorch.** Same input, weights and
 seed; one run per model, backend and input, so run-to-run variation is not
@@ -69,7 +69,7 @@ lantern-engine submit  --model of3 --input input.json --seeds 1-5     # Slurm: o
 lantern-engine verify  engine_out/<name>_pt2 [--ref other/seed_1]    # layout check and confidence table
 ```
 
-![A lantern-engine session: prepare, predict, verify](docs/figures/terminal.svg)
+[![A lantern-engine session: prepare, predict, verify](docs/figures/terminal.png)](docs/figures/terminal.svg)
 
 The input is an AlphaFold 3-style `input.json` with MSAs and templates
 attached ([`docs/input_schema.md`](docs/input_schema.md)). Model-native

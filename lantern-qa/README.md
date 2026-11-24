@@ -6,7 +6,7 @@ DeepFold team used in CASP17, collected from the team's analysis tree into one p
 with no hard-coded paths, pinned dependencies and checksummed data. The CASP17 command
 lines still work.
 
-![From a prediction pool to a ranked pool](docs/figures/overview.svg)
+[![From a prediction pool to a ranked pool](docs/figures/overview.png)](docs/figures/overview.svg)
 
 **Figure 1. From a prediction pool to a ranked pool.** Three lanes over the same models: predicted interface
 quality (DockQ, ICS, IPS from XGBoost on interface features), clustering on GPU distance matrices, and the

@@ -44,7 +44,7 @@ target from its sequence to a slate of five models.
 - **A person approves and submits.** The agent never does. After approval, `lantern package` checks the slate's
   geometry and writes the CASP files through the team's casp17-utils. Anything it flags waits for a person.
 
-![lantern: one instruction set for Claude Code, Codex and Antigravity, then the stage line with the person's two checkpoints and the loops back, and the tools each stretch drives](docs/figures/overview.svg)
+[![lantern: one instruction set for Claude Code, Codex and Antigravity, then the stage line with the person's two checkpoints and the loops back, and the tools each stretch drives](docs/figures/overview.png)](docs/figures/overview.svg)
 
 **Figure 1. The stage line.** Thirteen stages from a sequence to a packaged slate. The two ringed stations
 are the checkpoints, where the agent writes a brief and stops until a person resolves it; orange marks every

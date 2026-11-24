@@ -14,7 +14,7 @@ Structure prediction tools from the DeepFold team's CASP17 entry. There are thre
 And the pool itself is public: **[lantern-decoy](https://lantern-decoy.deepfold.org)** — 726,097 unfiltered
 CASP17 predictions with the input that produced each one ([what it is and how to get it](docs/lantern-decoy.md)).
 
-![lantern drives lantern-engine and lantern-qa: a stage line above, the prediction lane and the QA lane below](docs/figures/overview.svg)
+[![lantern drives lantern-engine and lantern-qa: a stage line above, the prediction lane and the QA lane below](docs/figures/overview.png)](docs/figures/overview.svg)
 
 **Figure 1. The three tools on one target.** lantern's stations run along the top, the two in orange being the
 points where a person decides; lantern-engine's lane turns a sequence into a pool of predictions and
@@ -49,7 +49,7 @@ bin/lantern agent step T1234               # one step; `bin/lantern target show 
 bin/lantern daemon --target T1234          # or let the scheduler step it until a person is needed
 ```
 
-![lantern: one dossier per target, one agent step per stage, a person at the gates](lantern/docs/figures/overview.svg)
+[![lantern: one dossier per target, one agent step per stage, a person at the gates](lantern/docs/figures/overview.png)](lantern/docs/figures/overview.svg)
 
 **Figure 2. The stage machine.** One dossier per target; each station is one agent step that records what it
 found and why. Orange marks the stations only a person can pass, and the three dashed curves are the loops back:
@@ -68,7 +68,7 @@ input file, on PyTorch or on its TensorRT and JAX backends. It was called foldmu
 - Its TensorRT engines finish the forward pass 1.3 to 2.1 times faster than each model's PyTorch path, with the same
   weights and the same structures, up to 2004 tokens on one GPU.
 
-![From a sequence to a structure](lantern-engine/docs/figures/overview.svg)
+[![From a sequence to a structure](lantern-engine/docs/figures/overview.png)](lantern-engine/docs/figures/overview.svg)
 
 ```sh
 git clone https://github.com/DeepFoldProtein/RESIDUDES.git
@@ -80,7 +80,7 @@ lantern-engine prepare --fasta target.fasta                # MSA search, then in
 lantern-engine predict --model pt2 --input engine_out/target_inputs/input.json
 ```
 
-![Forward-pass speed-up over PyTorch per model and backend](lantern-engine/docs/figures/speed.svg)
+[![Forward-pass speed-up over PyTorch per model and backend](lantern-engine/docs/figures/speed.png)](lantern-engine/docs/figures/speed.svg)
 
 Start with [`lantern-engine/README.md`](lantern-engine/README.md). The speed numbers are
 in [`lantern-engine/docs/benchmark.md`](lantern-engine/docs/benchmark.md), the input
@@ -94,7 +94,7 @@ what lantern-engine produces:
 - GPU clustering by TM, iTM and interface similarity;
 - pLDDT, PAE, PDE, distogram and MSA plots with ranking tables.
 
-![From a prediction pool to a ranked pool](lantern-qa/docs/figures/overview.svg)
+[![From a prediction pool to a ranked pool](lantern-qa/docs/figures/overview.png)](lantern-qa/docs/figures/overview.svg)
 
 ```sh
 cd RESIDUDES/lantern-qa
