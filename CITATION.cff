@@ -10,7 +10,7 @@ abstract: >-
 type: software
 license: MIT
 repository-code: "https://github.com/DeepFoldProtein/RESIDUDES"
-url: "https://lantern-decoy.deepfold.org"
+url: "https://residudes-decoy.deepfold.org"
 keywords:
   - CASP17
   - protein structure prediction

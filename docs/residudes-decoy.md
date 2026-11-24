@@ -1,9 +1,6 @@
 # residudes-decoy: the CASP17 sampling pool, with the input of every model
 
-**[lantern-decoy.deepfold.org](https://lantern-decoy.deepfold.org)** · bucket `https://s3.deepfold.org/lantern-decoy/`
-
-The site and the bucket still carry the earlier name `lantern-decoy`; the dataset, the layout and the
-terms below are the same.
+**[residudes-decoy.deepfold.org](https://residudes-decoy.deepfold.org)** · bucket `https://s3.deepfold.org/residudes-decoy/`
 
 726,097 predicted structures for 82 CASP17 targets, from five predictors, released unfiltered: the models
 this team submitted and the ones it threw away, each with the input specification that produced it and the
@@ -17,7 +14,7 @@ confidence`](../residudes/docs/casp17_cases.md), residudes-qa's interface scorer
 [`residudes/docs/gates.md`](../residudes/docs/gates.md) — was measured on pools of this shape, and 82 of those
 targets are now public.
 
-[![The residudes-decoy overview: the pool in a line, and the example target T1417 with its structure in a Mol* viewer beside the list of viewable models](figures/residudes-decoy-home.png)](https://lantern-decoy.deepfold.org)
+[![The residudes-decoy overview: the pool in a line, and the example target T1417 with its structure in a Mol* viewer beside the list of viewable models](figures/residudes-decoy-home.png)](https://residudes-decoy.deepfold.org)
 
 ## What is in it
 
@@ -39,7 +36,7 @@ CASP17 ensemble targets (`E*`) are not included — they are assessed as ensembl
 structures — and neither are the ligand-series targets `L01`/`L02`, which are one receptor against many
 ligands.
 
-[![The targets page: 82 CASP17 targets with stoichiometry, structure count, input variants, runs, the models that produced them and the download size](figures/residudes-decoy-targets.png)](https://lantern-decoy.deepfold.org/targets)
+[![The targets page: 82 CASP17 targets with stoichiometry, structure count, input variants, runs, the models that produced them and the download size](figures/residudes-decoy-targets.png)](https://residudes-decoy.deepfold.org/targets)
 
 *The targets page: every target with its stoichiometry, how many structures and input variants it has, which
 predictors produced them, and what the download costs. T1364 alone is 81,120 structures and 3.5 GB.*
@@ -63,7 +60,7 @@ including by distillation, and restrict use to non-commercial research. The othe
 structures over the same 82 targets with the same index and metadata**, carry no such restriction, which is
 why the split is by predictor and not by target. The full text ships with the data
 (`licenses/LEGALLY_BINDING_TERMS_OF_USE.txt`) and the site's
-[terms page](https://lantern-decoy.deepfold.org/terms) summarises it.
+[terms page](https://residudes-decoy.deepfold.org/terms) summarises it.
 
 ## Getting it
 
@@ -71,19 +68,19 @@ No credentials, no API: the bucket is public and serves `Access-Control-Allow-Or
 
 ```sh
 # the index first: it is small, and it says what is worth downloading
-curl -O https://s3.deepfold.org/lantern-decoy/index/structures.csv.gz
+curl -O https://s3.deepfold.org/residudes-decoy/index/structures.csv.gz
 
 # one target, one predictor
-curl -O https://s3.deepfold.org/lantern-decoy/structures/T1416/af3.tar.zst
+curl -O https://s3.deepfold.org/residudes-decoy/structures/T1416/af3.tar.zst
 tar --use-compress-program=unzstd -xf af3.tar.zst
 
 # everything, with any S3 client
 aws s3 --no-sign-request --endpoint-url https://s3.deepfold.org \
-    sync s3://lantern-decoy/ ./lantern-decoy/
+    sync s3://residudes-decoy/ ./residudes-decoy/
 
 # everything except the non-commercial, no-training AlphaFold 3 shards
 aws s3 --no-sign-request --endpoint-url https://s3.deepfold.org \
-    sync s3://lantern-decoy/ ./lantern-decoy/ --exclude "structures/*/af3.tar.zst"
+    sync s3://residudes-decoy/ ./residudes-decoy/ --exclude "structures/*/af3.tar.zst"
 ```
 
 `SHA256SUMS` carries a checksum for every object (`sha256sum -c`), and every structure also carries its own
@@ -121,7 +118,7 @@ Index columns: `structure_id`, `target_id`, `truth_target`, `truth_stoichiometry
 `ranking_score`, `gpde`, `has_clash`, `fraction_disordered`, `cif_bytes`, `content_sha256`,
 `source_relative_path`.
 
-[![The input variants page: each variant name with what it means, its evidence and how many structures and targets it covers](figures/residudes-decoy-inputs.png)](https://lantern-decoy.deepfold.org/variants)
+[![The input variants page: each variant name with what it means, its evidence and how many structures and targets it covers](figures/residudes-decoy-inputs.png)](https://residudes-decoy.deepfold.org/variants)
 
 *The variant dictionary: what each input name means, where that meaning came from, and how much of the pool it
 covers. The rows without a written meaning are the ones described below.*
@@ -155,10 +152,9 @@ covers. The rows without a written meaning are the ones described below.*
 - The per-target cases behind the selection claims are in
   [`residudes/docs/casp17_cases.md`](../residudes/docs/casp17_cases.md).
 
-The browser at [lantern-decoy.deepfold.org](https://lantern-decoy.deepfold.org) is a separate repository
-([DeepFoldProtein/lantern-decoy-web](https://github.com/DeepFoldProtein/lantern-decoy-web)): a static front
-end with no API that fetches the manifests, the per-target summaries and the mmCIF files straight from the
-bucket.
+The browser at [residudes-decoy.deepfold.org](https://residudes-decoy.deepfold.org) is built from a separate
+repository: a static front end with no API that fetches the manifests, the per-target summaries and the mmCIF
+files straight from the bucket.
 
 ## Citation
 

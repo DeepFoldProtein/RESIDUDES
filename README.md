@@ -11,7 +11,7 @@ Structure prediction tools from the DeepFold team's CASP17 entry. There are thre
 - [`residudes-qa/`](residudes-qa/) assesses the pool: it scores, clusters and plots every prediction to show which ones to
   trust.
 
-And the pool itself is public: **[residudes-decoy](https://lantern-decoy.deepfold.org)** — 726,097 unfiltered
+And the pool itself is public: **[residudes-decoy](https://residudes-decoy.deepfold.org)** — 726,097 unfiltered
 CASP17 predictions with the input that produced each one ([what it is and how to get it](docs/residudes-decoy.md)).
 
 [![residudes drives residudes-engine and residudes-qa: a stage line above, the prediction lane and the QA lane below](docs/figures/overview.png)](docs/figures/overview.svg)
@@ -107,10 +107,9 @@ uv run residudes-qa visualize <target>
 ## The data: residudes-decoy
 
 The sampling pool behind all of this is released as it was sampled, not as it was submitted:
-**[lantern-decoy.deepfold.org](https://lantern-decoy.deepfold.org)** · `s3.deepfold.org/lantern-decoy`
-— the site and the bucket still carry the earlier name; the dataset is the one described here.
+**[residudes-decoy.deepfold.org](https://residudes-decoy.deepfold.org)** · `s3.deepfold.org/residudes-decoy`.
 
-[<img src="docs/figures/residudes-decoy-home.png" width="760" alt="The residudes-decoy site: the pool described in a line, then the example target T1417 with its structure in a Mol* viewer and the list of viewable models beside it">](https://lantern-decoy.deepfold.org)
+[<img src="docs/figures/residudes-decoy-home.png" width="760" alt="The residudes-decoy site: the pool described in a line, then the example target T1417 with its structure in a Mol* viewer and the list of viewable models beside it">](https://residudes-decoy.deepfold.org)
 
 The site browses the pool straight from object storage — no API: the target list and the input recipes come
 from the manifests, the per-target page draws its distributions from a summary JSON and shows structures in
@@ -125,8 +124,8 @@ Mol\*, and the full per-structure index is one click away.
 | Size | 114.9 GB in 312 zstd shards, public, no credentials |
 
 ```sh
-curl -O https://s3.deepfold.org/lantern-decoy/index/structures.csv.gz          # what is in it
-curl -O https://s3.deepfold.org/lantern-decoy/structures/T1416/af3.tar.zst     # one target, one predictor
+curl -O https://s3.deepfold.org/residudes-decoy/index/structures.csv.gz          # what is in it
+curl -O https://s3.deepfold.org/residudes-decoy/structures/T1416/af3.tar.zst     # one target, one predictor
 ```
 
 A set of best models shows what a pipeline chose; a pool shows what it chose *from*, which is what work on
@@ -134,7 +133,7 @@ ranking, selection and decoy discrimination needs. **Shards are split by predict
 the 194,183 AlphaFold 3 structures are non-commercial and may not be used to train structure-prediction models,
 while the other 531,914 are Apache-2.0 or MIT and carry no such restriction.
 [`docs/residudes-decoy.md`](docs/residudes-decoy.md) has the layout, the index columns, the record linkage and the
-caveats; the [terms page](https://lantern-decoy.deepfold.org/terms) has the licences in full.
+caveats; the [terms page](https://residudes-decoy.deepfold.org/terms) has the licences in full.
 
 ## Tests
 

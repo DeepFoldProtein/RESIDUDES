@@ -257,7 +257,7 @@ bin/residudes review T [--add "name: why"]           # first-results checks -> t
 
 **Before `residudes pool`.** It reads `<dir>/results/<sto>/<variant>/<runner>/seed_<N>/sample_<M>/` (`summary.json`
 and `model.cif`). Per-chain runs go under `<dir>/<chain>/results/...`. A pool of this campaign is public if you
-want one to try these commands on: [residudes-decoy](https://lantern-decoy.deepfold.org), 726,097 CASP17 models
+want one to try these commands on: [residudes-decoy](https://residudes-decoy.deepfold.org), 726,097 CASP17 models
 with the input of each ([`docs/residudes-decoy.md`](../docs/residudes-decoy.md)).
 - `<dir>` is `--dir`, or `<targets_root>/<T>` from `residudes.toml`.
 - The folder names become the names everything else uses: `--sto A3`, and models like `A3__af3_msa__af3__s97_3`.

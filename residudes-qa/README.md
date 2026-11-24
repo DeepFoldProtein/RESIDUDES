@@ -26,7 +26,7 @@ Within RESIDUDES:
 - `residudes`, the campaign agent, drives both.
 
 The CASP17 pools these scorers were fitted and tested on are public, unfiltered and with the input of every
-model: [residudes-decoy](https://lantern-decoy.deepfold.org), 726,097 structures over 82 targets
+model: [residudes-decoy](https://residudes-decoy.deepfold.org), 726,097 structures over 82 targets
 ([`docs/residudes-decoy.md`](../docs/residudes-decoy.md)). The AlphaFold 3 quarter of that pool may **not** be used
 to train scoring or ranking models; the other 531,914 structures carry no such restriction.
 
