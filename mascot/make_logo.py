@@ -25,7 +25,7 @@ def cut(src: Path) -> Image.Image:
     a = np.clip((d - T0) / (T1 - T0), 0, 1)
 
     # White the border can reach is background. White the drawing encloses is either background seen through a gap
-    # — under the lantern's handle, between its posts — or part of the picture: the highlights in the eyes. The
+    # — under the residudes's handle, between its posts — or part of the picture: the highlights in the eyes. The
     # gaps are large, the highlights are a few hundred pixels, so size tells them apart.
     lab, n = ndimage.label(a < 0.5)
     edge = {int(i) for i in np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]) if i}

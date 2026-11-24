@@ -1,5 +1,5 @@
-# Unit tests that need no GPU and no cluster: lantern (the agent: dossier, gates, checkpoints, harness layout)
-# and lantern-engine (input building and run planning). lantern-qa needs its CUDA stack and is tested on the cluster.
+# Unit tests that need no GPU and no cluster: residudes (the agent: dossier, gates, checkpoints, harness layout)
+# and residudes-engine (input building and run planning). residudes-qa needs its CUDA stack and is tested on the cluster.
 name: tests
 
 on:
@@ -14,11 +14,11 @@ jobs:
       - uses: actions/checkout@v7
       - run: python3 docs/check_links.py
 
-  lantern:
+  residudes:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: lantern
+        working-directory: residudes
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.4.0     # no floating major tag: pin the release
@@ -31,11 +31,11 @@ jobs:
       - run: uv sync --frozen
       - run: uv run --frozen pytest -q
 
-  lantern-engine:
+  residudes-engine:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: lantern-engine
+        working-directory: residudes-engine
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.4.0     # no floating major tag: pin the release

@@ -1,0 +1,31 @@
+{
+  "env": {
+    "RESIDUDES_ACTOR": "agent"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(residudes --help)",
+      "Bash(residudes target list:*)",
+      "Bash(residudes target show:*)",
+      "Bash(residudes next:*)",
+      "Bash(residudes jobs:*)",
+      "Bash(residudes doctor:*)",
+      "Bash(bin/residudes --help)",
+      "Bash(bin/residudes target list:*)",
+      "Bash(bin/residudes target show:*)",
+      "Bash(bin/residudes next:*)",
+      "Bash(bin/residudes jobs:*)",
+      "Bash(bin/residudes doctor:*)",
+      "Bash(residudes checkpoints:*)",
+      "Bash(residudes report:*)",
+      "Bash(bin/residudes checkpoints:*)",
+      "Bash(bin/residudes report:*)"
+    ],
+    "deny": [
+      "Bash(residudes approve:*)",
+      "Bash(bin/residudes approve:*)",
+      "Bash(residudes resolve:*)",
+      "Bash(bin/residudes resolve:*)"
+    ]
+  }
+}

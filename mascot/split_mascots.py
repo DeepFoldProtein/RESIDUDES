@@ -1,4 +1,4 @@
-"""Split the lantern mascot sheets into one image per stage, keyed onto transparency.
+"""Split the residudes mascot sheets into one image per stage, keyed onto transparency.
 
     python3 split_mascots.py .
 

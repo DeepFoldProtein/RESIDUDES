@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# residudes-engine launcher — no install needed. Finds a Python >= 3.11 for the CLI
+# itself (stdlib only); the heavy inference process is started by the CLI
+# from the runtime venv declared in sites/<site>.toml (default: core/.venv).
+set -euo pipefail
+HERE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+export RESIDUDES_ENGINE_ROOT="${RESIDUDES_ENGINE_ROOT:-$HERE}"
+PY="${RESIDUDES_ENGINE_PYTHON:-}"
+if [ -z "$PY" ]; then
+    for c in python3 python "$RESIDUDES_ENGINE_ROOT/core/.venv/bin/python"; do
+        if command -v "$c" >/dev/null 2>&1 \
+           && "$c" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' 2>/dev/null; then
+            PY="$c"; break
+        fi
+    done
+fi
+[ -n "$PY" ] || { echo "residudes-engine: need Python >= 3.11 on PATH (or set RESIDUDES_ENGINE_PYTHON)" >&2; exit 2; }
+export PYTHONPATH="$RESIDUDES_ENGINE_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
+exec "$PY" -m residudes_engine "$@"

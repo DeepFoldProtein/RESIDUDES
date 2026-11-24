@@ -1,8 +1,8 @@
-# The lantern mascot, one picture per stage
+# The residudes mascot, one picture per stage
 
 <img src="thumb/slate_proposed.png" align="right" width="280" alt="the mascot holding up model 1 and the other four, the gate sieve behind it">
 
-A miner otter with a helmet lamp and a hand lantern. Sixteen pictures: the thirteen dossier stages, plus three
+A miner otter with a helmet lamp and a hand residudes. Sixteen pictures: the thirteen dossier stages, plus three
 states that are not stages (a loop back, a safety refusal, and the moves only a person may make).
 
 ## What is where
@@ -23,11 +23,11 @@ states that are not stages (a loop back, a safety refusal, and the moves only a 
 `/gpfs/deepfold/casp/casp17/Bio-TRT/.venv/bin/python`). `small/`, `thumb/` and `fig/` are
 `convert <f> -resize 800x -strip`, `-resize 360x` and `-resize 480x`.
 
-**Where they are used.** The logo heads [the repo README](../README.md) and [lantern's](../lantern/README.md), and
-sits in the corner of both overview figures. The stage pictures run as a table under lantern's stage diagram, and
+**Where they are used.** The logo heads [the repo README](../README.md) and [residudes's](../residudes/README.md), and
+sits in the corner of both overview figures. The stage pictures run as a table under residudes's stage diagram, and
 six of them are the stations of the metro map in [`docs/figures/make_figures.py`](../docs/figures/make_figures.py),
 embedded as data URIs so each figure stays a single file. `human_only` marks the line about who may resolve,
-approve and submit in [lantern's own figure](../lantern/docs/figures/make_figures.py).
+approve and submit in [residudes's own figure](../residudes/docs/figures/make_figures.py).
 
 ## The stages
 
@@ -35,7 +35,7 @@ File names are the dossier's own stage names in lower case, so a deck or a page 
 
 | file | stage | what the mascot is doing |
 |---|---|---|
-| `new` | NEW | holding the sealed FASTA envelope, chains hanging from the seal, lantern barely lit |
+| `new` | NEW | holding the sealed FASTA envelope, chains hanging from the seal, residudes barely lit |
 | `identified` | IDENTIFIED | magnifier over a page, the papers it has read at its feet |
 | `hypotheses` | HYPOTHESES | fanning V0–V3 variant cards, three ghosts of itself behind it |
 | `plan_review` | PLAN_REVIEW | holding out the brief — the pen is in a person's hand |
@@ -52,7 +52,7 @@ File names are the dossier's own stage names in lower case, so a deck or a page 
 | `safety_refusal` | — | both palms up: a model safeguard refused and the target is parked |
 | `human_only` | — | beside a padlock: approve, resolve and submit belong to a person |
 
-The four pictures with a human hand or a lock in them carry lantern's rule: it proposes, a person decides.
+The four pictures with a human hand or a lock in them carry residudes's rule: it proposes, a person decides.
 
 ## How the background is taken out
 

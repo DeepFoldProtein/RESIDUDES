@@ -4,7 +4,7 @@
     python3 docs/check_links.py          # exit 1 and list the broken ones
 
 Skipped: fenced code blocks, inline code that is not a link's text, URLs, anchors, e-mail addresses, and the upstream models' own READMEs
-vendored under lantern-engine/core/models/ (kept as their authors wrote them).
+vendored under residudes-engine/core/models/ (kept as their authors wrote them).
 """
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SKIP = ("lantern-engine/core/models/",)
+SKIP = ("residudes-engine/core/models/",)
 
 
 def broken() -> list[tuple[str, str]]:

@@ -1,12 +1,12 @@
 cff-version: 1.2.0
-message: "If you use RESIDUDES — lantern, lantern-engine, lantern-qa — or the lantern-decoy pool, please cite the CASP17 abstract below."
+message: "If you use RESIDUDES — residudes, residudes-engine, residudes-qa — or the residudes-decoy pool, please cite the CASP17 abstract below."
 title: "Protein Complex Structure Prediction with RESIDUDES in CASP17"
 abstract: >-
-  The DeepFold team's CASP17 entry (group 077, RESIDUDES-X): lantern, a campaign agent that takes a
+  The DeepFold team's CASP17 entry (group 077, RESIDUDES-X): residudes, a campaign agent that takes a
   target from its sequence to a slate of five models and stops wherever a person has to approve;
-  lantern-engine, which builds the inputs and runs Protenix v2, OpenFold 3, Boltz-2 and AlphaFold 3;
-  and lantern-qa, which scores, clusters and plots the pool. The sampling pool itself is released as
-  lantern-decoy.
+  residudes-engine, which builds the inputs and runs Protenix v2, OpenFold 3, Boltz-2 and AlphaFold 3;
+  and residudes-qa, which scores, clusters and plots the pool. The sampling pool itself is released as
+  residudes-decoy.
 type: software
 license: MIT
 repository-code: "https://github.com/DeepFoldProtein/RESIDUDES"

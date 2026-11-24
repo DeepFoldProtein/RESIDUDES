@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# residudes launcher. Uses the uv venv of this checkout when present; otherwise any Python >= 3.11
+# (setup, doctor and the dossier commands are stdlib-only; `residudes agent` needs the venv).
+set -euo pipefail
+HERE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+PY="${RESIDUDES_PYTHON:-}"
+if [ -z "$PY" ]; then
+    for c in "$HERE/.venv/bin/python" python3 python; do
+        if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' 2>/dev/null; then
+            PY="$c"; break
+        fi
+    done
+fi
+[ -n "$PY" ] || { echo "residudes: need Python >= 3.11 (or run: cd $HERE && uv sync)" >&2; exit 2; }
+export PYTHONPATH="$HERE/src${PYTHONPATH:+:$PYTHONPATH}"
+exec "$PY" -m residudes "$@"

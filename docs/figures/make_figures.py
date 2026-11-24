@@ -4,8 +4,8 @@
     python3 docs/figures/make_figures.py
 
 One map of the three tools, drawn large (GitHub shows it about 880 px wide, so text is at least 19 px on 1600 px):
-lantern's stations on top (the person's two checkpoints in orange, with the loops back), lantern-engine's lane (sequence to
-prediction pool) and lantern-qa's lane (pool to ranked pool) below, joined at the prediction pool, with the station
+residudes's stations on top (the person's two checkpoints in orange, with the loops back), residudes-engine's lane (sequence to
+prediction pool) and residudes-qa's lane (pool to ranked pool) below, joined at the prediction pool, with the station
 that drives each tool.
 """
 from __future__ import annotations
@@ -20,7 +20,7 @@ MASCOT = OUT.parent.parent / "mascot" / "fig"           # one picture per stage,
 FONT = "Helvetica, Arial, 'Liberation Sans', 'DejaVu Sans', sans-serif"
 MONO = "Menlo, Consolas, 'DejaVu Sans Mono', monospace"
 INK, MUTED, TRACK = "#1d1d1f", "#6e6e73", "#2a2a2e"
-BLUE, GREEN, ORANGE = "#0072B2", "#009E73", "#D55E00"          # lantern-engine, lantern-qa, a person
+BLUE, GREEN, ORANGE = "#0072B2", "#009E73", "#D55E00"          # residudes-engine, residudes-qa, a person
 
 
 
@@ -111,16 +111,16 @@ def fig_overview():
     s.text(60, 120, "an agent that runs the campaign, a toolkit that predicts, a QA stack that ranks",
            size=24, fill=MUTED, anchor="start")
 
-    # ---- lantern: six stations (the stage machine grouped), checkpoints in orange, loops back above the line ------
+    # ---- residudes: six stations (the stage machine grouped), checkpoints in orange, loops back above the line ------
     yt = 400
     st = [("ANALYSE", "target · priors", 250, "identified"), ("PLAN REVIEW", "⇄ person", 520, "plan_review"),
           ("PREDICT", "inputs · runs", 790, "running"), ("QA", "gates · pool", 1060, "pool_ready"),
           ("RESULTS REVIEW", "⇄ person", 1370, "results_review"), ("SLATE", "a person approves", 1660, "slate_proposed")]
     X = {n: x for n, _, x, _ in st}
-    s.tag(60, 180, "lantern", TRACK)
-    s.text(250, 184, "the campaign agent: one instruction set, read by every harness",
+    tx = 60 + s.tag(60, 180, "residudes", TRACK) + 26     # clear of the chip, whatever the name is
+    s.text(tx, 184, "the campaign agent: one instruction set, read by every harness",
            size=22, fill=MUTED, anchor="start")
-    hx = 250                                              # the harnesses that read that instruction set
+    hx = tx                                               # the harnesses that read that instruction set
     for box, d, label, colour in HARNESSES:
         s.glyph(d, box, hx, 198, 28, colour)
         s.text(hx + 36, 220, label, size=22, fill=INK, anchor="start")
@@ -146,7 +146,7 @@ def fig_overview():
         s.text(x, yt + 252, name, size=24, weight="bold", fill=col)
         s.text(x, yt + 280, sub, size=19, fill=ORANGE if person else MUTED)
 
-    # ---- lantern-engine lane --------------------------------------------------------------------------------------------
+    # ---- residudes-engine lane --------------------------------------------------------------------------------------------
     yb = 960
     pool_x, ranked_x = X["QA"], X["RESULTS REVIEW"]
     s.line(80, yb, 500, yb, stroke=BLUE)
@@ -163,7 +163,7 @@ def fig_overview():
         s.text(mx, y - 16, name, size=19)
     s.text(mx, yb + 150, "PyTorch · TensorRT · JAX", size=20, fill=BLUE, weight="bold")
 
-    # ---- lantern-qa lane -----------------------------------------------------------------------------------------
+    # ---- residudes-qa lane -----------------------------------------------------------------------------------------
     mid = (pool_x + ranked_x) / 2
     for name, dy in (("interface", -70), ("cluster", 0), ("visualize", 70)):
         y = yb + dy
@@ -179,15 +179,15 @@ def fig_overview():
         s.text(x, yb + 156, sub, size=18, fill=MUTED)
 
     # ---- which station drives which tool -------------------------------------------------------------------------
-    s.arrow(X["ANALYSE"], yt + 300, yb - 24, BLUE, "lantern-engine msa")
-    s.arrow(X["PREDICT"], yt + 300, yb - 146, BLUE, "lantern-engine predict", left=True)
-    s.arrow(pool_x, yt + 300, yb - 28, GREEN, "lantern-qa")
+    s.arrow(X["ANALYSE"], yt + 300, yb - 24, BLUE, "residudes-engine msa")
+    s.arrow(X["PREDICT"], yt + 300, yb - 146, BLUE, "residudes-engine predict", left=True)
+    s.arrow(pool_x, yt + 300, yb - 28, GREEN, "residudes-qa")
     s.arrow(ranked_x, yb - 28, yt + 300, TRACK, "review · slate")
 
     # ---- lane names ----------------------------------------------------------------------------------------------
-    s.tag(60, 1225, "lantern-engine", BLUE)
+    s.tag(60, 1225, "residudes-engine", BLUE)
     s.text(60, 1280, "inputs and predictions: four models, one input file", size=21, fill=MUTED, anchor="start")
-    s.tag(pool_x - 30, 1225, "lantern-qa", GREEN)
+    s.tag(pool_x - 30, 1225, "residudes-qa", GREEN)
     s.text(pool_x - 30, 1280, "the CASP17 QA stack: which predictions to trust", size=21, fill=MUTED, anchor="start")
     s.save("overview")
 
