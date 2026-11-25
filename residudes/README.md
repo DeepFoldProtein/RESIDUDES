@@ -31,10 +31,10 @@ bin/residudes setup                # interactive first run: resources, databases
 bin/residudes doctor               # re-run at any time to re-check the installation
 ```
 
-**Dossier location.** On the reference cluster, `setup` proposes `/store/deepfold/lantern`, the team's shared
-dossier directory. A separate directory may be used for experiments, or another `residudes.toml` supplied with
-`--config`. Because `residudes daemon` consumes paid agent steps, it requires its targets to be named explicitly
-(`--target T1234`), or `--all` for every dossier in the directory.
+**Dossier location.** `setup` proposes `work_root/` in the directory it was run from, and lists any shared
+dossier directories it finds on the machine so that one can be chosen instead. Another `residudes.toml` can be
+supplied with `--config`. Because `residudes daemon` consumes paid agent steps, it requires its targets to be
+named explicitly (`--target T1234`), or `--all` for every dossier in the directory.
 
 **Installation on other systems.** The paths in this repository are those of the DeepFold cluster and are
 defaults rather than requirements. [`catalog.toml`](catalog.toml) lists that cluster's databases, weights and

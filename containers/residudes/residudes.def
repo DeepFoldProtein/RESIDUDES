@@ -26,6 +26,12 @@ Stage: final
 %runscript
     exec /opt/residudes/bin/residudes "$@"
 
+%labels
+    org.opencontainers.image.title RESIDUDES agent
+    org.opencontainers.image.description The CASP17 campaign agent: one dossier per target, from a sequence to a slate of five models, halting at the two human checkpoints. Mount the checkout and the work root.
+    org.opencontainers.image.source https://github.com/DeepFoldProtein/RESIDUDES
+    org.opencontainers.image.licenses MIT
+
 %help
     The RESIDUDES campaign agent. Bind the checkout at /opt/residudes and the work root:
 

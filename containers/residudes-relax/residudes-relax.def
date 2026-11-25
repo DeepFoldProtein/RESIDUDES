@@ -16,6 +16,12 @@ From: debian:13-slim
 %runscript
     exec "$@"
 
+%labels
+    org.opencontainers.image.title RESIDUDES relaxation tools
+    org.opencontainers.image.description GROMACS 2024.2 and AmberTools 24.8 for restrained relaxation. Rosetta and the relax pipeline are bind-mounted.
+    org.opencontainers.image.source https://github.com/DeepFoldProtein/RESIDUDES
+    org.opencontainers.image.licenses MIT
+
 %help
     GROMACS 2024.2 and AmberTools 24.8, for `residudes relax`. The pipeline and Rosetta are
     mounted, since neither is in this repository:

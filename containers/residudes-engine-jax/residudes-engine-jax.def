@@ -29,6 +29,12 @@ Stage: final
 %runscript
     exec /opt/residudes-engine/bin/residudes-engine "$@"
 
+%labels
+    org.opencontainers.image.title RESIDUDES engine (JAX + AlphaFold 3)
+    org.opencontainers.image.description AlphaFold 3 with its C++ extension already compiled, and the JAX backends. Contains vendored AlphaFold 3 code under CC BY-NC-SA 4.0: non-commercial. af3.bin is licensed per user and is bind-mounted.
+    org.opencontainers.image.source https://github.com/DeepFoldProtein/RESIDUDES
+    org.opencontainers.image.licenses CC-BY-NC-SA-4.0
+
 %help
     AlphaFold 3 and the JAX backends. The parameters are licensed to you, so they are mounted:
 

@@ -16,6 +16,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 from residudes import catalog, resources
@@ -58,10 +59,38 @@ def report(cfg: Config) -> dict:
             "components": [_component(cfg.residudes_engine, "residudes-engine"), _component(cfg.residudes_qa, "residudes-qa")]}
 
 
+# ---------------------------------------------------------------------- colour
+# Setup prints a wall of status lines, and the three that matter (a stale database, a missing
+# component, a filesystem that is nearly full) are easy to miss in a plain one. Colour only when
+# the output is a terminal and the user has not asked for none; NO_COLOR is respected because
+# this output gets piped into files and issues.
+_TTY = sys.stdout.isatty() and not os.environ.get("NO_COLOR")
+
+
+def _c(text: str, code: str) -> str:
+    return f"\033[{code}m{text}\033[0m" if _TTY else text
+
+
+def green(s): return _c(s, "32")
+def yellow(s): return _c(s, "33")
+def red(s): return _c(s, "31")
+def bold(s): return _c(s, "1")
+def dim(s): return _c(s, "2")
+
+
+MARKS = {"ok": (green, "ok   "), "stale": (yellow, "STALE"), "missing": (red, "MISS "),
+         "unconfigured": (yellow, "UNSET"), "check": (yellow, "check"), "found": (green, "found")}
+
+
+def mark(status: str) -> str:
+    colour, label = MARKS.get(status, (dim, f"{status:5s}"))
+    return "[" + colour(label) + "]"
+
+
 def _print_report(rep: dict) -> None:
     r = rep["resources"]
     h = r["host"]
-    print(f"\n== 1. resources on {h['host']}  ({h['cpus']} CPUs, {h['mem_gb']} GB RAM, python {h['python']})")
+    print(bold(f"\n== 1. resources on {h['host']}") + f"  ({h['cpus']} CPUs, {h['mem_gb']} GB RAM, python {h['python']})")
     if r["gpus"]:
         names = sorted({g["name"] for g in r["gpus"]})
         print(f"   local GPUs: {len(r['gpus'])} x {', '.join(names)} (driver {r['gpus'][0]['driver']})")
@@ -72,32 +101,39 @@ def _print_report(rep: dict) -> None:
             print(f"   slurm {name}{' (default)' if p['default'] else ''}: {gpus}; nodes {nodes}")
         print(f"   queue: {', '.join(f'{k} {v}' for k, v in r['slurm']['queue'].items()) or 'empty'}")
     for s in r["storage"]:
-        print(f"   storage {s['path']}: {s['used_pct']}% used, {s['free_tb']} TB free of {s['total_tb']} TB")
+        use = s["used_pct"]
+        shown = f"{use}% used" if use is None else (red(f"{use}% used") if use >= 95 else
+                                                    yellow(f"{use}% used") if use >= 90 else f"{use}% used")
+        print(f"   storage {s['path']}: {shown}, {s['free_tb']} TB free of {s['total_tb']} TB")
     if r["gpfs_quota"]:
         print("   gpfs quota:\n      " + "\n      ".join(r["gpfs_quota"].splitlines()[:4]))
-    print("   tools: " + ", ".join(f"{k}{'' if v else ' (missing)'}" for k, v in r["tools"].items()))
+    print("   tools: " + ", ".join(k if v else yellow(f"{k} (missing)") for k, v in r["tools"].items()))
     for rec in rep["recommendations"]:
-        print(f"   -> {rec}")
-    print("\n== 2. databases, weights, tools (catalog.toml)")
+        print("   " + yellow("->") + f" {rec}")
+    print(bold("\n== 2. databases, weights, tools") + " (catalog.toml)")
     for c in rep["catalog"]:
-        mark = {"ok": "ok   ", "stale": "STALE", "missing": "MISS ", "unconfigured": "UNSET"}[c["status"]]
-        print(f"   [{mark}] {c['name']:32s} {c['date'] or '':10s}  {c['note']}")
+        print(f"   {mark(c['status'])} {c['name']:32s} {dim(c['date'] or ''):10s}  {c['note']}")
         if c["fix"]:
-            print(f"           fix: {c['fix']}")
-    print("\n== 3. components")
+            print("           " + dim(f"fix: {c['fix']}"))
+    print(bold("\n== 3. components"))
     for c in rep["components"]:
-        print(f"   [{c['status']:7s}] {c['name']} ({c['path']})")
+        print(f"   {mark(c['status'])} {c['name']} {dim('(' + str(c['path']) + ')')}")
         for line in c.get("doctor", [])[-8:]:
             print(f"             {line}")
 
 
-def _suggest_work_root(rep: dict, current: str) -> str:
+def _suggest_work_root(rep: dict, current: str) -> tuple[str, list[str]]:
+    """What to put on the work_root prompt, and the other places worth offering.
+
+    A first run should not have to know one cluster's directory layout, so the default is a
+    folder in the directory the command was run from. Shared dossier directories that actually
+    exist are offered beside it, because on this cluster that is where the team's targets are.
+    """
     if os.path.isabs(current) and not Path(current).resolve().is_relative_to(RESIDUDES_DIR.resolve()):
-        return current
-    store = [s for s in rep["resources"]["storage"] if s["path"].startswith("/store")]
-    if store and (100 if store[0]["used_pct"] is None else store[0]["used_pct"]) < 90:
-        return "/store/deepfold/lantern"
-    return current
+        return current, []                                     # an existing choice is left alone
+    here = str(Path.cwd() / "work_root")
+    others = [d for d in ("/store/deepfold/residudes", "/store/deepfold/lantern") if Path(d).is_dir()]
+    return here, others
 
 
 HARNESS_SKILL_DIRS = {                                   # where each harness looks for workspace skills
@@ -149,9 +185,12 @@ def run_setup(cfg_path: str | None, yes: bool, as_json: bool, project: str | Non
         return 0
     _print_report(rep)
 
-    print("\n== 4. residudes.toml")
+    print(bold("\n== 4. residudes.toml"))
     p = config_path(cfg_path)
-    cfg.work_root = _ask("   where should target dossiers live (work_root)", _suggest_work_root(rep, cfg.work_root), yes)
+    suggested, others = _suggest_work_root(rep, cfg.work_root)
+    if others:                      # say what else is there rather than silently preferring it
+        print("   " + dim("shared dossier directories on this machine: " + ", ".join(others)))
+    cfg.work_root = _ask("   where should target dossiers live (work_root)", suggested, yes)
     cfg.targets_root = _ask("   existing predictions tree (residudes-engine layout), empty if none", cfg.targets_root
                             or ("/gpfs/deepfold/casp/casp17/targets" if Path("/gpfs/deepfold/casp/casp17/targets").exists() else ""), yes)
     cfg.agent_usd_per_step = float(_ask("   agent budget per step (USD)", str(cfg.agent_usd_per_step), yes))
@@ -159,9 +198,9 @@ def run_setup(cfg_path: str | None, yes: bool, as_json: bool, project: str | Non
     if not p.exists() or _confirm(f"   overwrite {p}?", yes):
         save(cfg, p)
         Path(cfg.work_root, "targets").mkdir(parents=True, exist_ok=True)
-        print(f"   wrote {p}; dossiers in {cfg.work_root}/targets")
+        print("   " + green("wrote") + f" {p}; dossiers in {cfg.work_root}/targets")
 
-    print("\n== 5. skills (playbooks for Claude Code, Codex and Antigravity)")
+    print(bold("\n== 5. skills") + " (playbooks for Claude Code, Codex and Antigravity)")
     proj = Path(project) if project else None
     if proj is None and not yes:
         ans = _ask("   project directory to link the skills into (empty to skip)", "", yes)
@@ -172,7 +211,7 @@ def run_setup(cfg_path: str | None, yes: bool, as_json: bool, project: str | Non
               + "; ".join(f"{k}: {v}" for k, v in HARNESS_SKILL_DIRS.items()) + ")")
     print("   inside residudes/ every harness already finds them, and AGENTS.md (CLAUDE.md imports it) holds the rules")
 
-    print("\n== 6. how to start a target")
+    print(bold("\n== 6. how to start a target"))
     print("   residudes target add T1234 --fasta T1234.fasta [--stoich A3]   # creates the dossier")
     print("   residudes next T1234                                        # what the next step is, and its skill")
     print("   residudes agent step T1234                                  # let the agent do that step (asks nothing outward)")

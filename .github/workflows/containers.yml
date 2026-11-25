@@ -115,5 +115,6 @@ jobs:
           context: ${{ env.CTX }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          # no labels: input - each Dockerfile carries its own OCI labels, and metadata-action's
+          # repository-level ones would overwrite them, leaving every package page identical
           cache-from: type=gha,scope=${{ matrix.name }}

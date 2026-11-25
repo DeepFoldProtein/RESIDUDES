@@ -20,6 +20,18 @@ publishes an official image, that image is used as the base layer rather than re
 | `residudes-engine-jax` | 11.6 GB | `nvidia/cuda:13.0.3-runtime` | AlphaFold 3 with its C++ extension compiled, and the JAX backends | the checkout, **`af3.bin`**, which is licensed per user |
 | `residudes-relax` | 0.6 GB | `debian:13-slim` | GROMACS 2024.2 and AmberTools 24.8, from conda-forge | **a Rosetta build**, which is licence-gated, and the relax pipeline |
 
+All eight are published as `ghcr.io/deepfoldprotein/<name>:latest`. A public one is pulled with
+no credentials, by either runtime:
+
+```sh
+apptainer build residudes.sif docker://ghcr.io/deepfoldprotein/residudes:latest   # no root, no daemon
+docker pull ghcr.io/deepfoldprotein/residudes:latest
+```
+
+One OCI image serves both: Apptainer converts it to a SIF on the way in, which is why nothing is
+published twice. `containers/verify.sh` asks the registry about each image and builds locally
+whatever it cannot pull.
+
 Sizes refer to the Apptainer `.sif` files produced on the reference hardware. Each recipe consists
 of three files: `install.sh`, which contains the installation steps and the rationale for them, and
 a `Dockerfile` and an Apptainer `.def` file that both execute it. The two container formats

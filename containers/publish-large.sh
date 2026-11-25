@@ -8,6 +8,8 @@
 #
 #   containers/publish-large.sh                       # build and push all five
 #   containers/publish-large.sh residudes-ef2         # or name the ones you want
+#   containers/publish-large.sh residudes residudes-qa residudes-msa   # the small ones too,
+#       which is how a package built by CI is re-pushed with its own labels
 #   PUSH=0 containers/publish-large.sh                # build only, push nothing
 #
 # Requirements: docker, ~60 GB free on the docker data root, and a login that may write packages:
@@ -26,7 +28,7 @@ IMAGES=${*:-$ALL}
 context_for() {            # each recipe's build context, which is not always its own directory
     case "$1" in
         residudes-engine-*) echo "$REPO/residudes-engine/core" ;;   # it copies the vendored model sources
-        residudes-qa-cu130) echo "$REPO/.ctx-qa-cu130" ;;           # it needs residudes-qa's lockfile
+        residudes-qa|residudes-qa-cu130) echo "$REPO/.ctx-$1" ;;     # they need residudes-qa's lockfile
         *) echo "$REPO/containers/$1" ;;
     esac
 }
@@ -35,10 +37,10 @@ prepare() {
     case "$1" in
         residudes-engine-*)
             cp "$REPO/containers/$1/Dockerfile" "$REPO/containers/$1/install.sh" "$REPO/residudes-engine/core/" ;;
-        residudes-qa-cu130)
-            rm -rf "$REPO/.ctx-qa-cu130"; mkdir -p "$REPO/.ctx-qa-cu130"
-            cp "$REPO/containers/$1"/* "$REPO/.ctx-qa-cu130/"
-            cp "$REPO/residudes-qa/pyproject.toml" "$REPO/residudes-qa/uv.lock" "$REPO/.ctx-qa-cu130/" ;;
+        residudes-qa|residudes-qa-cu130)
+            rm -rf "$REPO/.ctx-$1"; mkdir -p "$REPO/.ctx-$1"
+            cp "$REPO/containers/$1"/* "$REPO/.ctx-$1/"
+            cp "$REPO/residudes-qa/pyproject.toml" "$REPO/residudes-qa/uv.lock" "$REPO/.ctx-$1/" ;;
     esac
 }
 
@@ -49,6 +51,10 @@ check() {                  # the same assertions CI makes for the small images
         residudes-engine-trt) docker run --rm --entrypoint python "$1:$TAG" -c 'import torch, tensorrt; print("tensorrt", tensorrt.__version__)' ;;
         residudes-engine-jax) docker run --rm --entrypoint /opt/venv/bin/python "$1:$TAG" -c 'import jax; from alphafold3.cpp import cif_dict; print("jax", jax.__version__)' ;;
         residudes-relax)     docker run --rm --entrypoint sh "$1:$TAG" -c 'gmx --version | grep -m1 "GROMACS version"' ;;
+        residudes-qa)        docker run --rm --entrypoint python "$1:$TAG" -c 'import igraph, gemmi, xgboost; print("qa imports ok")' ;;
+        residudes-msa)       docker run --rm --entrypoint sh "$1:$TAG" -c 'for b in jackhmmer kalign mmseqs; do "$b" -h >/dev/null 2>&1 || "$b" --help >/dev/null 2>&1 || exit 1; done; echo "msa binaries ok"' ;;
+        # the agent image's entrypoint is the checkout, which is mounted rather than baked in
+        residudes)           docker run --rm -v "$REPO/residudes:/opt/residudes" "$1:$TAG" --version ;;
     esac
 }
 
@@ -70,4 +76,4 @@ for name in $IMAGES; do
     fi
     docker image rm -f "$name:$TAG" >/dev/null 2>&1 || true     # 10 GB each; do not keep five around
 done
-rm -rf "$REPO/.ctx-qa-cu130"
+rm -rf "$REPO"/.ctx-residudes-qa*

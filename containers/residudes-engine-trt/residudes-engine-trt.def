@@ -27,6 +27,12 @@ Stage: final
 %runscript
     exec /opt/residudes-engine/bin/residudes-engine "$@"
 
+%labels
+    org.opencontainers.image.title RESIDUDES engine (PyTorch + TensorRT)
+    org.opencontainers.image.description Protenix v2, OpenFold 3 and Boltz-2 on PyTorch or TensorRT 10.16. Checkpoints and the per-GPU TensorRT engines are bind-mounted.
+    org.opencontainers.image.source https://github.com/DeepFoldProtein/RESIDUDES
+    org.opencontainers.image.licenses MIT
+
 %help
     Protenix v2, OpenFold 3 and Boltz-2, on PyTorch or TensorRT. Weights and engines are mounted:
 

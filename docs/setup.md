@@ -22,6 +22,14 @@ answer: a publicly readable image is pulled, a private one is pulled if credenti
 registry are present, and otherwise the image is built locally with `apptainer build`, which
 needs no root. `--pull` and `--build` force one route.
 
+The images live at `ghcr.io/deepfoldprotein/<name>:latest` and are pulled by either runtime from
+that one address:
+
+```sh
+apptainer build residudes.sif docker://ghcr.io/deepfoldprotein/residudes:latest
+docker pull ghcr.io/deepfoldprotein/residudes:latest
+```
+
 Eight images, split so a login node never pulls a GPU stack. The four small ones are published
 on every push to `main`; the large ones on a release tag.
 

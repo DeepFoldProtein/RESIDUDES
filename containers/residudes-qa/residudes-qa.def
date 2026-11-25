@@ -26,6 +26,12 @@ Stage: final
 %runscript
     exec /opt/venv/bin/python -m residudes_qa "$@"
 
+%labels
+    org.opencontainers.image.title RESIDUDES QA (CPU)
+    org.opencontainers.image.description Quality assessment of a prediction pool on CPU: interface scoring, clustering and the confidence plots. No torch; see residudes-qa-cu130 for the GPU scorers.
+    org.opencontainers.image.source https://github.com/DeepFoldProtein/RESIDUDES
+    org.opencontainers.image.licenses MIT
+
 %help
     residudes-qa without CUDA: clustering, interface features, plots, and the 92-test suite.
 

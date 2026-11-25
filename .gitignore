@@ -4,4 +4,4 @@ __pycache__/
 .ruff_cache/
 images/
 
-.ctx-qa-cu130/
+.ctx-residudes-qa*/
