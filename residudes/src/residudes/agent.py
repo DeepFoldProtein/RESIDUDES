@@ -147,8 +147,7 @@ def step(cfg: Config, target: str, budget: float | None = None, max_turns: int |
          model: str | None = None, verbose: bool = True) -> dict:
     d = Dossier.load(cfg.targets_dir, target)
     goal, _ = d.next_step()
-    c = d.open_checkpoint()
-    if d.stage in HUMAN_STAGES or (c and not d.agents_turn(c)):
+    if not d.agent_may_act():
         print(f"{target} is at {d.stage}: {goal}. Nothing for the agent to do.")
         return {"subtype": "skipped"}
     lock = Dossier.path(cfg.targets_dir, target).parent / ".step.lock"

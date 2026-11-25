@@ -166,6 +166,9 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("--stoich", help="stoichiometry given by the organisers, e.g. A3 or A1B1C1")
     p.add_argument("--deadline-server")
     p.add_argument("--deadline-human")
+    p.add_argument("--review", action="store_true",
+                   help="stop at the plan and results checkpoints and at the slate for a person; by default the agent "
+                        "answers them itself and runs the target through to a packaged slate (submitting stays yours)")
     p = t.add_parser("show")
     p.add_argument("target")
     p.add_argument("--json", action="store_true")
@@ -414,7 +417,21 @@ def _main(argv: list[str] | None = None) -> int:
                 d.stoichiometry["given"] = args.stoich
             d.deadlines = {k: v for k, v in (("server", args.deadline_server), ("human", args.deadline_human)) if v}
             d.note(_actor(), "dossier created")
+            # Full automation is the default: whoever registers the target grants the mandate, by name and on the
+            # record, up to a packaged slate. The checkpoints still happen and are written the same way - the
+            # agent answers them - so the reasoning a person would have read is in the dossier either way.
+            # Submission is outside any mandate. `--review` keeps a person at each checkpoint instead.
+            mode = "with human checkpoints"
+            if not args.review:
+                try:
+                    d.authorise_automation(_actor(), "PACKAGED", "the default at registration")
+                    mode = "full automation, up to a packaged slate (submitting stays yours)"
+                except ValueError as exc:                  # the agent registering a target cannot grant itself one
+                    mode = f"with human checkpoints ({exc})"
             print(f"created {d.save(cfg.targets_dir)}")
+            print(f"  {mode}")
+            if not args.review:
+                print(f"  to stop at the checkpoints instead: residudes automate {args.target} --off")
             return 0
         if args.tcmd == "show":
             d = Dossier.load(cfg.targets_dir, args.target)
@@ -423,6 +440,9 @@ def _main(argv: list[str] | None = None) -> int:
                 return 0
             goal, skill = d.next_step()
             print(f"{d.target}  stage {d.stage}  (created {d.created})")
+            a = d.automation
+            print("  mode: " + (f"full automation, granted by {a['by']} up to {a['until']} (submitting stays a person's)"
+                                if a else "human checkpoints (a person answers each one and approves the slate)"))
             print(f"  next: {goal}" + (f"  [skill {skill}]" if skill else ""))
             for k, v in d.stoichiometry.items():
                 print(f"  stoichiometry {k}: {v}")

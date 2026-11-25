@@ -24,26 +24,43 @@ NEW → IDENTIFIED → HYPOTHESES → PLAN_REVIEW ⇄ person → INPUTS_READY �
 
 Do the work of the current stage, record it, move the stage when its goal is met, and stop.
 
-## Work it out with a person: two checkpoints
+## Two checkpoints, answered by you or by a person
 
-residudes does not run a campaign alone. It stops twice per target, and both stops are built into the stages
-(skill `residudes-consult`):
+Every target stops twice for a decision, and both stops are built into the stages (skill `residudes-consult`).
+Who answers depends on the dossier. By default `residudes target add` records a **mandate** from the person who
+registered the target, up to a packaged slate, and you answer the checkpoints yourself. With `--review` (or after
+`residudes automate T --off`) a person answers them. `residudes target show T` says which; the step you are given
+says it too.
+
+The checkpoints are written the same way either way. The brief is the record of why the target went where it did,
+and a reader of the dossier should not be able to tell from its quality who it was written for.
 - **PLAN_REVIEW**, after the analysis and the literature. Write a brief covering:
   - what you found, and the priors behind each decision;
   - the prediction plan;
   - your questions, each with options and a recommendation.
 
-  Open it with `residudes consult T --kind plan --brief FILE --ask "..."`. Then talk it through. A person replies,
-  you answer with `residudes reply T C# "..."`, and you revise the decisions if they ask. Nothing is submitted until
-  a person runs `residudes resolve T C# --outcome proceed`.
+  Open it with `residudes consult T --kind plan --brief FILE --ask "..."`.
+  - **Under the mandate**, answer it as the person would: weigh each question against the evidence, write the
+    answer and the reasons with `residudes reply T C# "..."`, then `residudes resolve T C# --outcome proceed` (or
+    `loop:HYPOTHESES` if your own reading finds the plan wanting).
+  - **Without one**, talk it through: a person replies, you answer, you revise the decisions if they ask, and the
+    person resolves it.
 - **RESULTS_REVIEW**, after the first round.
   - `residudes review T` checks the pool: low confidence, a split or flat n-sweep, low pLDDT, clashes, missing models,
     runs that lost a chain, models with an empty file, predictors in different architectures, weak interfaces, the most confident models at
     different sites, and a site prior no gate uses. Add what you see yourself with `--add`.
-  - Any trigger means a results checkpoint, and the person decides: proceed to the slate, `loop:RUNNING` (more
-    sampling) or `loop:HYPOTHESES` (new variants, another copy number).
+  - Any trigger means a results checkpoint with the options: proceed to the slate, `loop:RUNNING` (more sampling) or
+    `loop:HYPOTHESES` (new variants, another copy number). Under the mandate you choose, with the reasons on record.
+- **The slate.** Under the mandate, read it against the gates and the decisions once more, then `residudes approve
+  T "<why these five>"` and move to APPROVED; without one, a person approves it.
 
-You never resolve a checkpoint and never move past one yourself: the stage machine refuses.
+Three things hold under any mandate:
+- **Submission is a person's.** You stop at PACKAGED; the stage machine refuses SUBMITTED from you in every case.
+- **Write NEEDS HUMAN when the evidence cannot decide it** - two stoichiometries the pool cannot separate, a gate
+  that fails on model 1, a slate that contradicts a decision. A mandate is permission to decide, not an obligation
+  to guess; the daemon stops on that note and a person picks it up.
+- **Everything you decide under it is marked.** Resolutions and approvals carry `automated` and who granted the
+  mandate, so the log never blurs who decided.
 
 ## Analyse the target first, then decide from that analysis
 

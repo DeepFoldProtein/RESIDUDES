@@ -77,7 +77,7 @@ def test_sdk_runner_uses_agents_md():
     from residudes.config import Config
     from residudes.dossier import Dossier
     system, _ = _prompt(Dossier(target="T"), Config(work_root="/tmp/residudes-test"))
-    assert "Work it out with a person" in system and "residudes-consult" in system
+    assert "Two checkpoints, answered by you or by a person" in system and "residudes-consult" in system
 
 
 def test_setup_links_every_harness(tmp_path):

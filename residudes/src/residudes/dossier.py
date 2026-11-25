@@ -235,8 +235,12 @@ class Dossier:
 
     def _agreed(self, kind: str, since: str = "") -> bool:
         since = max(since, self._entered("PLAN_REVIEW" if kind == "plan" else "RESULTS_REVIEW"), key=tkey)
+        # A person's resolution counts; so does the agent's when it was made under a mandate, which it carries on the
+        # record (`automated`, and who granted it). Without the second clause a mandate let the agent resolve the plan
+        # checkpoint and then refused the move that resolution was for, so full automation stopped at PLAN_REVIEW.
         return any(c["kind"] == kind and c["status"] == "resolved" and c["resolution"]["outcome"] == "proceed"
-                   and c["resolution"]["by"] not in AGENT_ACTORS and tkey(c["resolution"]["time"]) >= tkey(since) for c in self.checkpoints)
+                   and (c["resolution"]["by"] not in AGENT_ACTORS or c["resolution"].get("automated"))
+                   and tkey(c["resolution"]["time"]) >= tkey(since) for c in self.checkpoints)
 
     def decide(self, actor: str, kind: str, chose: str, evidence: list[str], alternatives: list[str] | None = None,
                confidence: str = "medium", reversible_until: str | None = None) -> dict:
@@ -302,14 +306,48 @@ class Dossier:
         self.note(person, f"approved: {what}"
                   + (f" [automated under the mandate from {self.automation.get('by')}]" if person in AGENT_ACTORS else ""))
 
+    def agent_may_act(self) -> bool:
+        """Whether a step of the agent's has anything to do now: the one rule the daemon, `residudes agent step`
+        and the brief all follow, so they cannot disagree about where a target stops.
+
+        Without a mandate the agent stops at every checkpoint that waits for a person and at the slate. With one
+        it answers those itself, on the record, the way a person would have. Two stops hold in every case:
+        PACKAGED, because what follows is submission, an act in someone's name that no mandate delegates; and
+        SUBMITTED, which waits for the native."""
+        if self.stage in ("PACKAGED", "SUBMITTED"):
+            return False
+        mandate = self.automation_allows(self.stage)
+        c = self.open_checkpoint()
+        if c and not self.agents_turn(c) and not mandate:
+            return False
+        if self.stage == "SLATE_PROPOSED" and not mandate:
+            return False
+        return True
+
     def next_step(self) -> tuple[str, str | None]:
         c = self.open_checkpoint()
+        mandate = self.automation_allows(self.stage)
+        by = self.automation.get("by", "") if mandate else ""
+        if c and mandate and not self.agents_turn(c):
+            # The checkpoint was opened as for a person, with the same brief; under the mandate the agent answers it.
+            return (f"automation is on (granted by {by}): answer checkpoint {c['id']} ({c['kind']}) yourself, as the "
+                    f"person it was written for would. Read it (`residudes checkpoints {self.target} {c['id']}`), weigh "
+                    "the options against the evidence, write your answer and the reasons with `residudes reply "
+                    f"{self.target} {c['id']} \"...\"`, then `residudes resolve {self.target} {c['id']} --outcome "
+                    "proceed` (or `loop:HYPOTHESES` / `loop:RUNNING` if your own reading finds the plan or the pool "
+                    "wanting). Write NEEDS HUMAN instead only when the evidence cannot decide it", "residudes-consult")
         if c and self.agents_turn(c):
             return (f"a person replied in checkpoint {c['id']} ({c['kind']}): read the thread (`residudes checkpoints {self.target} {c['id']}`), "
                     f"answer with `residudes reply {self.target} {c['id']} \"...\"`, and revise the plan or decisions if they asked; "
-                    "do not resolve it yourself", "residudes-consult")
+                    + ("then resolve it yourself under the mandate" if mandate else "do not resolve it yourself"), "residudes-consult")
         if c:
             return (f"wait for a person in checkpoint {c['id']} ({c['kind']})", None)
+        if self.stage == "SLATE_PROPOSED" and mandate:
+            return (f"automation is on (granted by {by}): approve the slate as a person would - read it against the "
+                    "structural gates and the decisions once more (`residudes slate T --show`, `residudes gate T --show`), "
+                    f"then `residudes approve {self.target} \"<why these five>\"` and `residudes stage {self.target} "
+                    "APPROVED`. Write NEEDS HUMAN instead if a gate fails on model 1 or the slate contradicts a decision",
+                    "residudes-selection")
         if self.stage == "PLAN_REVIEW":
             if self._agreed("plan"):
                 return ("the plan is agreed: move to INPUTS_READY", None)

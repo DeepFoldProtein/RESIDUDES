@@ -104,13 +104,19 @@ def _rows(cfg: Config, prefer: str | None) -> list[dict]:
         except Exception:
             continue
         c = d.open_checkpoint()
-        waiting = ""
-        if c and not d.agents_turn(c):
-            waiting = f"you ({c['id']})"
+        auto = bool(d.automation)
+        # Who the target waits on, by the same rule the daemon follows (Dossier.agent_may_act), so the list
+        # never shows a checkpoint the agent will answer under its mandate as one waiting on a person.
+        if d.stage == "PACKAGED":
+            waiting = "you (submit)"
+        elif not d.agent_may_act():
+            waiting = f"you ({c['id']})" if c else ("you (approve)" if d.stage == "SLATE_PROPOSED" else "")
         elif c:
             waiting = f"agent ({c['id']})"
+        else:
+            waiting = ""
         s = live.get(ddir.name)
-        out.append({"target": ddir.name, "stage": d.stage, "waiting": waiting,
+        out.append({"target": ddir.name, "stage": d.stage, "waiting": waiting, "auto": auto,
                     "live": bool(s), "age": _ago(s["created"]) if s else ""})
     return out
 
@@ -140,6 +146,9 @@ def list_cmd(cfg: Config, prefer: str | None = None) -> int:
     print()
     if yours:
         print("  " + yellow("waiting on you: ") + ", ".join(yours))
+    reviewed = [r["target"] for r in rows if not r.get("auto")]
+    if reviewed:                         # the exception now, so name it: these stop at every checkpoint for a person
+        print("  " + dim("with human checkpoints: ") + ", ".join(reviewed))
     print("  " + dim("join: ") + "residudes chat <target>" + dim("    leave: ") + LEAVE
           + dim("    end: ") + "--stop")
     print()

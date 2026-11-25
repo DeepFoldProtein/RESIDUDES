@@ -1,9 +1,10 @@
 """`residudes daemon`: the scheduler. One process, no LLM, polls at most once a minute.
 
 Each round, for every dossier (or the ones named):
-  - human stages (SLATE_PROPOSED, PACKAGED, SUBMITTED) and RETROSPECTIVE: skip
-  - an open checkpoint (PLAN_REVIEW, RESULTS_REVIEW): skip while it waits for a person; when a person has written the
-    latest message in it, run an agent step so the agent answers (the conversation goes back and forth)
+  - where the dossier says the agent may not act (Dossier.agent_may_act): skip. Without a mandate that is every
+    checkpoint waiting for a person and the slate; with one (the default from `target add`) the agent answers those
+    itself, and only PACKAGED (submission is a person's act) and SUBMITTED stop it. RETROSPECTIVE: skip
+  - an open checkpoint where a person wrote last: run an agent step so the agent answers (back and forth)
   - a chat session open for that target: skip, because a person is working on it there
   - a "NEEDS HUMAN" note newer than the last step: skip until a person writes a newer note
   - at RUNNING / POOL_READY with recorded jobs (Slurm or local pueue) not finished: refresh their state, skip
@@ -22,7 +23,7 @@ import os
 import time
 
 from residudes import ops
-from residudes.agent import HUMAN_STAGES, step
+from residudes.agent import step
 from residudes.config import Config
 from residudes.dossier import Dossier, list_targets
 
@@ -79,11 +80,13 @@ def _step_through_conversation(cfg: Config, d: Dossier) -> str:
 
 def _round_target(cfg: Config, d: Dossier, budget: float | None, max_idle_steps: int, idle: dict,
                   ) -> str:
-    if d.stage in HUMAN_STAGES or d.stage == "RETROSPECTIVE":
+    if d.stage == "RETROSPECTIVE":
         return f"{d.target}: {d.stage} (waiting for a person)"
     c = d.open_checkpoint()
-    if c and not d.agents_turn(c):
-        return f"{d.target}: waiting for a person at checkpoint {c['id']} ({c['kind']})"
+    if not d.agent_may_act():                                # the dossier decides, mandate included
+        if c and not d.agents_turn(c):
+            return f"{d.target}: waiting for a person at checkpoint {c['id']} ({c['kind']})"
+        return f"{d.target}: {d.stage} (waiting for a person)"
     if _needs_human(d) and not c:
         return f"{d.target}: NEEDS HUMAN"
     if _waiting_on_jobs(cfg, d.target):
