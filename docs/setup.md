@@ -14,6 +14,19 @@ sequence databases, is bind-mounted at run time
 ```sh
 git clone https://github.com/DeepFoldProtein/RESIDUDES
 cd RESIDUDES
+residudes/bin/residudes setup           # a coding agent does the setup with you
+```
+
+`setup` hands the work to whichever agent CLI is on the machine — Claude Code, Codex, Antigravity
+or Gemini — because installing a campaign means reading a report, deciding what this machine
+needs and then running the installs, and the project ships its own procedure for exactly that
+(`residudes/skills/residudes-setup/`). The agent explains each command before running it and
+stops at anything that costs money or needs a licence. `--harness` picks one, `--manual` asks the
+questions instead, and with no agent CLI present it falls back to the questions on its own.
+
+Either way the installation is checked the same way:
+
+```sh
 containers/verify.sh                    # obtain the images, then check the installation
 ```
 

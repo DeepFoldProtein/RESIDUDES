@@ -27,7 +27,7 @@ residudes-engine and which drive residudes-qa.
 ```sh
 cd RESIDUDES/residudes
 uv sync                          # claude-agent-sdk (agent runner) and gemmi (gates); otherwise stdlib only
-bin/residudes setup                # interactive first run: resources, databases, configuration, skills
+bin/residudes setup                # first run: an agent CLI does it with you (--manual for the questions)
 bin/residudes doctor               # re-run at any time to re-check the installation
 ```
 

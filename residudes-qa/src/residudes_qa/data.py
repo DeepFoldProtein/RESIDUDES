@@ -54,13 +54,17 @@ def _fetch_one(entry: dict, root: Path, link: bool, sources: list[str]) -> str:
     dest.parent.mkdir(parents=True, exist_ok=True)
     tmp = dest.with_name(dest.name + ".part")
     for src in sources:
-        if src == "local" and entry.get("local") and Path(entry["local"]).exists():
+        local = entry.get("local")
+        if local and not Path(local).is_absolute():       # relative to the site's source tree
+            tree = os.environ.get("RESIDUDES_QA_SOURCE_TREE")
+            local = str(Path(tree) / local) if tree else None
+        if src == "local" and local and Path(local).exists():
             if link:
                 if dest.is_symlink() or dest.exists():
                     dest.unlink()
-                dest.symlink_to(entry["local"])
+                dest.symlink_to(local)
                 return "linked"
-            shutil.copyfile(entry["local"], tmp)
+            shutil.copyfile(local, tmp)
         elif src == "url" and entry.get("url"):
             with urllib.request.urlopen(entry["url"], timeout=120) as r, open(tmp, "wb") as fh:
                 shutil.copyfileobj(r, fh)

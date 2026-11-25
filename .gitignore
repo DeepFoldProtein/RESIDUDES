@@ -5,3 +5,7 @@ __pycache__/
 images/
 
 .ctx-residudes-qa*/
+
+# site files describe one machine; only the template is shared
+residudes-engine/sites/*.toml
+!residudes-engine/sites/*.example.toml

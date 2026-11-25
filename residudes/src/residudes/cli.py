@@ -108,7 +108,11 @@ def _main(argv: list[str] | None = None) -> int:
     ap.add_argument("--config", help="residudes.toml (default: $RESIDUDES_CONFIG or residudes/residudes.toml)")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    p = sub.add_parser("setup", help="first-run onboarding")
+    p = sub.add_parser("setup", help="first-run onboarding, with an agent by default")
+    p.add_argument("--manual", action="store_true",
+                   help="answer the questions yourself instead of letting an agent do the setup")
+    p.add_argument("--harness", choices=("claude", "codex", "ag", "gemini"),
+                   help="which agent CLI to use (default: the first one on PATH)")
     p.add_argument("--yes", action="store_true", help="accept every suggestion (non-interactive)")
     p.add_argument("--json", action="store_true", help="only print the findings as JSON")
     p.add_argument("--project", help="link the skills into this project's .claude/skills and .agents/skills")
@@ -302,7 +306,13 @@ def _main(argv: list[str] | None = None) -> int:
 
     args = ap.parse_args(argv)
     if args.cmd == "setup":
-        from residudes.setup import run_setup
+        from residudes.setup import run_setup, run_setup_guided
+        # An agent can read the report, decide what is missing and install it; the questions are
+        # the fallback, and --manual asks for them. --json and --yes are machine modes: no agent.
+        if not (args.manual or args.yes or args.json):
+            rc = run_setup_guided(args.config, args.harness)
+            if rc != 1:                      # 1 = no agent CLI here, so fall through to the questions
+                return rc
         return run_setup(args.config, args.yes, args.json, args.project, args.copy_skills)
     if args.cmd == "doctor":
         from residudes.setup import run_doctor

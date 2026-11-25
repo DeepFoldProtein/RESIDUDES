@@ -288,4 +288,8 @@ else
 fi
 
 printf '\n%s passed, %s failed, %s skipped\n' "$pass" "$fail" "$skip"
+if [ "$fail" != 0 ]; then
+    printf 'to fix these with an agent on this machine: %s/residudes/bin/residudes setup\n' "$REPO"
+    printf 'or by hand: %s/docs/setup.md\n' "$REPO"
+fi
 [ "$fail" = 0 ]

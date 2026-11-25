@@ -267,3 +267,65 @@ def run_doctor(cfg_path: str | None, as_json: bool) -> int:
         print(f"\nconfig: {cfg.path if Path(cfg.path).exists() else 'none (run `residudes setup`)'}; "
               f"claude: {shutil.which('claude') or 'missing'}")
     return 1 if bad else 0
+
+
+# ------------------------------------------------------------------ guided setup
+# Setting a campaign up means reading a report, deciding what to install, and then running the
+# installs - which is work a coding agent can do, and which this project already has a skill for.
+# So `residudes setup` hands the job to whichever agent CLI is on the machine and falls back to
+# the questions below when there is none. `--manual` always gets the questions.
+HARNESS_CLI = (                       # command, name, how to pass a prompt and keep the terminal
+    ("claude", "Claude Code", lambda prompt: ["claude", prompt]),
+    ("codex", "Codex CLI", lambda prompt: ["codex", prompt]),
+    ("ag", "Antigravity CLI", lambda prompt: ["ag", prompt]),
+    ("gemini", "Gemini CLI", lambda prompt: ["gemini", "-i", prompt]),
+)
+
+
+def available_harness(preferred: str | None = None) -> tuple[str, str, list] | None:
+    for cmd, name, argv in HARNESS_CLI:
+        if preferred and cmd != preferred:
+            continue
+        if shutil.which(cmd):
+            return cmd, name, argv
+    return None
+
+
+SETUP_BRIEF = """Set this machine up to run RESIDUDES, with me.
+
+Read {skill} first: it is the project's own setup procedure. Then:
+
+1. Run `{residudes} doctor` and read the report with me - resources, databases, components.
+2. Decide together what this machine needs. A campaign needs the agent; predictions need
+   residudes-engine with a GPU; scoring needs residudes-qa; MSA search needs the databases.
+   Published images cover every part ({containers}), and `containers/verify.sh` pulls or builds
+   them and then checks the installation end to end, databases included.
+3. Do the installing. Explain each command before running it, and stop at anything that costs
+   money, needs a licence (AlphaFold 3 parameters, Rosetta, MODELLER) or writes outside this
+   machine.
+4. Finish by running `containers/verify.sh` (add `--gpu` where there is a card, and
+   `--af3-db DIR --deep` where the databases are) and show me the result.
+
+Do not submit anything anywhere, and do not change RESIDUDES_ACTOR.
+"""
+
+
+def run_setup_guided(cfg_path: str | None, harness: str | None) -> int:
+    """Hand the setup to a coding agent on this machine."""
+    found = available_harness(harness)
+    if not found:
+        names = ", ".join(c for c, _, _ in HARNESS_CLI)
+        print(yellow(f"   no agent CLI found on PATH ({names}); continuing with the questions"))
+        return 1
+    cmd, name, argv = found
+    root = RESIDUDES_DIR
+    prompt = SETUP_BRIEF.format(
+        skill=root / "skills" / "residudes-setup" / "SKILL.md",
+        residudes=root / "bin" / "residudes",
+        containers=root.parent / "containers" / "README.md",
+    )
+    print(f"\n{bold('== guided setup')} with {green(name)}  ({dim('residudes setup --manual for the questions instead')})")
+    try:
+        return subprocess.call(argv(prompt))
+    except KeyboardInterrupt:
+        return 130

@@ -2,12 +2,13 @@
 """Regenerate data/manifest.toml from the team's reference copies (maintainers only).
 
 Every data file residudes-qa needs is listed with its size, sha256, licence note and where it can
-be fetched from: `local` = the reference copy on the DeepFold cluster (GPFS), `url` = a public
+be fetched from: `local` = the reference copy under $RESIDUDES_QA_SOURCE_TREE, `url` = a public
 upstream that serves the identical bytes. `residudes-qa data fetch` copies or links from these and
 refuses a file whose sha256 differs.
 
     python3 scripts/dev/make_manifest.py > data/manifest.toml
 """
+import os
 import hashlib
 import sys
 from pathlib import Path
@@ -44,6 +45,9 @@ for f in sorted(MPNN.glob("*.pt")):
     entries.append((f"proteinmpnn/model_weights/{f.name}", f, "ProteinMPNN (MIT, Dauparas et al. 2022)", url))
 
 
+SOURCE_TREE = os.environ.get("RESIDUDES_QA_SOURCE_TREE", "")
+
+
 def sha256(p: Path) -> str:
     h = hashlib.sha256()
     with open(p, "rb") as fh:
@@ -63,7 +67,8 @@ for rel, src, lic, url in entries:
     out.write(f"size = {src.stat().st_size}\n")
     out.write(f'sha256 = "{sha256(src)}"\n')
     out.write(f'license = "{lic}"\n')
-    out.write(f'local = "{src}"\n')
+    rel = str(src)[len(SOURCE_TREE) + 1:] if str(src).startswith(SOURCE_TREE + "/") else str(src)
+    out.write(f'local = "{rel}"\n')         # relative to $RESIDUDES_QA_SOURCE_TREE
     if url:
         out.write(f'url = "{url}"\n')
     out.write("\n")
