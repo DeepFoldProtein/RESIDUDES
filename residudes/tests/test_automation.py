@@ -170,3 +170,28 @@ def test_the_daemon_steps_at_the_slate_when_the_mandate_covers_it(tmp_path, monk
     d.save(tmp_path)
     daemon._round_target(Cfg(), d, None, 5, {})
     assert called == ["T9999"]
+
+
+def test_needs_human_stops_the_daemon_even_with_a_checkpoint_open(tmp_path, monkeypatch):
+    """Under a mandate the agent answers the checkpoint itself; when it writes NEEDS HUMAN instead, the daemon
+    must stop, not step it again (H1388 took two more steps before this)."""
+    from residudes import daemon
+
+    called = []
+    monkeypatch.setattr(daemon, "step", lambda cfg, t, **k: called.append(t) or {"subtype": "success"})
+    monkeypatch.setattr(daemon, "_waiting_on_jobs", lambda cfg, t: False)
+
+    class Cfg:
+        targets_dir = tmp_path
+
+    d = _d(tmp_path, stage="PLAN_REVIEW")
+    d.authorise_automation("delibae")
+    d.consult("agent", "plan", ["seeds?"], brief="b")
+    d.note("agent", "NEEDS HUMAN: resolve was refused")
+    d.save(tmp_path)
+    assert "NEEDS HUMAN" in daemon._round_target(Cfg(), d, None, 5, {})
+    assert called == []
+    d.reply("delibae", d.checkpoints[0]["id"], "go ahead")              # a person answers in the checkpoint
+    d.save(tmp_path)
+    daemon._round_target(Cfg(), d, None, 5, {})
+    assert called == ["T9999"]

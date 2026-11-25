@@ -87,7 +87,11 @@ def _round_target(cfg: Config, d: Dossier, budget: float | None, max_idle_steps:
         if c and not d.agents_turn(c):
             return f"{d.target}: waiting for a person at checkpoint {c['id']} ({c['kind']})"
         return f"{d.target}: {d.stage} (waiting for a person)"
-    if _needs_human(d) and not c:
+    # The note is overridden only when a person wrote the latest message in an open checkpoint: then answering
+    # them is the agent's turn. It used to be overridden by any open checkpoint, which under a mandate - where the
+    # agent answers the checkpoint and nobody replies - kept stepping a target whose agent had asked for help:
+    # refused again, NEEDS HUMAN again (H1388: two such steps after the first).
+    if _needs_human(d) and not (c and d.agents_turn(c)):
         return f"{d.target}: NEEDS HUMAN"
     if _waiting_on_jobs(cfg, d.target):
         return f"{d.target}: waiting on jobs"
