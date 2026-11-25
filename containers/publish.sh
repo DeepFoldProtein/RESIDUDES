@@ -12,6 +12,7 @@
 #   containers/publish.sh residudes-ef2               # or name the ones you want
 #   containers/publish.sh residudes residudes-qa residudes-msa        # the small ones too
 #   PUSH=0 containers/publish.sh                      # build only, push nothing
+#   PRUNE=0 containers/publish.sh                     # keep the build cache afterwards
 #
 # Requirements: docker, ~60 GB free on the docker data root, and a login that may write packages:
 #   echo "$GHCR_TOKEN" | docker login ghcr.io -u <you> --password-stdin
@@ -79,3 +80,8 @@ for name in $IMAGES; do
     docker image rm -f "$name:$TAG" "$REGISTRY/$name:$TAG" >/dev/null 2>&1 || true
 done
 rm -rf "$REPO"/.ctx-residudes-qa*
+# The builder stages stay behind as build cache: 110 GB after the two engine images, on a host whose
+# root disk is shared. The cache is the daemon's, so this also drops other builds' unused layers.
+if [ "${PRUNE:-1}" = 1 ]; then
+    docker builder prune -af >/dev/null && echo "build cache pruned (PRUNE=0 keeps it)"
+fi
