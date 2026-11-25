@@ -54,6 +54,10 @@ PLAYBOOK = {
 
 
 PERSON_MOVES = ("APPROVED", "SUBMITTED")          # a person approves a slate and submits it; never the agent
+# Submission is the one move no mandate can delegate: entering a prediction for a target is an act
+# in someone's name, outside this machine, and not undoable. Everything before it can be automated
+# by a person who says so in writing - see authorise_automation.
+NEVER_AUTOMATED = ("SUBMITTED",)
 LOOPS = {("RESULTS_REVIEW", "HYPOTHESES"), ("RESULTS_REVIEW", "RUNNING"), ("PLAN_REVIEW", "HYPOTHESES")}   # via `resolve`
 AGENT_ACTORS = ("agent",)
 
@@ -99,6 +103,7 @@ class Dossier:
     slate: dict = field(default_factory=dict)
     approvals: list = field(default_factory=list)
     checkpoints: list = field(default_factory=list)     # conversations with a person: plan, results (see consult())
+    automation: dict = field(default_factory=dict)      # a person's standing mandate, if any (see authorise_automation)
     log: list = field(default_factory=list)
 
     # ------------------------------------------------------------------ io
@@ -153,8 +158,10 @@ class Dossier:
             raise ValueError(f"unknown stage {stage}; one of {STAGES}")
         if stage != self.stage and stage not in NEXT.get(self.stage, set()):
             raise ValueError(f"{self.target}: {self.stage} -> {stage} is not allowed (next: {sorted(NEXT.get(self.stage, []))})")
-        if (stage in PERSON_MOVES or (self.stage, stage) in LOOPS) and actor in AGENT_ACTORS:
+        if (stage in PERSON_MOVES or (self.stage, stage) in LOOPS) and actor in AGENT_ACTORS \
+                and not (self.automation_allows(stage) and stage not in NEVER_AUTOMATED):
             raise ValueError(f"{self.stage} -> {stage} is a person's move, not the agent's"
+                             + (" and no mandate can delegate it" if stage in NEVER_AUTOMATED else "")
                              + (" (a person resolves the checkpoint with `residudes resolve`)" if (self.stage, stage) in LOOPS else ""))
         if stage == "APPROVED" and not self.fresh_approval():
             raise ValueError("APPROVED needs an approval recorded after the slate was proposed: a person runs `residudes approve`")
@@ -204,14 +211,16 @@ class Dossier:
         return entry
 
     def resolve(self, actor: str, cid: str, outcome: str, note: str = "") -> dict:
-        if actor in AGENT_ACTORS:
-            raise ValueError("a person resolves a checkpoint, not the agent")
+        if actor in AGENT_ACTORS and not self.automation_allows("resolve"):
+            raise ValueError("a person resolves a checkpoint, not the agent "
+                             "(or a person turns automation on: `residudes automate T --on`)")
         if outcome not in OUTCOMES:
             raise ValueError(f"outcome must be one of {OUTCOMES}")
         c = self.checkpoint(cid)
         if c["status"] != "open":
             raise ValueError(f"{cid} is {c['status']}")
-        c["status"], c["resolution"] = "resolved", {"time": now(), "by": actor, "outcome": outcome, "note": note}
+        c["status"], c["resolution"] = "resolved", {"time": now(), "by": actor, "outcome": outcome, "note": note,
+                                                    **self._automation_mark(actor)}
         self.note(actor, f"{cid} resolved: {outcome}" + (f": {note}" if note else ""))
         if outcome.startswith("loop:"):
             self.move(outcome.split(":", 1)[1], actor, f"{cid}: {note or 'another round'}")
@@ -247,11 +256,51 @@ class Dossier:
                        default="", key=tkey)
         return next((a for a in reversed(self.approvals) if tkey(a["time"]) >= tkey(proposed)), None)
 
-    def approve(self, person: str, what: str) -> None:
+    # ------------------------------------------------------- the automation mandate
+    def authorise_automation(self, person: str, until: str = "PACKAGED", note: str = "") -> dict:
+        """Let the agent take the moves normally reserved for a person, up to but never including
+        submission. Only a person can grant this, it names who granted it, and it stops at `until`."""
         if person in AGENT_ACTORS:
-            raise ValueError("approve is for people only")
-        self.approvals.append({"time": now(), "by": person, "what": what})
-        self.note(person, f"approved: {what}")
+            raise ValueError("only a person can turn automation on")
+        if until not in STAGES:
+            raise ValueError(f"unknown stage {until}; one of {STAGES}")
+        if until == "SUBMITTED" or STAGES.index(until) > STAGES.index("PACKAGED"):
+            raise ValueError("automation cannot reach SUBMITTED: submitting is a person's act, always")
+        self.automation = {"by": person, "time": now(), "until": until, "note": note}
+        self.note(person, f"automation on, up to {until}" + (f": {note}" if note else ""))
+        return self.automation
+
+    def revoke_automation(self, person: str, note: str = "") -> None:
+        if person in AGENT_ACTORS:
+            raise ValueError("only a person can turn automation off")
+        if not self.automation:
+            raise ValueError("automation is not on")
+        was = self.automation
+        self.automation = {}
+        self.note(person, f"automation off (granted by {was.get('by')} at {was.get('time')})"
+                          + (f": {note}" if note else ""))
+
+    def automation_allows(self, what: str) -> bool:
+        """True when a person's mandate covers this action at the dossier's current stage."""
+        a = self.automation
+        if not a or what in NEVER_AUTOMATED:
+            return False
+        until = a.get("until", "PACKAGED")
+        return STAGES.index(self.stage) < STAGES.index(until) or self.stage == until
+
+    def _automation_mark(self, actor: str) -> dict:
+        """What an automated action records, so that the log never blurs the two."""
+        if actor not in AGENT_ACTORS or not self.automation:
+            return {}
+        return {"automated": True, "mandate": {"by": self.automation.get("by"),
+                                               "time": self.automation.get("time")}}
+
+    def approve(self, person: str, what: str) -> None:
+        if person in AGENT_ACTORS and not self.automation_allows("approve"):
+            raise ValueError("approve is for people only (or a person turns automation on: `residudes automate T --on`)")
+        self.approvals.append({"time": now(), "by": person, "what": what, **self._automation_mark(person)})
+        self.note(person, f"approved: {what}"
+                  + (f" [automated under the mandate from {self.automation.get('by')}]" if person in AGENT_ACTORS else ""))
 
     def next_step(self) -> tuple[str, str | None]:
         c = self.open_checkpoint()

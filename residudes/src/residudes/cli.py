@@ -62,6 +62,14 @@ def _actor() -> str:
     return os.environ.get("RESIDUDES_ACTOR") or getpass.getuser()
 
 
+def _automation_on(cfg, target: str) -> bool:
+    """Has a person left a standing mandate on this target? Checked before the agent is refused."""
+    try:
+        return Dossier.load(cfg.targets_dir, target).automation_allows("approve")
+    except Exception:                    # no dossier yet, unreadable, anything: fall back to refusing
+        return False
+
+
 def _sto(d, given: str | None) -> str:
     """--sto, or the stoichiometry given at `target add --stoich`."""
     if given:
@@ -152,9 +160,18 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("target")
     p.add_argument("stage", choices=STAGES)
     p.add_argument("--why", default="")
-    p = sub.add_parser("approve", help="people only")
+    p = sub.add_parser("approve", help="people only, unless a person turned automation on")
     p.add_argument("target")
     p.add_argument("--what", required=True)
+
+    p = sub.add_parser("automate", help="people only: let the agent answer its own checkpoints on this target")
+    p.add_argument("target")
+    p.add_argument("--on", action="store_true", help="grant the mandate")
+    p.add_argument("--off", action="store_true", help="revoke it")
+    p.add_argument("--show", action="store_true", help="say what is in force (the default)")
+    p.add_argument("--until", default="PACKAGED", metavar="STAGE",
+                   help="the last stage the mandate covers (default PACKAGED; SUBMITTED is never allowed)")
+    p.add_argument("--note", default="", help="why, for the record")
 
     p = sub.add_parser("pool", help="import an existing residudes-engine layout prediction pool into the dossier")
     p.add_argument("target")
@@ -403,11 +420,32 @@ def _main(argv: list[str] | None = None) -> int:
             d.runs.append({"time": now(), "by": _actor(), "job": args.job, "scheduler": args.scheduler, "what": args.what,
                            "state": args.state or "submitted"})
         return _with(cfg, args.target, rec)
+    if args.cmd == "automate":
+        if args.show or not (args.on or args.off):
+            d = Dossier.load(cfg.targets_dir, args.target)
+            a = d.automation
+            if not a:
+                print(f"{args.target}: automation off — a person answers checkpoints and approves the slate")
+            else:
+                print(f"{args.target}: automation on, granted by {a['by']} at {a['time']}, up to {a['until']}"
+                      + (f"\n  note: {a['note']}" if a.get("note") else "")
+                      + "\n  submission stays a person's move in every case")
+            return 0
+        if os.environ.get("RESIDUDES_ACTOR") == "agent":
+            print("only a person turns automation on or off", file=sys.stderr)
+            return 2
+        if args.off:
+            return _with(cfg, args.target, lambda d: d.revoke_automation(_actor(), args.note)
+                         or f"{args.target}: automation off")
+        return _with(cfg, args.target,
+                     lambda d: f"{args.target}: automation on up to {d.authorise_automation(_actor(), args.until, args.note)['until']}"
+                               " (submission still needs a person)")
     if args.cmd == "stage":
         return _with(cfg, args.target, lambda d: d.move(args.stage, _actor(), args.why) or f"{d.target}: now {d.stage}")
     if args.cmd == "approve":
-        if os.environ.get("RESIDUDES_ACTOR") == "agent":
-            print("approve is for people only", file=sys.stderr)
+        if os.environ.get("RESIDUDES_ACTOR") == "agent" and not _automation_on(cfg, args.target):
+            print("approve is for people only (a person can turn automation on: "
+                  f"`residudes automate {args.target} --on`)", file=sys.stderr)
             return 2
         def approve(d):
             from residudes import gate
@@ -443,8 +481,9 @@ def _main(argv: list[str] | None = None) -> int:
         if args.cmd == "reply":
             return _with(cfg, args.target, lambda d: d.reply(_actor(), args.checkpoint, args.text) and f"{args.checkpoint}: reply recorded")
         if args.cmd == "resolve":
-            if os.environ.get("RESIDUDES_ACTOR") == "agent":
-                print("resolve is for people only", file=sys.stderr)
+            if os.environ.get("RESIDUDES_ACTOR") == "agent" and not _automation_on(cfg, args.target):
+                print("resolve is for people only (a person can turn automation on: "
+                      f"`residudes automate {args.target} --on`)", file=sys.stderr)
                 return 2
             return _with(cfg, args.target, lambda d: d.resolve(_actor(), args.checkpoint, args.outcome, args.note)
                          and f"{args.checkpoint} resolved: {args.outcome}; {d.target} now {d.stage}")

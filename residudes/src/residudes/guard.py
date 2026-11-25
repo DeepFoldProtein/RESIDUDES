@@ -6,7 +6,8 @@ Each rule comes from an incident on the DeepFold cluster during CASP17 or from t
   mass scancel / pueue clean|reset      kills other people's work or wipes the queue state
   force push                            rewrites shared history
   outward submission                    CASP submissions need a person's `residudes approve`
-  approval / identity                   the agent never runs `residudes approve` and never changes RESIDUDES_ACTOR
+  approval / identity                   the agent never changes RESIDUDES_ACTOR, and never grants itself
+                                        the automation mandate (`residudes automate --on`)
   per-job watcher loops                 2,131 watchers once froze GPFS; use one scheduler instead
 
 This is a seatbelt, not a sandbox: the agent runs as the same Unix user as the person, and a determined
@@ -37,6 +38,9 @@ RULES: list[tuple[str, re.Pattern, str]] = [
      "submitting to CASP is an outward action: a person runs it after `residudes approve`"),
     ("actor", re.compile(r"\bRESIDUDES_ACTOR\s*=|\b(unset|export)\s+RESIDUDES_ACTOR\b|-u\s*RESIDUDES_ACTOR\b"),
      "the agent does not change RESIDUDES_ACTOR"),
+    # a mandate the agent could grant itself would not be a mandate
+    ("mandate", re.compile(r"\bresidudes\s+automate\b"),
+     "only a person turns automation on or off (`residudes automate <target> --on`)"),
     ("approve", re.compile(r"\bresidudes(\.cli)?\b.*\b(approve|resolve)\b"),
      "`residudes approve` and `residudes resolve` are for people only"),
     ("rmtree", re.compile(r"\b(rmtree|removedirs)\b"), RM_WHY),

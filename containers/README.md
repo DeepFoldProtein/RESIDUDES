@@ -51,12 +51,41 @@ apptainer build residudes.sif containers/residudes/residudes.def
 docker build -t residudes:dev containers/residudes
 ```
 
-A push to `main` publishes the core images to `ghcr.io/deepfoldprotein/<name>:latest`, together with
+A push to `main` builds the three small images and, where the repository variable
+`PUBLISH_IMAGES` is set, publishes them to `ghcr.io/deepfoldprotein/<name>:latest` together with
 `:sha-…` tags and `:vX.Y` for release tags, via
 [`.github/workflows/containers.yml`](../.github/workflows/containers.yml). **Every image is verified
 before publication**: the agent image regenerates the analysis of the H1388 example, the QA image
 runs its 92 tests, and the MSA image executes each binary it provides. An image that fails its
 check is not published.
+
+A GHCR package belongs to the repository that first pushed it; a second repository's
+`GITHUB_TOKEN` is refused with `denied: permission_denied: read_package`. Publishing is therefore
+opt-in per repository, and package visibility is a separate, one-time setting: a package stays
+private until someone makes it public, whatever the repository's visibility.
+
+### The five large images
+
+They are not built in CI. A hosted runner has too little disk: with the preinstalled toolchains
+deleted (41 GB free), with docker and buildkit moved to `/mnt` (41 GB), and with the wheel cache
+disabled, the TensorRT and JAX builds still ended in `no space left on device`. They are built and
+pushed with Docker from a machine that has the disk:
+
+```sh
+echo "$GHCR_TOKEN" | docker login ghcr.io -u <you> --password-stdin   # PAT with write:packages
+containers/publish-large.sh                        # all five: build, check, push
+containers/publish-large.sh residudes-ef2          # or one
+PUSH=0 containers/publish-large.sh                 # build and check only
+```
+
+The script applies each recipe's build context (the engine images copy the vendored model
+sources; the GPU QA image needs `residudes-qa`'s lockfile), runs the same check CI runs for the
+small images, and removes each image locally afterwards, since they are 4–12 GB apiece.
+`residudes-engine-jax` is skipped unless `PUBLISH_JAX=1`: it contains the vendored AlphaFold 3
+code, which is CC BY-NC-SA 4.0.
+
+Until they are in the registry, `containers/verify.sh` builds them locally with Apptainer, which
+needs no daemon and no root.
 
 On the reference cluster, `podman` and `buildah` are installed but lack an `/etc/subuid` entry, so
 rootless OCI builds fail; `apptainer build` works without privileges.
