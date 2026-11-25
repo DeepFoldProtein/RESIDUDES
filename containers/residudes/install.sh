@@ -20,7 +20,10 @@ rm -rf /var/lib/apt/lists/*
     "claude-agent-sdk==0.2.187" "gemmi==0.6.5"
 
 # `residudes agent step` drives the Claude Code CLI through the SDK
-npm install -g --no-fund --no-audit @anthropic-ai/claude-code
+# No agent CLI here. Claude Code, Codex and the others authenticate as a person and are licensed
+# to one, so baking one into a shared image fixes a choice that is not the image's to make and
+# ships an account's tool to whoever pulls it. `residudes setup` picks from what the machine has
+# and says how to install one otherwise; mount it, or install it in the container at run time.
 
 # molterm renders structures in the terminal, and its MCP server gives the agent tools for it:
 # fetch, screenshot, select, measure, align, dssp. A conversation about a target is mostly about

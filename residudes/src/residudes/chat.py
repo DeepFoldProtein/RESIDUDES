@@ -211,7 +211,7 @@ def ensure(cfg: Config, target: str, harness: str | None = None) -> bool:
     if any(s["target"] == target for s in sessions()):
         return True
     ddir = Path(cfg.targets_dir) / target
-    found = available_harness(harness)
+    found = available_harness(harness or (cfg.extra.get("agent", {}) or {}).get("cli"))
     if not ddir.is_dir() or not found:
         return False
     _cmd, _name, argv = found
@@ -279,9 +279,9 @@ def chat_cmd(cfg: Config, target: str | None, harness: str | None, prefer: str |
     exists = any(s["target"] == target for s in sessions())
     _banner(cfg, target, new=not exists)
     if not exists:
-        found = available_harness(harness)
+        found = available_harness(harness or (cfg.extra.get("agent", {}) or {}).get("cli"))
         if not found:
-            print("no agent CLI on PATH (claude, codex, ag, gemini); `residudes chat` needs one")
+            print("no agent CLI on PATH (claude, codex, ag, gemini); `residudes setup` says how to install one")
             return 1
         _cmd, agent_name, _argv = found
         print(f"starting {green(agent_name)} in {dim(str(ddir))}")

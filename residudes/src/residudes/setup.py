@@ -119,12 +119,12 @@ def _print_resources(rep: dict) -> None:
 
 
 def _print_catalog_and_components(rep: dict) -> None:
-    print(bold("\n== 3. databases, weights, tools") + " (catalog.toml)")
+    print(bold("\n== 4. databases, weights, tools") + " (catalog.toml)")
     for c in rep["catalog"]:
         print(f"   {mark(c['status'])} {c['name']:32s} {dim(c['date'] or ''):10s}  {c['note']}")
         if c["fix"]:
             print("           " + dim(f"fix: {c['fix']}"))
-    print(bold("\n== 4. components"))
+    print(bold("\n== 5. components"))
     for c in rep["components"]:
         print(f"   {mark(c['status'])} {c['name']} {dim('(' + str(c['path']) + ')')}")
         for line in c.get("doctor", [])[-8:]:
@@ -207,7 +207,7 @@ def ask_databases(cfg, yes: bool) -> dict:
     have = dict(cfg.extra.get("databases") or {})
     if yes:
         return have
-    print(bold("\n== 2. what this machine already has"))
+    print(bold("\n== 3. what this machine already has"))
     print("   " + dim("one line each, empty if this machine does not have it; `residudes doctor` re-checks later"))
     for key, what in DB_QUESTIONS:
         print(f"\n   {what}")                     # the description on its own line, then the prompt
@@ -225,11 +225,12 @@ def run_setup(cfg_path: str | None, yes: bool, as_json: bool, project: str | Non
         print(json.dumps(report(cfg), indent=1, default=str))
         return 0
     _print_resources(report(cfg))          # 1. what this machine is
-    ask_databases(cfg, yes)                # 2. what it already has, asked before anything is checked
+    choose_harness(cfg, yes)               # 2. which agent CLI drives it
+    ask_databases(cfg, yes)                # 3. what it already has, asked before anything is checked
     rep = report(cfg)                      # 3-4. the catalogue and the components, with those answers
     _print_catalog_and_components(rep)
 
-    print(bold("\n== 5. residudes.toml"))
+    print(bold("\n== 6. residudes.toml"))
     p = config_path(cfg_path)
     suggested, others = _suggest_work_root(rep, cfg.work_root)
     if others:                      # say what else is there rather than silently preferring it
@@ -244,7 +245,7 @@ def run_setup(cfg_path: str | None, yes: bool, as_json: bool, project: str | Non
         Path(cfg.work_root, "targets").mkdir(parents=True, exist_ok=True)
         print("   " + green("wrote") + f" {p}; dossiers in {cfg.work_root}/targets")
 
-    print(bold("\n== 6. skills") + " (playbooks for Claude Code, Codex and Antigravity)")
+    print(bold("\n== 7. skills") + " (playbooks for Claude Code, Codex and Antigravity)")
     proj = Path(project) if project else None
     if proj is None and not yes:
         ans = _ask("   project directory to link the skills into (empty to skip)", "", yes)
@@ -255,7 +256,26 @@ def run_setup(cfg_path: str | None, yes: bool, as_json: bool, project: str | Non
               + "; ".join(f"{k}: {v}" for k, v in HARNESS_SKILL_DIRS.items()) + ")")
     print("   inside residudes/ every harness already finds them, and AGENTS.md (CLAUDE.md imports it) holds the rules")
 
-    print(bold("\n== 7. how to start a target"))
+    # Setting a machine up and never fetching what runs on it is a half-setup: the next command
+    # would fail on a missing image. The guided mode's agent does this by running verify.sh; the
+    # questions have to offer it too.
+    verify = RESIDUDES_DIR.parent / "containers" / "verify.sh"
+    print(bold("\n== 8. container images"))
+    if not verify.exists():
+        print("   " + dim(f"no {verify} in this checkout: skipping"))
+    elif yes:
+        # --yes means "take the defaults", not "spend an hour": obtaining eight images is a
+        # deliberate act, so it is printed rather than started.
+        print("   " + dim(f"not started under --yes: {verify}"))
+    elif _confirm("   fetch the images now and check the installation? (containers/verify.sh)", False):
+        print(dim("   " + str(verify)))
+        rc = subprocess.call(["bash", str(verify)])
+        print(("   " + green("the installation checks out")) if rc == 0 else
+              ("   " + yellow(f"verify.sh exited {rc}: see the lines above")))
+    else:
+        print("   " + dim(f"later: {verify}   (--gpu for the GPU images, --af3-db DIR --deep for the databases)"))
+
+    print(bold("\n== 9. how to start a target"))
     print("   residudes target add T1234 --fasta T1234.fasta [--stoich A3]   # creates the dossier")
     print("   residudes next T1234                                        # what the next step is, and its skill")
     print("   residudes agent step T1234                                  # let the agent do that step (asks nothing outward)")
@@ -322,6 +342,36 @@ HARNESS_CLI = (                       # command, name, how to pass a prompt and 
     ("ag", "Antigravity CLI", lambda prompt: ["ag", prompt]),
     ("gemini", "Gemini CLI", lambda prompt: ["gemini", "-i", prompt]),
 )
+
+# An agent CLI authenticates as a person and is licensed to one, so it is not in the image and
+# not installed for you: setup picks from what is here and otherwise says where to get one.
+HARNESS_INSTALL = {
+    "claude": "npm install -g @anthropic-ai/claude-code   (then `claude` once, to sign in)",
+    "codex": "npm install -g @openai/codex                (then `codex` once, to sign in)",
+    "ag": "see the Antigravity docs for your platform",
+    "gemini": "npm install -g @google/gemini-cli          (then `gemini` once, to sign in)",
+}
+
+
+def choose_harness(cfg, yes: bool) -> str | None:
+    """Which agent CLI this machine will use, from the ones installed."""
+    here = [(cmd, name) for cmd, name, _ in HARNESS_CLI if shutil.which(cmd)]
+    current = (cfg.extra.get("agent", {}) or {}).get("cli") if cfg else None
+    print(bold("\n== 2. the agent CLI"))
+    if not here:
+        print("   " + yellow("none installed.") + " residudes drives one of these; install whichever you have access to:")
+        for cmd, name, _ in HARNESS_CLI:
+            print(f"     {name:16} {dim(HARNESS_INSTALL[cmd])}")
+        print("   " + dim("then run `residudes setup` again, or `residudes doctor` to re-check"))
+        return None
+    print("   installed: " + ", ".join(green(n) for _, n in here))
+    if len(here) == 1 and not current:
+        chosen = here[0][0]
+        print(f"   using {green(here[0][1])}")
+    else:
+        chosen = _ask("   which should residudes use", current or here[0][0], yes)
+    cfg.extra.setdefault("agent", {})["cli"] = chosen
+    return chosen
 
 
 def available_harness(preferred: str | None = None) -> tuple[str, str, list] | None:
