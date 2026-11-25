@@ -14,10 +14,9 @@ COPY pyproject.toml uv.lock /opt/core/
 COPY install.sh /tmp/install.sh
 # one layer per stage: a 9 GB layer is what fails to pull, three 3 GB ones do not
 RUN sh /tmp/install.sh system
-RUN sh /tmp/install.sh venv
-RUN sh /tmp/install.sh torch
+RUN sh /tmp/install.sh base
 RUN sh /tmp/install.sh cuda
-RUN sh /tmp/install.sh rest
+RUN sh /tmp/install.sh torch
 RUN sh /tmp/install.sh check && rm /tmp/install.sh
 
 # What the package page shows for this image. Without these every package inherits the

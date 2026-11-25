@@ -25,45 +25,37 @@ fi
 
 cd /opt/core
 
-# The venv is 9 GB, and a single `uv sync` makes it a single layer that size - which does not
-# survive every network: measured, a 9 GB blob dies partway with PROTOCOL_ERROR or unexpected EOF
-# while the 3 GB images pull cleanly on the same link. So the heaviest wheels go in first, one
-# group per call, and each call is its own RUN in the Dockerfile. Versions are read from the
-# lockfile, and the closing `uv sync --frozen` is what guarantees the result still matches it.
-
-heavy() {        # the pinned version of a package, from uv.lock
+# The venv is 9 GB, and one `uv sync` makes one layer that size - which does not survive every
+# network: measured, a 9 GB blob dies partway with PROTOCOL_ERROR or unexpected EOF while the 3 GB
+# images pull cleanly on the same link. So the sync is done in passes, each its own RUN in the
+# Dockerfile, holding the heaviest packages back until last. Every pass is `uv sync --frozen`, so
+# the project's indexes are used (torch comes from the PyTorch index, as a +cu128 local version)
+# and each pass is verified against the lockfile rather than hand-pinned.
+heavy_args() {      # --no-install-package for each package whose wheel is over the given size
     /usr/bin/python3.12 - "$1" <<'EOF'
 import sys, tomllib
-name = sys.argv[1]
+limit = float(sys.argv[1]) * 1e9
 lock = tomllib.load(open("/opt/core/uv.lock", "rb"))
-for p in lock.get("package", []):
-    if p["name"] == name:
-        print(f"{name}=={p['version']}")
-        break
+names = [p["name"] for p in lock.get("package", [])
+         if max((w.get("size", 0) for w in p.get("wheels", [])), default=0) > limit]
+print(" ".join(f"--no-install-package {n}" for n in sorted(names)))
 EOF
 }
 
-nvidia_pins() {  # every nvidia-* package the lock pins, as install arguments
-    /usr/bin/python3.12 - <<'EOF'
-import tomllib
-lock = tomllib.load(open("/opt/core/uv.lock", "rb"))
-print(" ".join(f"{p['name']}=={p['version']}" for p in lock.get("package", [])
-                if p["name"].startswith(("nvidia-", "tensorrt"))))
-EOF
+sync() {            # one pass, excluding what the caller holds back
+    # shellcheck disable=SC2086
+    UV_PROJECT_ENVIRONMENT=/opt/venv uv sync --frozen --no-install-project \
+        --python /usr/bin/python3.12 $1
 }
 
-if [ "$stage" = all ] || [ "$stage" = venv ]; then
-    uv venv /opt/venv --python /usr/bin/python3.12
-fi
-if [ "$stage" = all ] || [ "$stage" = torch ]; then
-    VIRTUAL_ENV=/opt/venv uv pip install --no-deps "$(heavy torch)"
+if [ "$stage" = all ] || [ "$stage" = base ]; then
+    sync "$(heavy_args 0.2) --no-install-package torch"       # everything small
 fi
 if [ "$stage" = all ] || [ "$stage" = cuda ]; then
-    # shellcheck disable=SC2046
-    VIRTUAL_ENV=/opt/venv uv pip install --no-deps $(nvidia_pins)
+    sync "--no-install-package torch"                         # the CUDA wheels
 fi
-if [ "$stage" = all ] || [ "$stage" = rest ]; then
-    UV_PROJECT_ENVIRONMENT=/opt/venv uv sync --frozen --no-install-project --python /usr/bin/python3.12
+if [ "$stage" = all ] || [ "$stage" = torch ]; then
+    sync ""                                                   # torch last, and the lock is met
     rm -rf /root/.cache/uv
 fi
 [ "$stage" = all ] || [ "$stage" = check ] || exit 0

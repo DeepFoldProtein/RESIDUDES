@@ -31,31 +31,38 @@ cd /opt/core
 # Dockerfile, holding the heaviest packages back until last. Every pass is `uv sync --frozen`, so
 # the project's indexes are used (torch comes from the PyTorch index, as a +cu128 local version)
 # and each pass is verified against the lockfile rather than hand-pinned.
-heavy_args() {      # --no-install-package for each package whose wheel is over the given size
-    /usr/bin/python3.12 - "$1" <<'EOF'
+groups() {          # packages NOT in the first $1 of $2 groups, as --no-install-package arguments
+    /usr/bin/python3.12 - "$1" "$2" <<'EOF'
 import sys, tomllib
-limit = float(sys.argv[1]) * 1e9
+upto, total = int(sys.argv[1]), int(sys.argv[2])
 lock = tomllib.load(open("/opt/core/uv.lock", "rb"))
-names = [p["name"] for p in lock.get("package", [])
-         if max((w.get("size", 0) for w in p.get("wheels", [])), default=0) > limit]
-print(" ".join(f"--no-install-package {n}" for n in sorted(names)))
+sized = sorted(((max((w.get("size", 0) for w in p.get("wheels", [])), default=0), p["name"])
+                for p in lock.get("package", [])), reverse=True)
+# Greedy bin packing by wheel size: the heaviest package goes to the lightest group, which gives
+# groups of similar weight whatever the lockfile holds. One group per build step, so no layer is
+# the whole environment.
+bins = [[0, []] for _ in range(total)]
+for size, name in sized:
+    b = min(bins, key=lambda x: x[0])
+    b[0] += size
+    b[1].append(name)
+held = [n for b in bins[upto:] for n in b[1]]
+print(" ".join(f"--no-install-package {n}" for n in sorted(held)))
 EOF
 }
 
-sync() {            # one pass, excluding what the caller holds back
+sync() {            # one pass, holding back the groups that come later
     # shellcheck disable=SC2086
     UV_PROJECT_ENVIRONMENT=/opt/venv uv sync --frozen --no-install-project \
         --python /usr/bin/python3.12 $1
 }
 
-if [ "$stage" = all ] || [ "$stage" = base ]; then
-    sync "$(heavy_args 0.2) --no-install-package torch"       # everything small
-fi
-if [ "$stage" = all ] || [ "$stage" = cuda ]; then
-    sync "--no-install-package torch"                         # the CUDA wheels
-fi
-if [ "$stage" = all ] || [ "$stage" = torch ]; then
-    sync ""                                                   # torch last, and the lock is met
+GROUPS=4
+if [ "$stage" = all ] || [ "$stage" = p1 ]; then sync "$(groups 1 $GROUPS)"; fi
+if [ "$stage" = all ] || [ "$stage" = p2 ]; then sync "$(groups 2 $GROUPS)"; fi
+if [ "$stage" = all ] || [ "$stage" = p3 ]; then sync "$(groups 3 $GROUPS)"; fi
+if [ "$stage" = all ] || [ "$stage" = p4 ]; then
+    sync ""                                   # everything, and the lock is met exactly
     rm -rf /root/.cache/uv
 fi
 [ "$stage" = all ] || [ "$stage" = check ] || exit 0
