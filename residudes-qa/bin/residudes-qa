@@ -15,6 +15,7 @@ if [ -n "${RESIDUDES_QA_IMAGE:-}" ]; then
             case ",$binds," in *",$top,"*) ;; *) binds="${binds:+$binds,}$top" ;; esac ;;
         esac
     done
+    echo "▶ residudes-qa in image $(basename "$RESIDUDES_QA_IMAGE"); bound: ${binds:-none}" >&2
     exec apptainer run --nv ${binds:+-B "$binds"} -B "$HERE:/opt/residudes-qa" "$RESIDUDES_QA_IMAGE" "$@"
 fi
 
