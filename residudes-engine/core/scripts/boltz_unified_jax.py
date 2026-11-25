@@ -930,13 +930,13 @@ def install_stage_profiler() -> None:
     def _pre(name):
         def hook(mod, args):
             _sync()
-            mod.__dict__["_fmx_t0"] = time.perf_counter()
+            mod.__dict__["_residudes_t0"] = time.perf_counter()
         return hook
 
     def _post(name):
         def hook(mod, args, output):
             _sync()
-            t0 = mod.__dict__.pop("_fmx_t0", None)
+            t0 = mod.__dict__.pop("_residudes_t0", None)
             if t0 is not None:
                 _acc(name, time.perf_counter() - t0)
         return hook

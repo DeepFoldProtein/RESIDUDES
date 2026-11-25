@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J fmx-setup-venv
+#SBATCH -J residudes-engine-setup-venv
 #SBATCH -c 8
 #SBATCH -t 03:00:00
 # Build the runtime venv at core/.venv on a compute node (needs network to

@@ -206,7 +206,7 @@ def cmd_submit(ns: argparse.Namespace) -> int:
     for seed in seeds:
         out = base if seed is None else base / f"seed_{seed}"
         out.mkdir(parents=True, exist_ok=True)
-        name = f"fmx-{model.tag}-{ns.backend}" + (f"-s{seed}" if seed is not None else "")
+        name = f"residudes-{model.tag}-{ns.backend}" + (f"-s{seed}" if seed is not None else "")
         cmd = ["sbatch", "-J", name, "-p", str(sl.get("partition", "normal")),
                "--gres", str(sl.get("gres", "gpu:1")), "-c", str(sl.get("cpus", 4)),
                "-t", str(ns.time or sl.get("time", "02:00:00")),
@@ -571,7 +571,7 @@ def cmd_engines(ns: argparse.Namespace) -> int:
             args = ["engines", "build", "--model", spec.tag, "--kernel", ns.kernel,
                     "--max-seqlen", str(ns.max_seqlen), "--min-seqlen", str(ns.min_seqlen), *ns.extra]
             constraint = (site.slurm.get("constraint") or {}).get(ns.gpu) if ns.gpu else None
-            return setup_mod.slurm_wrap(site, args, name=f"fmx-build-{spec.tag}-{ns.kernel}-{ns.max_seqlen}",
+            return setup_mod.slurm_wrap(site, args, name=f"residudes-build-{spec.tag}-{ns.kernel}-{ns.max_seqlen}",
                                         log_dir=RESIDUDES_ENGINE_ROOT / "runs" / "_setup", time_limit=ns.time,
                                         gpu_constraint=constraint, dry_run=ns.dry_run)
         if gpu is None:
