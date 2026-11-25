@@ -75,6 +75,7 @@ for name in $IMAGES; do
         docker push "$REGISTRY/$name:$TAG"
         echo "  pushed $REGISTRY/$name:$TAG"
     fi
-    docker image rm -f "$name:$TAG" >/dev/null 2>&1 || true     # 10 GB each; do not keep five around
+    # 10-24 GB each; do not keep five around. Both tags: the registry one alone keeps the image.
+    docker image rm -f "$name:$TAG" "$REGISTRY/$name:$TAG" >/dev/null 2>&1 || true
 done
 rm -rf "$REPO"/.ctx-residudes-qa*
