@@ -1,0 +1,27 @@
+Bootstrap: docker
+From: debian:13-slim
+
+%files
+    install.sh /opt/relax-install.sh
+
+%post
+    sh /opt/relax-install.sh
+    rm /opt/relax-install.sh
+
+%environment
+    export PATH=/opt/relax/bin:$PATH
+    export AMBERHOME=/opt/relax
+    export GMXLIB=${GMXLIB:-/opt/relax/share/gromacs/top}
+
+%runscript
+    exec "$@"
+
+%help
+    GROMACS 2024.2 and AmberTools 24.8, for `residudes relax`. The pipeline and Rosetta are
+    mounted, since neither is in this repository:
+
+        apptainer exec -B /path/to/gromacs/relax:/opt/pipeline -B /path/to/rosetta:/opt/rosetta \
+            residudes-relax.sif /opt/pipeline/minimization.sh model.pdb --bb-fc 1000000
+
+    residudes relax --model model.cif --variant gromacs-rosetta runs the same thing through
+    the agent and records the result in the dossier.

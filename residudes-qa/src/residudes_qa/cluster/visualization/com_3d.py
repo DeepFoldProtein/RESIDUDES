@@ -44,7 +44,8 @@ def _load_chain_ca(cif_path, chain_ids: Sequence[str]) -> Dict[str, np.ndarray]:
             if ca is None:
                 for atom in res:
                     if atom.name == 'CA':
-                        ca = atom; break
+                        ca = atom
+                        break
             if ca is None:
                 continue
             out[chain.name].append((ca.pos.x, ca.pos.y, ca.pos.z))
@@ -124,7 +125,9 @@ def render_com_3d(
         _draw_anchor(ax)
         ax.scatter(mid[:, 0], mid[:, 1], mid[:, 2],
                    c=colors, s=4, alpha=0.6, depthshade=False)
-        ax.set_xlabel('X (Å)'); ax.set_ylabel('Y (Å)'); ax.set_zlabel('Z (Å)')
+        ax.set_xlabel('X (Å)')
+        ax.set_ylabel('Y (Å)')
+        ax.set_zlabel('Z (Å)')
         ax.set_title(f'probe midpoint ({label})')
         ax.view_init(elev=elev, azim=azim)
     fig.suptitle(
@@ -151,7 +154,9 @@ def render_com_3d(
             ax.scatter(mid[mask, 0], mid[mask, 1], mid[mask, 2],
                        c=col, s=3, alpha=0.5, depthshade=False,
                        label=f'{meth} (n={mask.sum()})')
-        ax.set_xlabel('X (Å)'); ax.set_ylabel('Y (Å)'); ax.set_zlabel('Z (Å)')
+        ax.set_xlabel('X (Å)')
+        ax.set_ylabel('Y (Å)')
+        ax.set_zlabel('Z (Å)')
         ax.set_title(f'by generator ({label})')
         ax.view_init(elev=elev, azim=azim)
         if i == 3:

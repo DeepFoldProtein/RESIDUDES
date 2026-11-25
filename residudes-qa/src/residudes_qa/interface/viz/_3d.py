@@ -189,7 +189,7 @@ def plot_filter_funnel(
         stats_history = [stats_history]
     for stats in stats_history:
         if "n_input" in stats:
-            rows.append((f"input", int(stats["n_input"]), ""))
+            rows.append(("input", int(stats["n_input"]), ""))
         for step in stats.get("by_filter_step", []):
             rows.append(
                 (

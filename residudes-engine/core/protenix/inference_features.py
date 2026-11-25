@@ -77,7 +77,7 @@ os.chdir(_PROTENIX_ROOT)
 # Monkey-patch Protenix's scipy-based weight init (~267s) with torch native (~2s).
 import importlib.util
 _fi_spec = importlib.util.spec_from_file_location(
-    "biotrt_fast_init", os.path.join(_SCRIPT_DIR, "_fast_init.py"))
+    "residudes_fast_init", os.path.join(_SCRIPT_DIR, "_fast_init.py"))
 _fi_mod = importlib.util.module_from_spec(_fi_spec)
 _fi_spec.loader.exec_module(_fi_mod)
 _fi_mod.patch_protenix_trunc_normal()
@@ -93,7 +93,7 @@ def _inject_trt(model, engines_dir: str, pairformer_only: bool = False):
 
     import importlib.util
     spec = importlib.util.spec_from_file_location(
-        "biotrt_compat", os.path.join(_SCRIPT_DIR, "compat.py"))
+        "residudes_compat", os.path.join(_SCRIPT_DIR, "compat.py"))
     compat = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(compat)
 

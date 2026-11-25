@@ -19,8 +19,7 @@ states that are not stages (a loop back, a safety refusal, and the moves only a 
 | `fig/` | at 480 px, embedded in the overview figures, which render at 1.5× |
 
 `python3 split_mascots.py .` rebuilds `cells/` and `cutout/` from `sheets/`, and `python3 make_logo.py .` rebuilds
-`logo/` from `logo/source.png` (numpy, scipy, Pillow; on this cluster
-`/gpfs/deepfold/casp/casp17/Bio-TRT/.venv/bin/python`). `small/`, `thumb/` and `fig/` are
+`logo/` from `logo/source.png` (any python with numpy, scipy and Pillow). `small/`, `thumb/` and `fig/` are
 `convert <f> -resize 800x -strip`, `-resize 360x` and `-resize 480x`.
 
 **Where they are used.** The logo heads [the repo README](../README.md) and [residudes's](../residudes/README.md), and

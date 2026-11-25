@@ -12,7 +12,7 @@ Two implementations live here:
    cuEquivariance fused triangle kernels (the same kernels the TRT engines
    use). On RTX 4090 a single `tri_mul` call on N=76, c_z=256 takes
    ~0.09 ms vs >5 ms for the manual path. Activated by
-   ``BIO_TRT_JAX_CUEQ=1`` (default off until measured end-to-end).
+   ``RESIDUDES_ENGINE_JAX_CUEQ=1`` (default off until measured end-to-end).
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ def _get_cuex():
     if _CUEX_TRIED:
         return _CUEX
     _CUEX_TRIED = True
-    if os.environ.get("BIO_TRT_JAX_CUEQ", "0").lower() not in (
+    if os.environ.get("RESIDUDES_ENGINE_JAX_CUEQ", "0").lower() not in (
         "1", "true", "yes", "on"
     ):
         return None
@@ -257,7 +257,7 @@ class TriangleAttention(hk.Module):
             num_seq = q.shape[0]; num_res = q.shape[1]
             try:
                 bn_swap_at = int(os.environ.get(
-                    "BIO_TRT_JAX_CUEQ_TRI_ATTN_BN_SWAP_AT", "256"))
+                    "RESIDUDES_ENGINE_JAX_CUEQ_TRI_ATTN_BN_SWAP_AT", "256"))
             except ValueError:
                 bn_swap_at = 256
 
@@ -335,9 +335,9 @@ class TriangleAttention(hk.Module):
         # same key mask: adding -1e9 on masked keys to the [H,N,N] bias is exact
         # for valid rows and only changes fully-masked rows (garbage either way).
         # cuEquivariance's kernel takes the mask natively, so it keeps the mask.
-        # BIO_TRT_JAX_FOLD_MASK=0 restores the old call.
+        # RESIDUDES_ENGINE_JAX_FOLD_MASK=0 restores the old call.
         use_cuex = _get_cuex() is not None and self.impl != "xla"
-        if not use_cuex and os.environ.get("BIO_TRT_JAX_FOLD_MASK", "1") == "1":
+        if not use_cuex and os.environ.get("RESIDUDES_ENGINE_JAX_FOLD_MASK", "1") == "1":
             key_valid = jnp.any(pair_mask.astype(jnp.bool_), axis=0)          # [N]
             nonbatched_bias = nonbatched_bias + jnp.where(
                 key_valid, 0.0, -1e9).astype(nonbatched_bias.dtype)[None, None, :]

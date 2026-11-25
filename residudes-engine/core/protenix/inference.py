@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Protenix inference with Bio-TRT TRT acceleration.
+Protenix inference with residudes-engine TRT acceleration.
 
 Monkey-patches Protenix's InferenceRunner to inject TRT after model loading.
 Runs from models/protenix/ CWD so Protenix config imports work correctly.
@@ -104,13 +104,13 @@ def _maybe_convert_af3_input(json_path):
         files = [json_path]
 
     spec = importlib.util.spec_from_file_location(
-        "biotrt_af3_adapter",
+        "residudes_af3_adapter",
         os.path.join(_REPO_ROOT, "scripts", "af3_input_adapter.py"),
     )
     adapter = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(adapter)
 
-    sidecar = Path(tempfile.mkdtemp(prefix="biotrt_pt2_af3_"))
+    sidecar = Path(tempfile.mkdtemp(prefix="residudes_pt2_af3_"))
     merged_jobs: list = []
     for fp in files:
         with open(fp) as f:
@@ -154,7 +154,7 @@ def _resolve_json_paths(json_path):
                         changed = True
     if changed:
         tmp = tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", prefix="biotrt_", delete=False)
+            mode="w", suffix=".json", prefix="residudes_", delete=False)
         json.dump(data, tmp, indent=2)
         tmp.close()
         return tmp.name
@@ -183,7 +183,7 @@ os.chdir(_PROTENIX_ROOT)
 # Checkpoint loading overwrites these weights anyway, so exact init values don't matter.
 import importlib.util
 _fi_spec = importlib.util.spec_from_file_location(
-    "biotrt_fast_init", os.path.join(_SCRIPT_DIR, "_fast_init.py"))
+    "residudes_fast_init", os.path.join(_SCRIPT_DIR, "_fast_init.py"))
 _fi_mod = importlib.util.module_from_spec(_fi_spec)
 _fi_spec.loader.exec_module(_fi_mod)
 _fi_mod.patch_protenix_trunc_normal()
@@ -200,7 +200,7 @@ def _inject_trt(model, engines_dir: str, pairformer_only: bool = False):
     # Load compat via file path to avoid protenix namespace collision
     import importlib.util
     spec = importlib.util.spec_from_file_location(
-        "biotrt_compat", os.path.join(_SCRIPT_DIR, "compat.py"))
+        "residudes_compat", os.path.join(_SCRIPT_DIR, "compat.py"))
     compat = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(compat)
 
@@ -260,7 +260,7 @@ def _run_ipsae_hook():
     _hook_path = os.path.join(
         _REPO_ROOT, "scripts", "postprocess", "protenix_ipsae.py")
     spec = importlib.util.spec_from_file_location(
-        "biotrt_protenix_ipsae", _hook_path)
+        "residudes_protenix_ipsae", _hook_path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     logger.info(
@@ -278,7 +278,7 @@ def _run_ipsae_hook():
 
 if __name__ == "__main__":
     # Optional stage profiler — share the same env knob the JAX path uses.
-    if os.environ.get("BIO_TRT_JAX_PROFILE", "0") == "1":
+    if os.environ.get("RESIDUDES_ENGINE_JAX_PROFILE", "0") == "1":
         from protenix.model.protenix import Protenix as _Protenix
         _orig_main_loop = _Protenix._main_inference_loop
 
@@ -292,7 +292,7 @@ if __name__ == "__main__":
             return out
 
         _Protenix._main_inference_loop = _patched_main_loop
-        logger.info("Stage profiler enabled (BIO_TRT_JAX_PROFILE=1)")
+        logger.info("Stage profiler enabled (RESIDUDES_ENGINE_JAX_PROFILE=1)")
 
     from runner.inference import run
     run()

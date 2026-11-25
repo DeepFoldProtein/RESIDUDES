@@ -148,7 +148,7 @@ def analyze_cluster_network(
                 inter_cluster[i, j] = np.mean(distance_matrix[np.ix_(idx_i, idx_j)])
 
     # --- Cluster connectivity (edge count between clusters) ---
-    cluster_connectivity = {int(l): {} for l in unique_labels}
+    cluster_connectivity = {int(lab): {} for lab in unique_labels}
     for u, v in G.edges():
         lu, lv = labels[u], labels[v]
         if lu != lv:

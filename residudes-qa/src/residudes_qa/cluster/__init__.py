@@ -49,6 +49,9 @@ if GPU_AVAILABLE:
     )
 
 __all__ = [
+    "compute_tm_matrix_gpu",
+    "compute_itm_matrix_gpu",
+    "compute_drmsd_matrix_gpu",
     # Core
     "compute_distance_matrix",
     "similarity_to_distance",

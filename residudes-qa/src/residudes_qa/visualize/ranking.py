@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Optional
 
 import pandas as pd
 
-from .reader import PredictionRun, SampleFiles, load_all_ranking_scores, load_summary_confidences
-from .metrics import compute_plddt_stats, residue_plddt
+from .reader import PredictionRun, load_summary_confidences
 
 
 def build_ranking_dataframe(run: PredictionRun) -> pd.DataFrame:

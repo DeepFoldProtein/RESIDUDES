@@ -26,9 +26,9 @@ from protenix.data.utils import save_structure_cif
 
 
 def _load_cif_normalize():
-    """Import `cif_normalize.normalize_model_cif` from Bio-TRT/scripts/.
+    """Import `cif_normalize.normalize_model_cif` from core/scripts/.
 
-    Bio-TRT's `scripts/` dir is located relative to this module
+    residudes-engine's `scripts/` dir is located relative to this module
     (`models/protenix/runner/dumper.py` → ../../../scripts), so the runner
     finds the helper regardless of where the repo is checked out.
     """

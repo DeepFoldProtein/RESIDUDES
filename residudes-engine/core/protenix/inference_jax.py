@@ -41,8 +41,8 @@ from pathlib import Path
 logger = logging.getLogger("protenix-jax")
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-_BIO_TRT_ROOT = os.path.dirname(_SCRIPT_DIR)
-_PROTENIX_ROOT = os.path.join(_BIO_TRT_ROOT, "models/protenix")
+_CORE_ROOT = os.path.dirname(_SCRIPT_DIR)
+_PROTENIX_ROOT = os.path.join(_CORE_ROOT, "models/protenix")
 
 # ── Pre-parse JAX-only flags (so Protenix's parser doesn't see them) ──────
 _pre = argparse.ArgumentParser(add_help=False)
@@ -72,7 +72,7 @@ jax.config.update("jax_persistent_cache_min_compile_time_secs", 1.0)
 jax.config.update("jax_persistent_cache_min_entry_size_bytes", 0)
 
 # ── Import paths ──────────────────────────────────────────────────────────
-sys.path.insert(0, _BIO_TRT_ROOT)        # residudes_engine_jax
+sys.path.insert(0, _CORE_ROOT)        # residudes_engine_jax
 sys.path.insert(0, _PROTENIX_ROOT)        # protenix native
 _USER_CWD = os.getcwd()
 os.chdir(_PROTENIX_ROOT)
@@ -112,13 +112,13 @@ def _maybe_convert_af3_input(json_path):
         files = [json_path]
 
     spec = _ilu.spec_from_file_location(
-        "biotrt_af3_adapter",
-        os.path.join(_BIO_TRT_ROOT, "scripts", "af3_input_adapter.py"),
+        "residudes_af3_adapter",
+        os.path.join(_CORE_ROOT, "scripts", "af3_input_adapter.py"),
     )
     adapter = _ilu.module_from_spec(spec)
     spec.loader.exec_module(adapter)
 
-    sidecar = _Path(tempfile.mkdtemp(prefix="biotrt_pt2_jax_af3_"))
+    sidecar = _Path(tempfile.mkdtemp(prefix="residudes_pt2_jax_af3_"))
     merged_jobs = []
     for fp in files:
         with open(fp) as f:
@@ -160,7 +160,7 @@ def _resolve_json_paths(json_path):
     if not changed:
         return json_path
     tmp = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".json", prefix="biotrt_pt2_jax_", delete=False)
+        mode="w", suffix=".json", prefix="residudes_pt2_jax_", delete=False)
     _json.dump(data, tmp, indent=2)
     tmp.close()
     return tmp.name
@@ -181,7 +181,7 @@ for _i, _arg in enumerate(sys.argv[:-1]):
 # Reuse the fast-init monkeypatch (~265s -> ~2s init time).
 import importlib.util
 _fi_spec = importlib.util.spec_from_file_location(
-    "biotrt_fast_init", os.path.join(_SCRIPT_DIR, "_fast_init.py"))
+    "residudes_fast_init", os.path.join(_SCRIPT_DIR, "_fast_init.py"))
 _fi_mod = importlib.util.module_from_spec(_fi_spec)
 _fi_spec.loader.exec_module(_fi_mod)
 _fi_mod.patch_protenix_trunc_normal()
@@ -243,8 +243,8 @@ if not _jax_args.no_jax:
 
     _ri.infer_predict = _save_tokamax_after(_ri.infer_predict)
 
-# ── Optional stage timing (BIO_TRT_JAX_PROFILE=1) ─────────────────────────
-if not _jax_args.no_jax and os.environ.get("BIO_TRT_JAX_PROFILE", "0") == "1":
+# ── Optional stage timing (RESIDUDES_ENGINE_JAX_PROFILE=1) ─────────────────────────
+if not _jax_args.no_jax and os.environ.get("RESIDUDES_ENGINE_JAX_PROFILE", "0") == "1":
     import time as _time
     import torch as _torch
     from protenix.model.protenix import Protenix as _Protenix
@@ -284,7 +284,7 @@ if not _jax_args.no_jax and os.environ.get("BIO_TRT_JAX_PROFILE", "0") == "1":
     _trunk_sums = {}
 
     def _attach_trunk_timers(model):
-        if getattr(model, "_biotrt_trunk_timers_attached", False):
+        if getattr(model, "_residudes_trunk_timers_attached", False):
             return
         _wrap_module_timer(model.input_embedder, "input_embedder", _trunk_sums)
         _wrap_module_timer(model.msa_module, "msa_module", _trunk_sums)
@@ -296,7 +296,7 @@ if not _jax_args.no_jax and os.environ.get("BIO_TRT_JAX_PROFILE", "0") == "1":
             )
         if hasattr(model, "confidence_head"):
             _wrap_module_timer(model.confidence_head, "confidence_head", _trunk_sums)
-        model._biotrt_trunk_timers_attached = True
+        model._residudes_trunk_timers_attached = True
 
     _orig_get_pf = _Protenix.get_pairformer_output
 
@@ -316,7 +316,7 @@ if not _jax_args.no_jax and os.environ.get("BIO_TRT_JAX_PROFILE", "0") == "1":
         return out
 
     _Protenix.get_pairformer_output = _patched_get_pf
-    logger.info("Stage profiler enabled (BIO_TRT_JAX_PROFILE=1)")
+    logger.info("Stage profiler enabled (RESIDUDES_ENGINE_JAX_PROFILE=1)")
 
 
 # ── (optional) full diffusion sampler in JAX ─────────────────────────────

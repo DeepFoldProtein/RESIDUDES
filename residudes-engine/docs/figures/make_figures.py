@@ -333,7 +333,8 @@ def fig_terminal():
 
 # ── README figures ────────────────────────────────────────────────────────
 
-MODELS = ["Protenix v2", "OpenFold 3", "Boltz-2", "AlphaFold 3"]
+MODELS = ["Protenix v2", "OpenFold 3", "Boltz-2", "AlphaFold 3"]          # the models with more than one backend
+OVERVIEW_MODELS = MODELS + ["ESMFold2"]      # ef2 has no TensorRT engine and no JAX port: PyTorch only
 SUMMARY = OUT.parent / "benchmark" / "speedup_summary.json"    # written by bench/collect.py
 
 
@@ -349,7 +350,7 @@ def speedups() -> tuple[dict, dict]:
 
 
 def fig_overview():
-    """The README hero: one line from the sequence to the structure; the four models as parallel tracks between
+    """The README hero: one line from the sequence to the structure; the five models as parallel tracks between
     the input.json interchange and the output, each carrying its measured forward-pass speed-up per backend.
     Drawn large: GitHub shows it about 880 px wide, so text is at least 18 px on 1600 px."""
     sp, facts = speedups()
@@ -363,7 +364,7 @@ def fig_overview():
     y = 470
     s.line(80, y, 640, y, stroke=rail, sw=12, cap="round")
     s.line(1340, y, 1560, y, stroke=rail, sw=12, cap="round")
-    ys = [y - 165, y - 55, y + 55, y + 165]
+    ys = [y - 176, y - 88, y, y + 88, y + 176]
     for yy in ys:
         s.path(f"M 640 {y} C 730 {y}, 730 {yy}, 820 {yy} L 1200 {yy} C 1270 {yy}, 1270 {y}, 1340 {y}", stroke=rail, sw=7)
     s.line(390, y - 6, 390, 200, stroke=grey, sw=4, cap="round")
@@ -388,11 +389,14 @@ def fig_overview():
     station(1340, y, "", None, big=True)
     station(1460, y, "Prediction", "model.cif · arrays", cmd="verify")
     cw, cg = 92, 12
-    for yy, name in zip(ys, MODELS):
+    for yy, name in zip(ys, OVERVIEW_MODELS):
         s.circle(840, yy, 12, fill="white", stroke=rail, sw=5)
         s.text(840, yy - 24, name, size=22, weight="bold", fill=ink, anchor="middle")
-        badges = [(TRT, f"{sp[name]['trt'][0]:.2f}×"), (JAX, f"{sp[name]['jax'][0]:.2f}×"), (TORCH, "1×")]
-        for j, (col, lab) in enumerate(badges):
+        if name in sp:
+            cells = [(0, TRT, f"{sp[name]['trt'][0]:.2f}×"), (1, JAX, f"{sp[name]['jax'][0]:.2f}×"), (2, TORCH, "1×")]
+        else:
+            cells = [(2, TORCH, "1×")]       # ESMFold2: nothing to compare, it has the one backend
+        for j, col, lab in cells:
             bx = 925 + j * (cw + cg)
             s.rect(bx, yy - 18, cw, 36, fill=col, stroke="none", r=18)
             s.text(bx + cw / 2, yy + 8, lab, size=21, weight="bold", fill="white", anchor="middle")
@@ -414,7 +418,7 @@ def fig_speed():
     s = Svg(W, H)
     ink, grey, rule = "#141414", "#6d6d6d", "#d9d9d9"
     s.text(60, 78, "residudes-engine", size=48, weight="bold", fill=ink, spacing="-0.5")
-    s.text(60, 118, "four models, three backends, one command", size=26, fill=grey)   # own line: fits any title
+    s.text(60, 118, "three backends, one command: the four models that have all three", size=26, fill=grey)
     gx, gy, cw, rh = 400, 200, 330, 104
     cols = [("PyTorch", TORCH, None), ("TensorRT", TRT, "trt"), ("JAX", JAX, "jax")]
 

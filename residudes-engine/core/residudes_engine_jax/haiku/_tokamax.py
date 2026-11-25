@@ -14,8 +14,8 @@ We fall back to ``jax.nn.dot_product_attention`` and the existing
 hand-rolled einsum/SwiGLU paths.
 
 Selection is also controllable via env vars:
-  BIO_TRT_JAX_TOKAMAX           = "0" / "1" (default: auto = "1" if importable)
-  BIO_TRT_JAX_ATTENTION_IMPL    = "auto" (default), "mosaic", "triton",
+  RESIDUDES_ENGINE_JAX_TOKAMAX           = "0" / "1" (default: auto = "1" if importable)
+  RESIDUDES_ENGINE_JAX_ATTENTION_IMPL    = "auto" (default), "mosaic", "triton",
                                   "cudnn", "xla", "xla_chunked"
 """
 
@@ -50,10 +50,10 @@ def _min_dpa_head_dim() -> int:
 
     So this is a *compound* gate (see ``dot_product_attention``): tokamax
     is only skipped when BOTH head_dim < this threshold AND the q seq
-    length is < ``BIO_TRT_JAX_DPA_MAX_N_FOR_GATE``.
+    length is < ``RESIDUDES_ENGINE_JAX_DPA_MAX_N_FOR_GATE``.
     """
     try:
-        return int(os.environ.get("BIO_TRT_JAX_DPA_MIN_HEAD_DIM", "64"))
+        return int(os.environ.get("RESIDUDES_ENGINE_JAX_DPA_MIN_HEAD_DIM", "64"))
     except ValueError:
         return 64
 
@@ -67,7 +67,7 @@ def _max_n_for_gate() -> int:
     below the size where materializing [N,N,H] softmax OOMs.
     """
     try:
-        return int(os.environ.get("BIO_TRT_JAX_DPA_MAX_N_FOR_GATE", "256"))
+        return int(os.environ.get("RESIDUDES_ENGINE_JAX_DPA_MAX_N_FOR_GATE", "256"))
     except ValueError:
         return 256
 
@@ -83,11 +83,11 @@ def _min_n_for_tokamax() -> int:
     eats the savings. Tokamax DPA is the only path that's a clear win
     (and it has its own internal threshold in ``dot_product_attention``).
 
-    Default ``BIO_TRT_JAX_TOKAMAX_MIN_N=99999`` effectively disables tokamax
+    Default ``RESIDUDES_ENGINE_JAX_TOKAMAX_MIN_N=99999`` effectively disables tokamax
     LN/GLU. Set lower (e.g. ``256``) on B200/H100 where the kernels may win.
     """
     try:
-        return int(os.environ.get("BIO_TRT_JAX_TOKAMAX_MIN_N", "99999"))
+        return int(os.environ.get("RESIDUDES_ENGINE_JAX_TOKAMAX_MIN_N", "99999"))
     except ValueError:
         return 99999
 
@@ -117,7 +117,7 @@ def get_tokamax():
     if _tokamax_tried:
         return _tokamax
     _tokamax_tried = True
-    if not _env_truthy("BIO_TRT_JAX_TOKAMAX", default=True):
+    if not _env_truthy("RESIDUDES_ENGINE_JAX_TOKAMAX", default=True):
         return None
 
     # Tokamax's _ConfigOption.value (tokamax/_src/config.py) lazily calls
@@ -149,7 +149,7 @@ def get_tokamax():
         _tokamax = tk
         # Pull in the autotune cache restored from a previous run so the
         # warm hot path doesn't re-microbenchmark the same shapes.
-        if _env_truthy("BIO_TRT_JAX_AUTOTUNE_PERSIST", default=True):
+        if _env_truthy("RESIDUDES_ENGINE_JAX_AUTOTUNE_PERSIST", default=True):
             try:
                 from residudes_engine_jax.haiku import _autotune_cache as _ac
                 _ac.install()
@@ -168,9 +168,9 @@ def attention_impl_preference() -> tuple[str, ...]:
     """Implementations to try, in order, for ``tokamax.dot_product_attention``.
 
     Default 'auto' → prefer Pallas (mosaic/triton) flash-attn on GPU, then
-    cudnn, then xla. Override with env BIO_TRT_JAX_ATTENTION_IMPL.
+    cudnn, then xla. Override with env RESIDUDES_ENGINE_JAX_ATTENTION_IMPL.
     """
-    requested = os.environ.get("BIO_TRT_JAX_ATTENTION_IMPL", "auto").lower()
+    requested = os.environ.get("RESIDUDES_ENGINE_JAX_ATTENTION_IMPL", "auto").lower()
     if requested != "auto":
         return (requested,)
     on_gpu = False

@@ -30,10 +30,10 @@ from pathlib import Path
 logger = logging.getLogger("dm-parity")
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-_BIO_TRT_ROOT = os.path.dirname(_SCRIPT_DIR)
-_PROTENIX_ROOT = os.path.join(_BIO_TRT_ROOT, "models/protenix")
+_CORE_ROOT = os.path.dirname(_SCRIPT_DIR)
+_PROTENIX_ROOT = os.path.join(_CORE_ROOT, "models/protenix")
 
-sys.path.insert(0, _BIO_TRT_ROOT)
+sys.path.insert(0, _CORE_ROOT)
 sys.path.insert(0, _PROTENIX_ROOT)
 os.chdir(_PROTENIX_ROOT)
 
@@ -50,7 +50,7 @@ sys.argv = [sys.argv[0]] + _remaining
 # Fast init
 import importlib.util
 _fi_spec = importlib.util.spec_from_file_location(
-    "biotrt_fast_init", os.path.join(_SCRIPT_DIR, "_fast_init.py"))
+    "residudes_fast_init", os.path.join(_SCRIPT_DIR, "_fast_init.py"))
 _fi_mod = importlib.util.module_from_spec(_fi_spec)
 _fi_spec.loader.exec_module(_fi_mod)
 _fi_mod.patch_protenix_trunc_normal()

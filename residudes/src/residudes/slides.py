@@ -25,7 +25,7 @@ import subprocess
 from pathlib import Path
 
 from residudes import report
-from residudes.dossier import Dossier, now
+from residudes.dossier import Dossier, chain_letter, now
 
 # site default; `residudes.toml` [tools] pymol wins, and a pymol on PATH is used before this one
 PYMOL_CANDIDATES = ["/gpfs/deepfold/casp/casp17/target_notes/E2450/.venv-pymol/bin/pymol"]
@@ -236,7 +236,7 @@ def figure_summary(d: Dossier, ddir: Path, name: str) -> str:
     """The numbers behind a figure, in one line: a picture in a deck is looked at, not measured off."""
     from residudes import figures
     if name == "chain_map":
-        return " · ".join(f"{chr(ord('A') + i)}: {n.split(',')[-1].strip()} {len(s)} aa"
+        return " · ".join(f"{chain_letter(i)}: {n.split(',')[-1].strip()} {len(s)} aa"
                           for i, (n, s) in enumerate(figures.chains(d)))
     if name == "literature":
         val = figures._latest(d, "literature", "background", "reading")
@@ -247,15 +247,15 @@ def figure_summary(d: Dossier, ddir: Path, name: str) -> str:
         return line + (f" · not settled: {_short(unknown[0], 230)}" if unknown else "")
     if name == "sites":
         cs = figures.chains(d)
-        letters = {chr(ord("A") + i): len(s) for i, (_, s) in enumerate(cs)}
-        seqs = {chr(ord("A") + i): s for i, (_, s) in enumerate(cs)}
+        letters = {chain_letter(i): len(s) for i, (_, s) in enumerate(cs)}
+        seqs = {chain_letter(i): s for i, (_, s) in enumerate(cs)}
         recs = figures.site_records(d, letters)
         mods, _ = figures.modifications(d)
         bits = [f"{r['key']} {r['chain']}: " + ", ".join(f"{seqs[r['chain']][x - 1]}{x}" for x in r["residues"])
                 for r in recs]
         return " · ".join(bits + [f"{lab} on {ch}{r}" for ch, r, lab in mods])
     if name == "motif":
-        cs = {chr(ord("A") + i): s for i, (_, s) in enumerate(figures.chains(d))}
+        cs = {chain_letter(i): s for i, (_, s) in enumerate(figures.chains(d))}
         bits = []
         for m in figures.motifs(d):
             for ch in ([m["chain"]] if m["chain"] in cs else sorted(cs)):
@@ -332,8 +332,10 @@ def build_typ(d: Dossier, ddir: Path, with_retro: bool = False) -> str:
     L += ["== The target", ""]
     L.append("#text(size: 12pt)[")
     for k in ("construct", "identity", "public_structures", "msa", "templates"):
-        if k in ev:
-            L.append(f"- *{k.replace('_', ' ')}*: {_s(_plain(ev[k][-1].get('value'), 175))}")
+        if k not in ev:
+            continue
+        line = report.sweep_summary(ev) if k == "public_structures" else None   # the searches, not the last blob
+        L.append(f"- *{k.replace('_', ' ')}*: {_s(line or _plain(ev[k][-1].get('value'), 175))}")
     L.append(f"- *stoichiometry given*: {_s(d.stoichiometry.get('given', 'not given'))}")
     L += ["]", ""]
 
@@ -549,7 +551,7 @@ def slides_cmd(cfg, d: Dossier, actor: str, render: bool = True, with_retro: boo
     if models:
         scenes = rep / "scenes.pml"
         chains = report._chains(d)
-        small = tuple(chr(ord("A") + i) for i, (_, seq) in enumerate(chains) if len(seq) <= 40)
+        small = tuple(chain_letter(i) for i, (_, seq) in enumerate(chains) if len(seq) <= 40)
         text = scenes_pml(models, small)
         changed = not scenes.exists() or scenes.read_text() != text
         scenes.write_text(text)

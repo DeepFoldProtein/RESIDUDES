@@ -24,7 +24,7 @@ PDB structure 1UBQ — ubiquitin crystal structure (76 residues). Used as a temp
 
 ### `ubiquitin_with_msa_template.json`
 Query with `main_msa_file_paths` and `template_entry_chain_ids` pre-filled.
-Use directly if running from the Bio-TRT repo root:
+Use directly if running from the core/ directory:
 ```bash
 bash openfold3/run_inference.sh \
     --query examples/openfold3/ubiquitin_with_msa_template.json \

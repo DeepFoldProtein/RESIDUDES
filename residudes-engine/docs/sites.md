@@ -49,6 +49,22 @@ expanded. Every key can be overridden per invocation with
 | `time` | `02:00:00` | `sbatch -t` (override with `--time`) |
 | `[slurm.constraint]` | none | `--gpu <tag>` → `sbatch -C <value>`, e.g. `rtx4090 = "RTX4090"` |
 
+## `[msa]`
+
+Where the MSA searches get their endpoints and databases. Every key can also be
+given on the command line, and the API ones by environment variable.
+
+| key | default | used by |
+|---|---|---|
+| `plmmsa_api`, `plmmsa_token` | the public API | `--source plmmsa` |
+| `colabfold_api` | `https://api.colabfold.com` | `--source colabfold` |
+| `mmseqs_bin`, `mmseqs_db` | `mmseqs`, unset | `--source mmseqs2` (`--db`) |
+| `af3_db_dir` | unset | `--source af3`: the AlphaFold 3 genetic databases (`--af3-db`) |
+| `af3_container` | unset | run that pipeline with `apptainer exec <image>` instead of the site's AF3 venv |
+| `af3_script` | `<core>/models/alphafold3/run_alphafold.py` | the entry point (inside the image, when one is set) |
+| `af3_binaries` | from `PATH` | `{ jackhmmer = "…", nhmmer = "…", hmmalign = "…", hmmsearch = "…", hmmbuild = "…" }` |
+| `af3_max_template_date` | unset | cut the pipeline's template search at a date |
+
 ## `[jax]`
 
 | key | default | meaning |

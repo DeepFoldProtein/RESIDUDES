@@ -23,13 +23,20 @@ def _write_trimer(path, chain_coords, bfac=80.0):
     for cname, coords in zip("ABC", chain_coords):
         ch = gemmi.Chain(cname)
         for i, (x, y, z) in enumerate(coords, 1):
-            r = gemmi.Residue(); r.name = "ALA"; r.seqid = gemmi.SeqId(i, " ")
-            a = gemmi.Atom(); a.name = "CA"; a.element = gemmi.Element("C")
+            r = gemmi.Residue()
+            r.name = "ALA"
+            r.seqid = gemmi.SeqId(i, " ")
+            a = gemmi.Atom()
+            a.name = "CA"
+            a.element = gemmi.Element("C")
             a.pos = gemmi.Position(float(x), float(y), float(z))
-            a.b_iso = float(bfac); a.occ = 1.0
-            r.add_atom(a); ch.add_residue(r)
+            a.b_iso = float(bfac)
+            a.occ = 1.0
+            r.add_atom(a)
+            ch.add_residue(r)
         m.add_chain(ch)
-    st.add_model(m); st.write_pdb(str(path))
+    st.add_model(m)
+    st.write_pdb(str(path))
 
 
 def test_kabsch_tm_identity():
@@ -76,7 +83,9 @@ def test_canonicalize_directory_end_to_end():
     t1, t2 = np.array([40., 0, 0]), np.array([0, 40., 0])
     with tempfile.TemporaryDirectory() as d:
         d = Path(d)
-        inp = d / "in"; out = d / "out"; inp.mkdir()
+        inp = d / "in"
+        out = d / "out"
+        inp.mkdir()
         # ref-frame model + a chain-permuted copy of the SAME structure
         _write_trimer(inp / "m1.pdb", [mono, mono + t1, mono + t2])
         _write_trimer(inp / "m2.pdb", [mono + t1, mono + t2, mono])   # relabelled
@@ -98,4 +107,5 @@ def test_canonicalize_directory_end_to_end():
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
-            fn(); print(f"PASS {name}")
+            fn()
+            print(f"PASS {name}")

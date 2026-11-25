@@ -80,7 +80,7 @@ def _maybe_convert_af3_predict_arg(argv):
             if not os.path.exists(arg):
                 return
             spec = _ilu.spec_from_file_location(
-                "biotrt_af3_adapter",
+                "residudes_af3_adapter",
                 str(_REPO_ROOT / "scripts" / "af3_input_adapter.py"),
             )
             adapter = _ilu.module_from_spec(spec)
@@ -109,14 +109,14 @@ def _maybe_convert_af3_predict_arg(argv):
                 jsons = sorted(p for p in Path(arg).iterdir() if _is_af3(str(p)))
                 if not jsons:
                     return
-                tmp_dir = Path(tempfile.mkdtemp(prefix="biotrt_bt2_jax_af3_"))
+                tmp_dir = Path(tempfile.mkdtemp(prefix="residudes_bt2_jax_af3_"))
                 for jp in jsons:
                     _convert_one(str(jp), tmp_dir)
                 logger.info(
                     "AF3 dialect dir → bt2 yamls: %s (%d files)", tmp_dir, len(jsons))
                 argv[i + 1] = str(tmp_dir)
             elif _is_af3(arg):
-                tmp_dir = Path(tempfile.mkdtemp(prefix="biotrt_bt2_jax_af3_"))
+                tmp_dir = Path(tempfile.mkdtemp(prefix="residudes_bt2_jax_af3_"))
                 out = _convert_one(arg, tmp_dir)
                 logger.info("AF3 dialect → bt2 yaml: %s", out)
                 argv[i + 1] = str(out)
@@ -147,41 +147,41 @@ def _install_check_inputs_filter():
 _install_check_inputs_filter()
 
 
-# ── ContactConditioning amplification (BIO_TRT_CONTACT_AMP / NEG_PAIRS) ───
+# ── ContactConditioning amplification (RESIDUDES_ENGINE_CONTACT_AMP / NEG_PAIRS) ───
 # Two knobs on the ContactConditioning embedding (the +z_init bias the model
 # adds based on user contact constraints):
 #
-#   BIO_TRT_CONTACT_AMP=N (default 1.0)
+#   RESIDUDES_ENGINE_CONTACT_AMP=N (default 1.0)
 #     Scales the SPECIFIED contact signal added to z_init. UNSPECIFIED and
 #     UNSELECTED regions stay at the trained baseline.
 #
-#   BIO_TRT_CONTACT_NEG_PAIRS="<a1>,<r1>,<a2>,<r2>,<thr>;..."
+#   RESIDUDES_ENGINE_CONTACT_NEG_PAIRS="<a1>,<r1>,<a2>,<r2>,<thr>;..."
 #     Per-pair "anti-contact" channel. (a, r) are asym_id (int, 0-based:
 #     chain A=0, B=1, ...) and residue number (int, 1-based to match
 #     input.json). For each entry, we synthesize a CONTACT class at that
-#     (i, j) token pair and SUBTRACT BIO_TRT_CONTACT_NEG_AMP * encoder(...)
+#     (i, j) token pair and SUBTRACT RESIDUDES_ENGINE_CONTACT_NEG_AMP * encoder(...)
 #     from z_init — flipping the attractive bias into a repulsive one.
 #     The pair is NOT registered in the input JSON / featurizer, so the
 #     ContactPotential layer never sees it (no attractive guidance fight).
 #
-#   BIO_TRT_CONTACT_NEG_AMP=N (default -1.0)
+#   RESIDUDES_ENGINE_CONTACT_NEG_AMP=N (default -1.0)
 #     Sign-flip magnitude. -1.0 = cancel the attractive signal; -2.0 = same
 #     magnitude repulsion as a positive contact; <-2.0 = stronger push.
 def _install_contact_amp():
     import torch
 
     try:
-        amp_pos = float(os.environ.get("BIO_TRT_CONTACT_AMP", "1.0"))
+        amp_pos = float(os.environ.get("RESIDUDES_ENGINE_CONTACT_AMP", "1.0"))
     except ValueError:
-        logger.warning("[bt2_jax] BIO_TRT_CONTACT_AMP not a float; disabling amp")
+        logger.warning("[bt2_jax] RESIDUDES_ENGINE_CONTACT_AMP not a float; disabling amp")
         return
     try:
-        neg_amp = float(os.environ.get("BIO_TRT_CONTACT_NEG_AMP", "-1.0"))
+        neg_amp = float(os.environ.get("RESIDUDES_ENGINE_CONTACT_NEG_AMP", "-1.0"))
     except ValueError:
-        logger.warning("[bt2_jax] BIO_TRT_CONTACT_NEG_AMP not a float; ignoring")
+        logger.warning("[bt2_jax] RESIDUDES_ENGINE_CONTACT_NEG_AMP not a float; ignoring")
         neg_amp = -1.0
 
-    neg_pairs_str = os.environ.get("BIO_TRT_CONTACT_NEG_PAIRS", "").strip()
+    neg_pairs_str = os.environ.get("RESIDUDES_ENGINE_CONTACT_NEG_PAIRS", "").strip()
     neg_pairs: list[tuple[int, int, int, int, float]] = []
     # Entry separator can be `;` (intuitive) or `:` (safe through shell).
     # Inside an entry, fields are comma-separated.
@@ -192,7 +192,7 @@ def _install_contact_amp():
         parts = [p.strip() for p in entry.split(",")]
         if len(parts) != 5:
             print(
-                f"[bt2_jax] BIO_TRT_CONTACT_NEG_PAIRS malformed entry {entry!r} "
+                f"[bt2_jax] RESIDUDES_ENGINE_CONTACT_NEG_PAIRS malformed entry {entry!r} "
                 f"(want a1,r1,a2,r2,thr)",
                 flush=True,
             )
@@ -202,7 +202,7 @@ def _install_contact_amp():
             thr = float(parts[4])
         except ValueError:
             print(
-                f"[bt2_jax] BIO_TRT_CONTACT_NEG_PAIRS parse error in {entry!r}",
+                f"[bt2_jax] RESIDUDES_ENGINE_CONTACT_NEG_PAIRS parse error in {entry!r}",
                 flush=True,
             )
             continue
@@ -351,14 +351,14 @@ if not _jax_args.no_jax:
         # cause shape mismatch in atom_attention_decoder. Toggle ON via env
         # to test on large complexes where the extra memory savings matter.
         cfg.swap_token_transformer = (
-            os.environ.get("BIO_TRT_JAX_SWAP_TOKEN_TRANSFORMER", "0") == "1"
+            os.environ.get("RESIDUDES_ENGINE_JAX_SWAP_TOKEN_TRANSFORMER", "0") == "1"
         )
         # Optional disables for debugging.
         cfg.swap_template_pairformer = (
-            os.environ.get("BIO_TRT_JAX_SWAP_TEMPLATE", "1") == "1"
+            os.environ.get("RESIDUDES_ENGINE_JAX_SWAP_TEMPLATE", "1") == "1"
         )
         cfg.swap_msa_pairformer = (
-            os.environ.get("BIO_TRT_JAX_SWAP_MSA", "1") == "1"
+            os.environ.get("RESIDUDES_ENGINE_JAX_SWAP_MSA", "1") == "1"
         )
         logger.info(
             "JAX hot-swap: dtype=%s structure=%d confidence=%d template=%s msa=%s token_transformer=%s",
@@ -384,7 +384,7 @@ if not _jax_args.no_jax:
         if not (tt_dir / "trt" / "rank0.engine").is_file():
             logger.warning("no token_transformer_engine under %s; diffusion stays in PyTorch", engines_dir)
             return False
-        spec = importlib.util.spec_from_file_location("_biotrt_boltz_compat", str(_REPO_ROOT / "boltz" / "compat.py"))
+        spec = importlib.util.spec_from_file_location("_residudes_boltz_compat", str(_REPO_ROOT / "boltz" / "compat.py"))
         compat = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(compat)
         from tensorrt_bionemo.models.helper import AcceleratedConfig

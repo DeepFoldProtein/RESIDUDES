@@ -58,7 +58,8 @@ def plan_gaps(d: Dossier, ddir) -> list[str]:
     if not (ev.get("msa_depth") or ev.get("msa")):
         gaps.append("no `msa_depth`: the MSAs were never measured")
     if not (ev.get("templates") or ev.get("public_structures")):
-        gaps.append("no `templates` or `public_structures`: the structures that exist were never looked for")
+        gaps.append("no `templates` or `public_structures`: the structures that exist were never looked for "
+                    "(`residudes structures T`)")
     for key in sorted(k for k in ev if SITE_KEYS.search(k)):
         if ev[key] and site_from_value(ev[key][-1].get("value"))[2] == "read from the text":
             gaps.append(f"`{key}` has no residues field: a gate drafted from it is read out of the prose")

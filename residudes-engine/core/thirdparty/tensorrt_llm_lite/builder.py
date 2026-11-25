@@ -151,7 +151,7 @@ class Builder():
                 f"precision should be one of {self._ALLOWED_PRECISIONS}")
 
         config = self.trt_builder.create_builder_config()
-        # Bio-TRT: bump the TRT WORKSPACE pool so large fused-tactic plans
+        # residudes-engine: bump the TRT WORKSPACE pool so large fused-tactic plans
         # (tri_mul_in, pair_bias_attn, ...) can be admitted on Blackwell-class
         # GPUs where the activation budget exceeds the default workspace.
         #

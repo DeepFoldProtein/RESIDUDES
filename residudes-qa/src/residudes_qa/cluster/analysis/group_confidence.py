@@ -64,7 +64,8 @@ def interface_pdockq(path: Union[str, Path], cutoff: float = 8.0) -> float:
         for r in ch:
             cb = r.find_atom("CB", "*") or r.find_atom("CA", "*")
             if cb is not None:
-                xs.append([cb.pos.x, cb.pos.y, cb.pos.z]); bs.append(cb.b_iso)
+                xs.append([cb.pos.x, cb.pos.y, cb.pos.z])
+                bs.append(cb.b_iso)
         if xs:
             chains.append((np.array(xs), np.array(bs)))
     if len(chains) < 2:

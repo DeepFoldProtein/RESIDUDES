@@ -93,28 +93,28 @@ def _(
     import trifast as _tf
     with torch.cuda.stream(torch.cuda.ExternalStream(stream)):
         q_, k_, v_, bias_, mask_, out_ = _to_torch(q, k, v, bias, mask, outputs[0])
-        # Bio-TRT layout: q,k,v (B, I, H, J, D); bias (B, 1, H, J, J); mask (B, I, 1, 1, J).
+        # residudes-engine layout: q,k,v (B, I, H, J, D); bias (B, 1, H, J, J); mask (B, I, 1, 1, J).
         # PyPI trifast expects: (b, h, n, n, d), (b, h, n, n), (b, n, n) with N = I = J.
         B, I_, H_, J_, D_ = q_.shape
         q_t = q_.permute(0, 2, 1, 3, 4).contiguous()
         k_t = k_.permute(0, 2, 1, 3, 4).contiguous()
         v_t = v_.permute(0, 2, 1, 3, 4).contiguous()
         b_t = bias_.squeeze(1).contiguous()
-        # Bio-TRT mask True=attend → trifast True=mask_out (invert).
+        # residudes-engine mask True=attend → trifast True=mask_out (invert).
         m_t = (~mask_.squeeze(2).squeeze(2).bool()).contiguous()
         # trifast applies scale = d**-0.5 internally; compensate if user scale differs.
         internal_scale = D_ ** -0.5
         if abs(float(scale) - internal_scale) > 1e-5:
             q_t = q_t * (float(scale) / internal_scale)
         o = _tf.triangle_attention(q_t, k_t, v_t, b_t, m_t)
-        # trifast out: (B, H, N, N, D) → Bio-TRT (B, I, H, J, D)
+        # trifast out: (B, H, N, N, D) → residudes-engine (B, I, H, J, D)
         out_.copy_(o.permute(0, 2, 1, 3, 4).contiguous().to(out_.dtype))
 
 
 def _trifast_triangle_attention(q, k, v, bias, mask, scale, num_heads, out, stream, cast_dtype=None):
-    """Run trifast Triton kernel on tensors in Bio-TRT layout.
+    """Run trifast Triton kernel on tensors in residudes-engine layout.
 
-    Input layout (from Bio-TRT attention.py CUEQUIV/TRIFAST path):
+    Input layout (from residudes-engine attention.py CUEQUIV/TRIFAST path):
         q, k, v:  [B, I, H, J, D]
         bias:     [B, 1, H, J, J]
         mask:     [B, I, 1, 1, J]  (bool)
@@ -137,7 +137,7 @@ def _trifast_triangle_attention(q, k, v, bias, mask, scale, num_heads, out, stre
     bias = bias.squeeze(1).reshape(B * H, J, J).contiguous()
 
     # mask: [B, I, 1, 1, J] -> [B, I, J] (bool)
-    # Bio-TRT passes mask with True=attend (cuequivariance convention),
+    # residudes-engine passes mask with True=attend (cuequivariance convention),
     # but trifast kernel uses True=mask_out, so invert.
     mask = (~mask.squeeze(2).squeeze(2).bool()).contiguous()
 

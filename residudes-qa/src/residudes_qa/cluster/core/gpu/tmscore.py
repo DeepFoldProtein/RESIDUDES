@@ -269,7 +269,8 @@ def compute_tm_matrix_gpu(
             bl, s = [], 0
             for i in range(1, len(ch) + 1):
                 if i == len(ch) or ch[i] != ch[s]:
-                    bl.append((s, i - s)); s = i
+                    bl.append((s, i - s))
+                    s = i
             return bl
         blks = [_blocks(ch) for ch in chain_lists]
         kset = {len(b) for b in blks}

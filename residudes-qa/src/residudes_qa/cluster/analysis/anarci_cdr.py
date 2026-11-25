@@ -108,7 +108,7 @@ def run_anarci_on_sequence(
                     continue
                 parts = line.split()
                 if len(parts) >= 3 and parts[0] in ("H", "L", "K"):
-                    chain_letter, num = parts[0], parts[1]
+                    _chain_letter, num = parts[0], parts[1]
                     ins = parts[2] if len(parts) >= 4 else ""
                     aa = parts[-1]
                     if aa == "-":

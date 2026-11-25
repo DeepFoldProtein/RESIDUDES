@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """OpenFold3 JAX hot-module backend.
 
-Mirrors ``Bio-TRT/openfold3/compat.py`` (the TRT version) but routes pairformer
+Mirrors ``core/openfold3/compat.py`` (the TRT version) but routes pairformer
 and token transformer through JAX (Haiku) modules with DLPack bridge instead
 of TRT engines.
 
@@ -25,7 +25,7 @@ Caveats:
   - JAX must run on the same GPU as PyTorch (DLPack zero-copy assumes shared
     pointer). Set CUDA_VISIBLE_DEVICES consistently or call set_jax_device().
   - With CPU jaxlib, this works but is much slower than the TRT path. CUDA
-    jaxlib is required for any real perf parity; see Bio-TRT README.
+    jaxlib is required for any real perf parity; see residudes-engine README.
   - Engines are converted from PT weights at __init__ time; no .npz cache yet.
 """
 
@@ -102,11 +102,11 @@ class _CompatPairformerJAXOF3(nn.Module):
         super().__init__()
         self._config = config
         variant = PairformerVariant.openfold3(num_blocks=config.pairformer_num_blocks)
-        # BIO_TRT_JAX_PAIRFORMER_SCAN / _REMAT, as in the Protenix wrapper: with
+        # RESIDUDES_ENGINE_JAX_PAIRFORMER_SCAN / _REMAT, as in the Protenix wrapper: with
         # scan the 48 blocks share one compiled body (hk.experimental.layer_stack).
         on = ("1", "true", "yes", "on")
-        remat = os.environ.get("BIO_TRT_JAX_PAIRFORMER_REMAT", "1").lower() in on
-        use_scan = os.environ.get("BIO_TRT_JAX_PAIRFORMER_SCAN", "0").lower() in on
+        remat = os.environ.get("RESIDUDES_ENGINE_JAX_PAIRFORMER_REMAT", "1").lower() in on
+        use_scan = os.environ.get("RESIDUDES_ENGINE_JAX_PAIRFORMER_SCAN", "0").lower() in on
         def fn(z, pair_mask, s, single_mask):
             return PairformerStack(variant=variant, with_single=True, remat=remat,
                                    use_scan=use_scan)(z, pair_mask, s, single_mask)
@@ -169,8 +169,8 @@ class _CompatTokenTransformerJAXOF3(nn.Module):
         super().__init__()
         self._config = config
         variant = TokenTransformerVariant.openfold3(num_blocks=config.token_transformer_num_blocks)
-        # BIO_TRT_JAX_TOKEN_TRANSFORMER_SCAN, as in the Protenix wrapper (24 blocks → one body).
-        use_scan = os.environ.get("BIO_TRT_JAX_TOKEN_TRANSFORMER_SCAN", "0").lower() in ("1", "true", "yes", "on")
+        # RESIDUDES_ENGINE_JAX_TOKEN_TRANSFORMER_SCAN, as in the Protenix wrapper (24 blocks → one body).
+        use_scan = os.environ.get("RESIDUDES_ENGINE_JAX_TOKEN_TRANSFORMER_SCAN", "0").lower() in ("1", "true", "yes", "on")
         def fn(a, s, z, mask):
             return TokenTransformer(variant=variant, use_scan=use_scan)(a, s, z, mask)
         # Avoid the nn.Module._apply shadow trap (see _CompatPairformerJAXOF3).
@@ -247,13 +247,13 @@ def _param_dtype(x, target):
     return a.dtype
 
 
-_INPUT_FP32 = os.environ.get("BIO_TRT_JAX_INPUT_DTYPE", "compute") == "fp32"
+_INPUT_FP32 = os.environ.get("RESIDUDES_ENGINE_JAX_INPUT_DTYPE", "compute") == "fp32"
 
 
 def _act(t: torch.Tensor, dtype) -> torch.Tensor:
     """Activations cross into JAX in the swapped modules' compute dtype (see
     residudes_engine_jax.boltz._act for why the old fp32 upcast cost 2–3× and 4·H·N³ bytes).
-    BIO_TRT_JAX_INPUT_DTYPE=fp32 restores the old behaviour. Masks stay fp32."""
+    RESIDUDES_ENGINE_JAX_INPUT_DTYPE=fp32 restores the old behaviour. Masks stay fp32."""
     if _INPUT_FP32 or dtype == jnp.float32:
         return t.to(torch.float32)
     return t.to(torch.bfloat16)

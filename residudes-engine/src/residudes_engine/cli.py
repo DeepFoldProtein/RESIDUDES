@@ -16,6 +16,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -150,7 +151,8 @@ def cmd_predict(ns: argparse.Namespace) -> int:
         print("▶ cwd :", plan.cwd)
         print("▶ cmd :", " ".join(shlex.quote(c) for c in plan.cmd))
         keys = ("LD_PRELOAD", "LD_LIBRARY_PATH", "PYTHONPATH", "LAYERNORM_TYPE", "PYTORCH_CUDA_ALLOC_CONF",
-                "DS_BUILD_OPS", "OF3_PAIRING_MODE", "OF3_PER_SAMPLE_TOKEN_CUTOFF", "BOLTZ_CACHE", "TMPDIR")
+                "DS_BUILD_OPS", "OF3_PAIRING_MODE", "OF3_PER_SAMPLE_TOKEN_CUTOFF", "BOLTZ_CACHE", "HF_HOME",
+                "TMPDIR")
         for k in keys + tuple(k for k in sorted(plan.env) if k.startswith(("RESIDUDES_ENGINE_JAX_", "XLA_", "JAX_", "PT2_", "OF3_TPL", "BT2_"))):
             if k in plan.env:
                 print(f"  env {k}={plan.env[k]}")
@@ -251,6 +253,71 @@ def cmd_verify(ns: argparse.Namespace) -> int:
     return rc
 
 
+
+def _msa_section(site, deep: bool = False) -> bool:
+    """What an MSA search needs: the binaries, and the databases at the names each tool expects.
+
+    A missing database is cheap to find here and expensive to find inside a queued job, so this
+    checks names and sizes; --deep then runs one real jackhmmer iteration to prove the stack works.
+    """
+    from . import msa as msa_mod
+    cfg = dict(site.raw.get("msa", {}) if site else {})
+    # the same overrides `residudes-engine msa` honours, so the doctor reports what a run would use
+    for key, env in (("af3_db_dir", "RESIDUDES_ENGINE_AF3_DB_DIR"), ("mmseqs_db", "RESIDUDES_ENGINE_MMSEQS_DB"),
+                     ("mmseqs_bin", "RESIDUDES_ENGINE_MMSEQS")):
+        if os.environ.get(env):
+            cfg[key] = os.environ[env]
+    ok = True
+
+    tools = {b: shutil.which(b) for b in msa_mod.AF3_BINARIES}
+    tools["mmseqs"] = shutil.which(cfg.get("mmseqs_bin") or "mmseqs")
+    missing = [b for b, p in tools.items() if not p]
+    print(f"  {'tools':12} {'✓' if not missing else '✗'} "
+          + ", ".join(f"{b}" for b, p in tools.items() if p) + (f"  MISSING: {', '.join(missing)}" if missing else ""))
+
+    db_dir = cfg.get("af3_db_dir")
+    if not db_dir:
+        print(f"  {'af3 dbs':12} (unset: [msa] af3_db_dir — --source af3 needs it)")
+    else:
+        root = Path(db_dir)
+        rows = []
+        for name, want, what in msa_mod.AF3_DATABASES:
+            p = root / name
+            if not p.exists():
+                rows.append(f"    ✗ {name}  missing ({what})")
+                ok = False
+            elif p.is_dir():
+                rows.append(f"    ✓ {name}/  ({what})")
+            else:
+                size = p.stat().st_size
+                mark = "✓" if size >= want else "!"
+                rows.append(f"    {mark} {name}  {size / 1e9:.1f} GB" + ("" if size >= want else f"  (expected >= {want / 1e9:.0f} GB: truncated?)"))
+                ok &= size >= want
+        print(f"  {'af3 dbs':12} {root}")
+        for r in rows:
+            print(r)
+
+    mdb = cfg.get("mmseqs_db")
+    if mdb:
+        root = Path(mdb)
+        found = sorted({f.name[: -len(".dbtype")] for f in root.glob("*.dbtype")}) if root.is_dir() else []
+        print(f"  {'mmseqs db':12} {'✓' if found else '✗'} {root}" + (f"  ({', '.join(found[:6])})" if found else ""))
+        ok &= bool(found)
+
+    if deep and db_dir and tools.get("jackhmmer"):
+        q = Path(tempfile.mkdtemp()) / "q.fasta"
+        q.write_text(">probe\nMKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQ\n")
+        target = Path(db_dir) / "rfam_14_9_clust_seq_id_90_cov_80_rep_seq.fasta"   # the smallest one
+        if target.is_file():
+            cmd = [tools["jackhmmer"], "-N", "1", "--cpu", "4", "-o", "/dev/null", str(q), str(target)]
+            t0 = time.time()
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+            print(f"  {'deep check':12} {'✓' if r.returncode == 0 else '✗'} jackhmmer -N 1 over "
+                  f"{target.name} in {time.time() - t0:.0f}s" + ("" if r.returncode == 0 else f": {r.stderr.strip()[:120]}"))
+            ok &= r.returncode == 0
+    return ok
+
+
 def cmd_env(ns: argparse.Namespace) -> int:
     try:
         site = load_site(ns.site)
@@ -289,6 +356,8 @@ def cmd_env(ns: argparse.Namespace) -> int:
     lib = find_libstdcxx(site.libstdcxx)
     print(f"  {'libstdc++':12} {'✓' if lib else '✗'} {lib or 'no libstdc++ with GLIBCXX_3.4.32 found (apt install g++-13, or set libstdcxx in the site file)'}")
     ok &= lib is not None
+    print("MSA databases and tools:")
+    ok &= _msa_section(site, deep=getattr(ns, "deep", False))
     print("models:")
     for tag, m in registry.MODELS.items():
         ck = site.checkpoints / m.checkpoint
@@ -421,7 +490,8 @@ def cmd_setup(ns: argparse.Namespace) -> int:
     if ns.what == "checkpoints":
         site = load_site(ns.site)
         tags = ns.models.split(",") if ns.models else sorted(registry.MODELS)
-        return setup_mod.setup_checkpoints(site, tags, dry_run=ns.dry_run, force=ns.force)
+        return setup_mod.setup_checkpoints(site, tags, dry_run=ns.dry_run, force=ns.force,
+                                           af3_from=getattr(ns, "af3_from", None))
     if ns.what == "all":
         if ns.slurm:
             raise SystemExit("setup all runs in the foreground (needs network); use `setup venv --slurm` separately")
@@ -429,7 +499,8 @@ def cmd_setup(ns: argparse.Namespace) -> int:
         if rc:
             return rc
         site = load_site(ns.site)
-        rc = setup_mod.setup_checkpoints(site, sorted(registry.MODELS), dry_run=ns.dry_run, force=ns.force)
+        rc = setup_mod.setup_checkpoints(site, sorted(registry.MODELS), dry_run=ns.dry_run, force=ns.force,
+                                         af3_from=getattr(ns, "af3_from", None))
         if rc:
             return rc
         ns.check = True
@@ -558,6 +629,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp.set_defaults(fn=cmd_env)
 
     sp = sub.add_parser("doctor", help="full environment check (= env --check)")
+    sp.add_argument("--deep", action="store_true",
+                    help="also run one jackhmmer iteration against the smallest database (minutes)")
     sp.add_argument("--site", default=None)
     sp.set_defaults(fn=cmd_env, check=True)
 
@@ -567,6 +640,9 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--cuda", default="cu13", choices=("cu13", "cu12"), help="CUDA flavour of the venv (default cu13)")
     sp.add_argument("--slurm", action="store_true", help="venv: build as a Slurm job (scripts/slurm/setup_venv.sbatch)")
     sp.add_argument("--models", default=None, help="checkpoints: comma list of model tags (default all)")
+    sp.add_argument("--af3-from", default=None, metavar="FILE|DIR|URL",
+                    help="checkpoints: install AlphaFold 3 parameters you have been granted "
+                         "(they are per-user and may not be redistributed, so nothing can fetch them for you)")
     sp.add_argument("--name", default="local", help="site: file name sites/<name>.toml (default local)")
     sp.add_argument("--checkpoints", default=None, help="site: directory for model weights")
     sp.add_argument("--engines", default=None, help="site: directory for TRT engines")
@@ -611,7 +687,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    for old in ("FOLDMUX_", "LANTERN_ENGINE_"):   # environments set up under either earlier name
+    for old in ("FOLDMUX_", "LANTERN_ENGINE_", "BIO_TRT_"):   # environments set up under an earlier name
         for k, v in list(os.environ.items()):
             if k.startswith(old):
                 os.environ.setdefault("RESIDUDES_ENGINE_" + k[len(old):], v)

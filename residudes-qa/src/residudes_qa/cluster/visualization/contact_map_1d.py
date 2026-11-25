@@ -78,7 +78,7 @@ def plot_cluster_epitope_bars(
     _setup_axes(ax, title or f"Cluster {cluster_id} — top epitope residues")
     if enrichment is not None:
         sm = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
-        cbar = plt.colorbar(sm, ax=ax, shrink=0.5, label="Enrichment ΔF")
+        plt.colorbar(sm, ax=ax, shrink=0.5, label="Enrichment ΔF")
     plt.tight_layout()
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -224,7 +224,7 @@ def plot_physchem_bars(
     Uses output of :func:`physchem_channels.epitope_residue_type_profile`.
     """
     cluster_ids = profile_df.index.tolist()
-    data = profile_df[list(channels)].to_numpy(dtype=np.float32)
+    profile_df[list(channels)].to_numpy(dtype=np.float32)
     colors = {
         "hydrophobic": "#fdae61",
         "positive_charge": "#2b83ba",
@@ -253,8 +253,8 @@ def plot_physchem_bars(
     return output_path
 
 
-from residudes_qa.cluster.visualization._colors import (
-    METHOD_COLORS, normalize_method, get_method_color,
+from residudes_qa.cluster.visualization._colors import (  # noqa: E402  (after the sys.path / availability block above)
+    METHOD_COLORS, get_method_color,
 )
 
 

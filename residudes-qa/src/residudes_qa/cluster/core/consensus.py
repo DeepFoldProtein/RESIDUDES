@@ -325,21 +325,21 @@ def write_consensus_pdb(
     medoid_name = Path(consensus.medoid_name).stem if consensus.medoid_name else "unknown"
 
     with open(output_path, 'w') as f:
-        f.write(f"REMARK   1  Consensus structure from cluster analysis\n")
-        f.write(f"REMARK   2\n")
+        f.write("REMARK   1  Consensus structure from cluster analysis\n")
+        f.write("REMARK   2\n")
         f.write(f"REMARK   2  CLUSTER ID:          {consensus.cluster_id}\n")
         f.write(f"REMARK   2  CLUSTER MEMBERS:     {consensus.n_members}\n")
         f.write(f"REMARK   2  REFERENCE (MEDOID):   {medoid_name}\n")
         f.write(f"REMARK   2  TOTAL RESIDUES:       {consensus.n_residues}\n")
-        f.write(f"REMARK   2\n")
-        f.write(f"REMARK   3  RMSF STATISTICS\n")
+        f.write("REMARK   2\n")
+        f.write("REMARK   3  RMSF STATISTICS\n")
         f.write(f"REMARK   3  MEAN RMSF:           {consensus.mean_rmsf:.3f} A\n")
         f.write(f"REMARK   3  MEDIAN RMSF:         {consensus.median_rmsf:.3f} A\n")
         f.write(f"REMARK   3  RMSF THRESHOLD:      {consensus.rmsf_threshold:.3f} A\n")
         f.write(f"REMARK   3  CONSERVED CORE:      {consensus.n_conserved}/{consensus.n_residues}"
                 f" ({consensus.conserved_fraction:.1%})\n")
-        f.write(f"REMARK   3\n")
-        f.write(f"REMARK   4  COORDINATES ARE CONSENSUS (MEAN) AFTER KABSCH ALIGNMENT\n")
+        f.write("REMARK   3\n")
+        f.write("REMARK   4  COORDINATES ARE CONSENSUS (MEAN) AFTER KABSCH ALIGNMENT\n")
         f.write(f"REMARK   4  B-FACTOR COLUMN:     "
                 f"{'RMSF (A)' if color_by_rmsf else 'CONSERVED (0/100)'}\n")
 
@@ -688,13 +688,13 @@ def write_segment_pdb(
     medoid_name = Path(consensus.medoid_name).stem if consensus.medoid_name else "unknown"
 
     with open(output_path, 'w') as f:
-        f.write(f"REMARK   1  Conserved local segment from cluster analysis\n")
-        f.write(f"REMARK   2\n")
+        f.write("REMARK   1  Conserved local segment from cluster analysis\n")
+        f.write("REMARK   2\n")
         f.write(f"REMARK   2  CLUSTER ID:        {consensus.cluster_id}\n")
         f.write(f"REMARK   2  CLUSTER MEMBERS:   {consensus.n_members}\n")
         f.write(f"REMARK   2  REFERENCE (MEDOID): {medoid_name}\n")
-        f.write(f"REMARK   2\n")
-        f.write(f"REMARK   3  SEGMENT INFO\n")
+        f.write("REMARK   2\n")
+        f.write("REMARK   3  SEGMENT INFO\n")
         f.write(f"REMARK   3  SEGMENT ID:        {segment.segment_id}\n")
         f.write(f"REMARK   3  CHAIN:             {chain_id}\n")
         f.write(f"REMARK   3  RESIDUE RANGE:     {start_resi}-{end_resi} "
@@ -702,9 +702,9 @@ def write_segment_pdb(
         f.write(f"REMARK   3  MEAN RMSF:         {segment.mean_rmsf:.3f} A\n")
         f.write(f"REMARK   3  MAX RMSF:          {segment.max_rmsf:.3f} A\n")
         f.write(f"REMARK   3  RMSF THRESHOLD:    {consensus.rmsf_threshold:.3f} A\n")
-        f.write(f"REMARK   3\n")
-        f.write(f"REMARK   4  COORDINATES ARE CONSENSUS (MEAN) AFTER KABSCH ALIGNMENT\n")
-        f.write(f"REMARK   4  B-FACTOR COLUMN CONTAINS PER-RESIDUE RMSF (ANGSTROMS)\n")
+        f.write("REMARK   3\n")
+        f.write("REMARK   4  COORDINATES ARE CONSENSUS (MEAN) AFTER KABSCH ALIGNMENT\n")
+        f.write("REMARK   4  B-FACTOR COLUMN CONTAINS PER-RESIDUE RMSF (ANGSTROMS)\n")
 
         atom_serial = 1
         for i in range(segment.start, segment.end):

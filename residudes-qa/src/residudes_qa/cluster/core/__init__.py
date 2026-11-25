@@ -52,6 +52,12 @@ except ImportError:
     GPU_AVAILABLE = False
 
 __all__ = [
+    "write_consensus_cif",
+    "write_segment_pdb",
+    "write_segment_cif",
+    "compute_tm_matrix_gpu",
+    "compute_itm_matrix_gpu",
+    "compute_drmsd_matrix_gpu",
     # Distance
     "compute_distance_matrix",
     "similarity_to_distance",

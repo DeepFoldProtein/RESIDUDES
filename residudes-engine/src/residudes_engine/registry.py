@@ -100,6 +100,15 @@ MODELS: dict[str, ModelSpec] = {
                  "note": "request access at https://github.com/google-deepmind/alphafold3 (WEIGHTS_TERMS_OF_USE.md); "
                          "put af3.bin or af3.bin.zst in <checkpoints>/af3/ or set [site] af3_weights"},
     ),
+    "ef2": ModelSpec(
+        tag="ef2", family="esmfold2", name="ESMFold2 (Biohub, ESMC-6B backbone)",
+        checkpoint="esmfold2_hf", engine_prefix="esmfold2", engines={},
+        backends=("torch",), fallback="torch",   # no TensorRT engine and no JAX port: PyTorch on one GPU
+        # Weights are a HuggingFace cache, fetched by the esm env on first use (biohub/ESMFold2, multi-GB).
+        weights={"method": "manual",
+                 "note": "the esm checkout's conda env downloads biohub/ESMFold2 into the HF cache on first run; "
+                         "point [site] esmfold2_weights at it, or let it default to <checkpoints>/esmfold2_hf"},
+    ),
 }
 
 
@@ -138,10 +147,8 @@ def find_engine_dir(engines_root: Path, gpu_tag: str, spec: ModelSpec,
             return min(fitting, key=lambda md: md[0])[1]
     return max(sized, key=lambda md: md[0])[1]
 
-# Registered for completeness (results on disk use these tags); not runnable via residudes-engine v0.
-EXTERNAL_MODELS = {
-    "ef2": "ESMFold2 (inferences/esmfold2/)",
-}
+# Tags that appear in results on disk but are not run from here. Empty since ef2 moved into MODELS.
+EXTERNAL_MODELS: dict[str, str] = {}
 
 
 def get_model(tag: str) -> ModelSpec:

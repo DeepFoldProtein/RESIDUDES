@@ -1,4 +1,9 @@
-"""Check the components listed in catalog.toml: present, how old, what to do if not."""
+"""Check the components listed in catalog.toml: present, how old, what to do if not.
+
+A path may be written as ``{key}``, which is filled from ``[databases]`` in residudes.toml.
+That keeps a machine's own layout in the config a site writes, instead of in the catalog
+everyone shares; a component whose key is unset reports ``unconfigured`` and says which key.
+"""
 from __future__ import annotations
 
 import datetime as dt
@@ -12,9 +17,33 @@ from residudes.config import RESIDUDES_DIR
 CATALOG = RESIDUDES_DIR / "catalog.toml"
 
 
-def load(path: Path = CATALOG) -> list[dict]:
+_KEY = re.compile(r"\{([a-z0-9_]+)\}")
+
+
+def _fill(value: str, paths: dict) -> tuple[str, list[str]]:
+    """Replace every {key} from `paths`; return the value and the keys that had none."""
+    missing = [k for k in _KEY.findall(value) if k not in paths]
+    return _KEY.sub(lambda m: str(paths.get(m.group(1), m.group(0))), value), missing
+
+
+def _resolve(c: dict, paths: dict) -> dict:
+    c = dict(c)
+    unset: list[str] = []
+    for field in ("paths", "any_of"):
+        if c.get(field):
+            filled = [_fill(v, paths) for v in c[field]]
+            c[field] = [v for v, _ in filled]
+            unset += [k for _, ks in filled for k in ks]
+    if c.get("date_file"):
+        c["date_file"], ks = _fill(c["date_file"], paths)
+        unset += ks
+    c["unset"] = sorted(set(unset))
+    return c
+
+
+def load(path: Path = CATALOG, paths: dict | None = None) -> list[dict]:
     with open(path, "rb") as fh:
-        return tomllib.load(fh)["component"]
+        return [_resolve(c, paths or {}) for c in tomllib.load(fh)["component"]]
 
 
 def _date(c: dict, present: list[str]) -> dt.date | None:
@@ -37,6 +66,11 @@ def _date(c: dict, present: list[str]) -> dt.date | None:
 
 def check(c: dict, today: dt.date | None = None) -> dict:
     today = today or dt.date.today()
+    if c.get("unset"):
+        keys = ", ".join(c["unset"])
+        return {"name": c["name"], "kind": c.get("kind", ""), "used_for": c.get("used_for", ""),
+                "status": "unconfigured", "date": None,
+                "note": f"set [databases] {keys} in residudes.toml", "fix": c.get("fix", "")}
     need, alts = c.get("paths", []), c.get("any_of", [])
     missing = [p for p in need if not Path(p).exists()]
     present = [p for p in need + alts if Path(p).exists()]
@@ -52,5 +86,5 @@ def check(c: dict, today: dt.date | None = None) -> dict:
             "date": when.isoformat() if when else None, "note": note, "fix": c.get("fix", "") if status != "ok" else ""}
 
 
-def check_all(path: Path = CATALOG) -> list[dict]:
-    return [check(c) for c in load(path)]
+def check_all(path: Path = CATALOG, paths: dict | None = None) -> list[dict]:
+    return [check(c) for c in load(path, paths)]

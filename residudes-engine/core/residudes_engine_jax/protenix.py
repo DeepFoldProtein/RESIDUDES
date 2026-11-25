@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Protenix (v1 + v2) JAX hot-module backend.
 
-Mirrors ``Bio-TRT/protenix/compat.py`` but routes through Haiku/JAX.
+Mirrors ``core/protenix/compat.py`` but routes through Haiku/JAX.
 
 Module attribute paths (Protenix):
   pairformer:        model.pairformer_stack
@@ -178,10 +178,10 @@ class _CompatPairformerJAXProtenix(nn.Module):
             variant = PairformerVariant.protenix_v1(num_blocks=config.pairformer_num_blocks)
         import os as _os
         _remat = _os.environ.get(
-            "BIO_TRT_JAX_PAIRFORMER_REMAT", "1").lower() in (
+            "RESIDUDES_ENGINE_JAX_PAIRFORMER_REMAT", "1").lower() in (
                 "1", "true", "yes", "on")
         _use_scan = _os.environ.get(
-            "BIO_TRT_JAX_PAIRFORMER_SCAN", "0").lower() in (
+            "RESIDUDES_ENGINE_JAX_PAIRFORMER_SCAN", "0").lower() in (
                 "1", "true", "yes", "on")
         def fn(z, pair_mask, s, single_mask):
             return PairformerStack(
@@ -266,7 +266,7 @@ class _CompatTokenTransformerJAXProtenix(nn.Module):
             variant = TokenTransformerVariant.protenix_v1(num_blocks=config.token_transformer_num_blocks)
         import os as _os
         _use_scan = _os.environ.get(
-            "BIO_TRT_JAX_TOKEN_TRANSFORMER_SCAN", "0").lower() in (
+            "RESIDUDES_ENGINE_JAX_TOKEN_TRANSFORMER_SCAN", "0").lower() in (
                 "1", "true", "yes", "on")
         def fn(a, s, z, mask):
             return TokenTransformer(variant=variant, use_scan=_use_scan)(a, s, z, mask)
@@ -355,9 +355,9 @@ class _CompatMsaModuleJAXProtenix(nn.Module):
 
         import os as _os
         _msa_remat = _os.environ.get(
-            "BIO_TRT_JAX_MSA_REMAT", "0").lower() in ("1","true","yes","on")
+            "RESIDUDES_ENGINE_JAX_MSA_REMAT", "0").lower() in ("1","true","yes","on")
         _msa_scan = _os.environ.get(
-            "BIO_TRT_JAX_MSA_SCAN", "1").lower() in ("1","true","yes","on")
+            "RESIDUDES_ENGINE_JAX_MSA_SCAN", "1").lower() in ("1","true","yes","on")
 
         def fn(m, z, pair_mask, m_mask):
             return MSAModuleStack(
@@ -414,10 +414,10 @@ class _CompatMsaModuleJAXProtenix(nn.Module):
         # AF3 caps MSA depth at 1024 by default. Protenix allows up to
         # 16384, but the JAX path scales poorly with S (no fused MSA-aware
         # kernels). We cap the test cutoff used for sampling — env var
-        # ``BIO_TRT_JAX_MSA_DEPTH_CAP`` overrides (default 1024).
+        # ``RESIDUDES_ENGINE_JAX_MSA_DEPTH_CAP`` overrides (default 1024).
         import os as _os
         try:
-            cutoff_cap = int(_os.environ.get("BIO_TRT_JAX_MSA_DEPTH_CAP", "1024"))
+            cutoff_cap = int(_os.environ.get("RESIDUDES_ENGINE_JAX_MSA_DEPTH_CAP", "1024"))
         except ValueError:
             cutoff_cap = 1024
         eff_cutoff = (self._orig.msa_configs["train_cutoff"]
@@ -469,10 +469,10 @@ class _CompatMsaModuleJAXProtenix(nn.Module):
         # as S * N * c_intermediate (8 * c_m at MSAPairWeightedAveraging /
         # transition) and OOM on a 24 GiB 4090 above S≈1000 with N=644.
         # The PT path uses chunk_size=2048 inside its kernels and stays
-        # within memory. Tunable via BIO_TRT_JAX_MSA_MAX_S.
+        # within memory. Tunable via RESIDUDES_ENGINE_JAX_MSA_MAX_S.
         import os as _os
         try:
-            max_s = int(_os.environ.get("BIO_TRT_JAX_MSA_MAX_S", "2048"))
+            max_s = int(_os.environ.get("RESIDUDES_ENGINE_JAX_MSA_MAX_S", "2048"))
         except ValueError:
             max_s = 2048
         if msa_sample.shape[0] > max_s:
@@ -555,7 +555,7 @@ class ProtenixJAX:
         self._original["diffusion_transformer"] = diff_mod.diffusion_transformer
         diff_mod.diffusion_transformer = tt
 
-        # MSA module hot-swap — opt-in (default OFF) via BIO_TRT_JAX_MSA_MODULE=1.
+        # MSA module hot-swap — opt-in (default OFF) via RESIDUDES_ENGINE_JAX_MSA_MODULE=1.
         # The 4-block JAX path is ~10x faster than PT *steady state* (3ms vs
         # 30ms/call), but the first 1-2 calls pay 4-5s of CUDA kernel autotune
         # per new shape. With only 10 cycles per inference, the autotune cost
@@ -563,9 +563,9 @@ class ProtenixJAX:
         # win for long-running services where autotune amortizes across many
         # proteins of similar shape. Large MSA (S>1024) falls back to PT to
         # avoid OOM (S * N * c_intermediate doesn't fit in 24 GiB). Set
-        # BIO_TRT_JAX_MSA_MAX_S to tune the fallback threshold.
+        # RESIDUDES_ENGINE_JAX_MSA_MAX_S to tune the fallback threshold.
         import os as _os
-        if _os.environ.get("BIO_TRT_JAX_MSA_MODULE", "0").lower() in (
+        if _os.environ.get("RESIDUDES_ENGINE_JAX_MSA_MODULE", "0").lower() in (
                 "1", "true", "yes", "on"):
             try:
                 msa = _CompatMsaModuleJAXProtenix(

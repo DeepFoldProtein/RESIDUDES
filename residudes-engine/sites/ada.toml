@@ -10,11 +10,15 @@ venv = "{residudes_engine_root}/core/.venv"
 venv_jax = "{residudes_engine_root}/core/jaxenv/.venv"      # JAX 0.11 environment: AlphaFold 3 and the optional fused-kernel JAX backend
 checkpoints = "/gpfs/deepfold/casp/casp17/checkpoints"
 af3_weights = "/gpfs/database/af3"                 # af3.bin (licensed by Google DeepMind; not in checkpoints)
+esm = "/gpfs/deepfold/casp/casp17/esm"             # ESMFold2: the esm checkout and its python 3.12 conda env
 engines = "/gpfs/deepfold/casp/casp17/engines"
 # libstdc++ carrying GLIBCXX_3.4.32 (needed by the C++ TensorRT plugin); system paths are tried after.
 libstdcxx = ["/gpfs/deepfold/anaconda3/lib/libstdc++.so.6.0.33"]
 kalign = "/gpfs/deepfold/others/kalign/bin/kalign"
 cache_dir = "{home}/.cache/residudes-engine"
+
+[msa]
+af3_db_dir = "/gpfs/database/af3"                  # AlphaFold 3's own pipeline: --source af3 (jackhmmer, hours of CPU)
 
 [slurm]
 partition = "normal"

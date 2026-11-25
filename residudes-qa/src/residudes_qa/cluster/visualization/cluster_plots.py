@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
-import seaborn as sns
 from typing import Optional, Union, List
 from pathlib import Path
 
@@ -181,7 +180,7 @@ def plot_cluster_sizes(
     bars = ax.bar(range(len(unique_labels)), counts, color=colors)
 
     ax.set_xticks(range(len(unique_labels)))
-    ax.set_xticklabels([f'C{l}' for l in unique_labels])
+    ax.set_xticklabels([f'C{lab}' for lab in unique_labels])
     ax.set_ylabel('Size')
     ax.set_xlabel('Cluster')
     ax.set_title(title)
@@ -335,7 +334,7 @@ def plot_metric_comparison(
     for i, metric in enumerate(metrics):
         means = df.groupby(cluster_column)[metric].mean().values
         offset = (i - len(metrics)/2 + 0.5) * width
-        bars = ax.bar(x + offset, means, width, label=metric, alpha=0.8)
+        ax.bar(x + offset, means, width, label=metric, alpha=0.8)
 
     ax.set_xlabel('Cluster')
     ax.set_ylabel('Mean Score')

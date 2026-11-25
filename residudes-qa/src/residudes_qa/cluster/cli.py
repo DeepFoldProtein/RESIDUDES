@@ -744,13 +744,13 @@ def cluster_analysis_cmd(args):
             return pd.read_parquet(path)
         return pd.read_csv(path)
 
-    print(f"Loading inputs…")
+    print("Loading inputs…")
     clusters = _load(args.clusters)
     contacts = _load(args.contacts) if args.contacts else None
     master = _load(args.master)
     print(f"  clusters: {len(clusters)} rows, "
           f"{clusters[args.cluster_col].nunique()} clusters")
-    print(f"  contacts_long: "
+    print("  contacts_long: "
           + (f"{len(contacts)} rows" if contacts is not None
              else "(none — will derive from CIFs)"))
     print(f"  master: {len(master)} rows")
@@ -801,7 +801,6 @@ def cluster_analysis_cmd(args):
 
 def run_clustering(args):
     """Execute clustering command."""
-    import numpy as np
     from residudes_qa.cluster.core.distance import load_precomputed_matrix, similarity_to_distance
     from residudes_qa.cluster.core.clustering import run_clustering as cluster
     from residudes_qa.cluster.core.fuzzy import run_fuzzy_clustering
@@ -809,7 +808,7 @@ def run_clustering(args):
     from residudes_qa.cluster.visualization.embeddings import compute_embedding
 
     print(f"\n{'='*60}")
-    print(f"  MassiveClustering - Run")
+    print("  MassiveClustering - Run")
     print(f"{'='*60}")
 
     # Load matrix
@@ -879,12 +878,11 @@ def run_clustering(args):
 
 def analyze_results(args):
     """Execute analyze command."""
-    import pandas as pd
     from residudes_qa.cluster.io.readers import load_clustering_results, load_scores
     from residudes_qa.cluster.assessment.native_compare import merge_with_clustering, compute_cluster_native_stats
 
     print(f"\n{'='*60}")
-    print(f"  MassiveClustering - Analyze")
+    print("  MassiveClustering - Analyze")
     print(f"{'='*60}")
 
     # Load clustering results
@@ -916,12 +914,11 @@ def analyze_results(args):
 
 def generate_report_cmd(args):
     """Execute report command."""
-    import numpy as np
     from residudes_qa.cluster.io.readers import load_clustering_results, load_scores, load_distance_matrix
     from residudes_qa.cluster.visualization.report import generate_report
 
     print(f"\n{'='*60}")
-    print(f"  MassiveClustering - Report")
+    print("  MassiveClustering - Report")
     print(f"{'='*60}")
 
     # Load data
@@ -956,7 +953,7 @@ def generate_heatmap_cmd(args):
     import matplotlib.pyplot as plt
 
     print(f"\n{'='*60}")
-    print(f"  MassiveClustering - Heatmap")
+    print("  MassiveClustering - Heatmap")
     print(f"{'='*60}")
 
     df = pd.read_csv(args.input)
@@ -975,7 +972,7 @@ def generate_heatmap_cmd(args):
 def comprehensive_cmd(args):
     """End-to-end clustering + visualization for multiple metrics."""
     import numpy as np
-    from residudes_qa.cluster.core.distance import load_precomputed_matrix, similarity_to_distance
+    from residudes_qa.cluster.core.distance import similarity_to_distance
     from residudes_qa.cluster.core.clustering import run_clustering as cluster, select_optimal_k
     from residudes_qa.cluster.io.writers import save_clustering_results, save_cluster_stats, save_k_selection_scores
     from residudes_qa.cluster.visualization.comprehensive import (
@@ -986,7 +983,7 @@ def comprehensive_cmd(args):
     import matplotlib.pyplot as plt
 
     print(f"\n{'='*60}")
-    print(f"  MassiveClustering - Comprehensive Analysis")
+    print("  MassiveClustering - Comprehensive Analysis")
     print(f"  Target: {args.target}")
     print(f"{'='*60}")
 
@@ -1052,7 +1049,7 @@ def comprehensive_cmd(args):
         k_scores = None
         if args.method == 'leiden':
             n_clusters = None  # Leiden determines K
-            print(f"  Method: Leiden (auto K via community detection)")
+            print("  Method: Leiden (auto K via community detection)")
         elif args.k is None:
             n_clusters, k_scores = select_optimal_k(
                 dist_matrix,
@@ -1065,7 +1062,7 @@ def comprehensive_cmd(args):
             print(f"  Auto K = {n_clusters}")
             if k_scores.get('is_ascending_at_boundary', False):
                 print(f"  WARNING: Silhouette still ascending at k_max={args.k_max}!")
-                print(f"           Consider increasing --k-max for better K selection.")
+                print("           Consider increasing --k-max for better K selection.")
             bic_k = k_scores.get('bic_optimal_k')
             if bic_k is not None and bic_k != n_clusters:
                 print(f"  Note: BIC suggests K={bic_k}")
@@ -1079,7 +1076,7 @@ def comprehensive_cmd(args):
                         dpi=150, bbox_inches='tight'
                     )
                     plt.close(fig)
-                    print(f"  K diagnostic plot saved")
+                    print("  K diagnostic plot saved")
 
                 # Save K selection scores CSV
                 save_k_selection_scores(
@@ -1088,7 +1085,7 @@ def comprehensive_cmd(args):
                     target_name=args.target,
                     metric_name=metric_name,
                 )
-                print(f"  K selection scores saved")
+                print("  K selection scores saved")
         else:
             n_clusters = args.k
             print(f"  K = {n_clusters} (user specified)")
@@ -1129,7 +1126,7 @@ def comprehensive_cmd(args):
         )
 
     # Generate comprehensive report per metric
-    print(f"\nGenerating comprehensive visualization...")
+    print("\nGenerating comprehensive visualization...")
     try:
         for metric_name, data in all_results.items():
             result = data['result']
@@ -1181,7 +1178,7 @@ def comprehensive_cmd(args):
                         dpi=150, bbox_inches="tight", facecolor="white",
                     )
                     plt.close(fig_dn)
-                    print(f"  Cluster dendrogram saved")
+                    print("  Cluster dendrogram saved")
             except Exception as e:
                 print(f"  Warning: Cluster dendrogram failed: {e}")
     except Exception as e:
@@ -1189,7 +1186,7 @@ def comprehensive_cmd(args):
 
     # Generate combined cluster summary table (all metrics in one table)
     # Use the first metric for clustering labels, show intra-cluster stats for ALL metrics
-    print(f"\nGenerating cluster summary table...")
+    print("\nGenerating cluster summary table...")
     try:
         primary_metric = list(all_results.keys())[0]
         primary_result = all_results[primary_metric]['result']
@@ -1216,7 +1213,7 @@ def comprehensive_cmd(args):
 
     # Provenance analysis (method distribution per cluster)
     if names:
-        print(f"\nRunning provenance analysis...")
+        print("\nRunning provenance analysis...")
         try:
             from residudes_qa.cluster.analysis.provenance import analyze_provenance
             primary_metric = list(all_results.keys())[0]
@@ -1235,7 +1232,7 @@ def comprehensive_cmd(args):
 
     # Native comparison + confidence analysis
     if scores_df is not None or getattr(args, 'ranking', None):
-        print(f"\nRunning score analysis...")
+        print("\nRunning score analysis...")
         try:
             from residudes_qa.cluster.analysis.native_comparison import (
                 analyze_native_scores, load_ranking_scores,
@@ -1265,7 +1262,7 @@ def comprehensive_cmd(args):
     if getattr(args, 'pdbs', None):
         pdb_dir = Path(args.pdbs)
         if pdb_dir.is_dir():
-            print(f"\nRunning consensus analysis...")
+            print("\nRunning consensus analysis...")
             try:
                 from residudes_qa.cluster.core.consensus import (
                     extract_all_cluster_consensus,
@@ -1421,7 +1418,7 @@ def network_cmd(args):
     )
 
     print(f"\n{'='*60}")
-    print(f"  MassiveClustering - Network Analysis")
+    print("  MassiveClustering - Network Analysis")
     print(f"  Target: {args.target}")
     print(f"{'='*60}")
 
@@ -1460,7 +1457,7 @@ def network_cmd(args):
                 names = [line.strip() for line in f if line.strip()]
 
     # Run network analysis
-    print(f"\nRunning network analysis...")
+    print("\nRunning network analysis...")
     community_method = getattr(args, 'community_method', 'auto')
     resolution = getattr(args, 'resolution', None)
 
@@ -1485,13 +1482,13 @@ def network_cmd(args):
         print(f"  Communities: {len(np.unique(result.communities))}")
 
     # Compute transition matrix
-    print(f"\nComputing transition matrix...")
+    print("\nComputing transition matrix...")
     transition = compute_cluster_transition_matrix(dist_matrix, labels)
 
     # Resolution scan
     scan_results = None
     if getattr(args, 'resolution_scan', False):
-        print(f"\nRunning Leiden resolution scan...")
+        print("\nRunning Leiden resolution scan...")
         from residudes_qa.cluster.core.network import build_structure_graph, resolution_scan
         G = build_structure_graph(dist_matrix, structure_names=names)
         try:
@@ -1508,7 +1505,7 @@ def network_cmd(args):
             })
             scan_df.to_csv(output_dir / f"{args.target}_resolution_scan.csv", index=False)
         except ImportError:
-            print(f"  WARNING: leidenalg not installed. Install with: pip install leidenalg igraph")
+            print("  WARNING: leidenalg not installed. Install with: pip install leidenalg igraph")
 
     # Bootstrap community stability (robustness — not a single run)
     if getattr(args, 'stability', False):
@@ -1523,7 +1520,7 @@ def network_cmd(args):
                 resolution=getattr(args, 'resolution', None),
             )
             print(f"  mean ARI vs full: {stab['mean_ari']:.3f} ± {stab['std_ari']:.3f}")
-            print(f"  (→1.0 = communities reproducible; low/variable = fragile)")
+            print("  (→1.0 = communities reproducible; low/variable = fragile)")
             np.save(output_dir / f"{args.target}_coassociation.npy", stab['coassoc'])
             pd.DataFrame({'ari': stab['ari_values']}).to_csv(
                 output_dir / f"{args.target}_bootstrap_ari.csv", index=False)
@@ -1533,7 +1530,7 @@ def network_cmd(args):
                 'stability': stab['per_node_stability'],
             }).to_csv(output_dir / f"{args.target}_node_stability.csv", index=False)
         except ImportError:
-            print(f"  WARNING: leidenalg/sklearn not installed.")
+            print("  WARNING: leidenalg/sklearn not installed.")
 
     # Multi-seed Leiden on the full graph: best-modularity partition + seed-stability
     if getattr(args, 'n_seeds', 0) and args.n_seeds > 1:
@@ -1550,7 +1547,7 @@ def network_cmd(args):
             print(f"  n_communities per seed: min={min(ms['n_communities_per_seed'])} "
                   f"max={max(ms['n_communities_per_seed'])}")
             print(f"  mean pairwise ARI across seeds: {ms['mean_ari']:.3f} ± {ms['std_ari']:.3f}")
-            print(f"  (→1.0 = partition seed-robust; lower = single-run split is a seed artifact)")
+            print("  (→1.0 = partition seed-robust; lower = single-run split is a seed artifact)")
             np.save(output_dir / f"{args.target}_multiseed_coassoc.npy", ms['coassoc'])
             np.save(output_dir / f"{args.target}_multiseed_best_labels.npy", ms['best_labels'])
             pd.DataFrame({
@@ -1566,11 +1563,11 @@ def network_cmd(args):
                 'best_community': ms['best_labels'],
             }).to_csv(output_dir / f"{args.target}_multiseed_communities.csv", index=False)
         except ImportError:
-            print(f"  WARNING: leidenalg/sklearn not installed.")
+            print("  WARNING: leidenalg/sklearn not installed.")
 
     # Consensus communities across resolutions
     if getattr(args, 'consensus_communities', False):
-        print(f"\nConsensus communities across resolutions...")
+        print("\nConsensus communities across resolutions...")
         from residudes_qa.cluster.core.network import build_structure_graph, consensus_communities
         import pandas as pd
         G = build_structure_graph(dist_matrix, structure_names=names)
@@ -1585,7 +1582,7 @@ def network_cmd(args):
                 'consensus_community': con['consensus_labels'],
             }).to_csv(output_dir / f"{args.target}_consensus_communities.csv", index=False)
         except ImportError:
-            print(f"  WARNING: leidenalg not installed.")
+            print("  WARNING: leidenalg not installed.")
 
     # Save results
     np.save(output_dir / f"{args.target}_inter_cluster_dist.npy", result.inter_cluster_matrix)
@@ -1671,14 +1668,14 @@ def network_cmd(args):
                         title=f"{args.target} — {vname} by {gname}",
                         output_path=output_dir / f"{args.target}_{vname}_by_{gname}.png")
                     _plt.close(fig_v)
-            print(f"  saved confidence violin plots")
+            print("  saved confidence violin plots")
         else:
             n_missing = sum(1 for p in (paths or []) if p is None)
             print(f"  WARNING: --pdbs set but {n_missing} structures not found in {pdir}; "
                   f"skipping confidence")
 
     # Generate visualization (always generate report; --visualize adds individual plots)
-    print(f"\nGenerating network visualization...")
+    print("\nGenerating network visualization...")
     import matplotlib.pyplot as plt
     from residudes_qa.cluster.visualization.network_viz import create_network_report
     try:
@@ -1692,7 +1689,7 @@ def network_cmd(args):
             output_dir=str(output_dir),
         )
         plt.close(fig)
-        print(f"  Network report saved")
+        print("  Network report saved")
     except Exception as e:
         print(f"  WARNING: Network visualization failed: {e}")
 
@@ -1733,7 +1730,7 @@ def network_cmd(args):
                     output_path=output_dir / f"{args.target}_resolution_scan.png",
                 )
                 plt.close(fig)
-            print(f"  Individual plots saved")
+            print("  Individual plots saved")
         except Exception as e:
             print(f"  WARNING: Individual plots failed: {e}")
 
@@ -1757,7 +1754,7 @@ def consensus_cmd(args):
     from residudes_qa.cluster.io.readers import load_pdb_list
 
     print(f"\n{'='*60}")
-    print(f"  MassiveClustering - Consensus & Local Substructure Extraction")
+    print("  MassiveClustering - Consensus & Local Substructure Extraction")
     print(f"  Target: {args.target}")
     print(f"{'='*60}")
 
@@ -1799,7 +1796,7 @@ def consensus_cmd(args):
         print(f"  Medoids loaded: {len(medoid_indices)}")
 
     # Extract consensus for all clusters
-    print(f"\nExtracting consensus structures...")
+    print("\nExtracting consensus structures...")
     results = extract_all_cluster_consensus(
         pdb_paths=[str(p) for p in pdb_paths],
         labels=labels,
@@ -1809,7 +1806,7 @@ def consensus_cmd(args):
     )
 
     # Save results
-    print(f"\n  Results per cluster:")
+    print("\n  Results per cluster:")
     summary_rows = []
     all_segment_rows = []
 
@@ -1892,7 +1889,7 @@ def consensus_cmd(args):
         })
 
     # Cross-cluster segment comparison
-    print(f"\n  Cross-cluster segment comparison...")
+    print("\n  Cross-cluster segment comparison...")
     comparisons = compare_segments_across_clusters(results)
     shared = [c for c in comparisons if c.rmsd < 2.0]
     print(f"    Total comparisons: {len(comparisons)}")
@@ -1928,8 +1925,8 @@ def consensus_cmd(args):
 
     print(f"\n{'='*60}")
     print(f"  Results saved to: {output_dir}")
-    print(f"  Files: consensus PDB/CIF, segment PDB/CIF, RMSF arrays,")
-    print(f"         summary CSV, segments CSV, comparisons CSV")
+    print("  Files: consensus PDB/CIF, segment PDB/CIF, RMSF arrays,")
+    print("         summary CSV, segments CSV, comparisons CSV")
     print(f"{'='*60}")
 
 
@@ -1939,11 +1936,11 @@ def mpnn_score_cmd(args):
     from pathlib import Path
     from residudes_qa.cluster.confidence.mpnn_scoring import MPNNScorer, save_mpnn_results
     from residudes_qa.cluster.confidence.analysis import (
-        compare_recovery_with_rmsf, generate_confidence_report,
+        compare_recovery_with_rmsf,
     )
 
     print(f"\n{'='*60}")
-    print(f"  MassiveClustering - ProteinMPNN Confidence Scoring")
+    print("  MassiveClustering - ProteinMPNN Confidence Scoring")
     print(f"{'='*60}")
 
     output_dir = Path(args.output)
@@ -1960,7 +1957,7 @@ def mpnn_score_cmd(args):
             print(f"  Auto-detected ProteinMPNN: {mpnn_dir}")
         else:
             print(f"  ERROR: ProteinMPNN not found at {candidate}")
-            print(f"  Please specify --proteinmpnn-dir")
+            print("  Please specify --proteinmpnn-dir")
             sys.exit(1)
 
     # Initialize scorer
@@ -2002,12 +1999,12 @@ def mpnn_score_cmd(args):
         sys.exit(1)
 
     # Save results
-    print(f"\nSaving results...")
+    print("\nSaving results...")
     save_mpnn_results(results, str(output_dir), target_name=args.target)
 
     # Print summary
     print(f"\n{'='*60}")
-    print(f"  ProteinMPNN Scoring Summary")
+    print("  ProteinMPNN Scoring Summary")
     print(f"{'='*60}")
     print(f"  Structures scored: {len(results)}")
     recoveries = [r.overall_recovery for r in results]
@@ -2077,7 +2074,7 @@ def superposition_core_cmd(args):
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"\n{'='*60}")
-    print(f"  MassiveClustering - Superposition Core Analysis")
+    print("  MassiveClustering - Superposition Core Analysis")
     print(f"  Target: {target}")
     print(f"{'='*60}")
 
@@ -2202,7 +2199,7 @@ def superposition_core_cmd(args):
     majority_mask = core_stack.sum(axis=0) > n_clusters / 2
     never_core = ~core_stack.any(axis=0)
 
-    print(f"\n  Cross-cluster core:")
+    print("\n  Cross-cluster core:")
     print(f"    Universal (ALL): {universal_mask.sum()}/{n_residues} "
           f"({universal_mask.sum()/n_residues:.1%})")
     print(f"    Majority (>{n_clusters//2}): {majority_mask.sum()}/{n_residues} "
@@ -2211,7 +2208,7 @@ def superposition_core_cmd(args):
           f"({never_core.sum()/n_residues:.1%})")
 
     # Multi-threshold
-    print(f"  Multi-threshold (ALL clusters):")
+    print("  Multi-threshold (ALL clusters):")
     for thresh, name in [(0.5, 'aligned'), (0.8, 'core'),
                           (0.9, 'stable'), (0.95, 'rigid')]:
         n = int((weight_stack > thresh).all(axis=0).sum())
@@ -2315,7 +2312,7 @@ def superposition_core_cmd(args):
     level_colors = {-1: '#d32f2f', 0: '#e0e0e0', 1: '#bbdefb',
                     2: '#42a5f5', 3: '#1565c0', 4: '#1a237e'}
     ax.bar(residues, np.ones(n_residues), width=1.0,
-           color=[level_colors[int(l)] for l in core_level])
+           color=[level_colors[int(lab)] for lab in core_level])
     ax.set_yticks([])
     ax.set_xlabel('Residue index')
     counts = {k: int((core_level == k).sum()) for k in [-1, 0, 1, 2, 3, 4]}
@@ -2335,7 +2332,6 @@ def superposition_core_cmd(args):
 
 def inpaint_cmd(args):
     """Superposition core → PatchR inpainting pipeline with analysis."""
-    import numpy as np
     from residudes_qa.cluster.core.inpainting import (
         generate_patchr_input, run_patchr, analyze_inpainting,
     )
@@ -2345,7 +2341,7 @@ def inpaint_cmd(args):
     out.mkdir(parents=True, exist_ok=True)
 
     print(f"\n{'='*60}")
-    print(f"  MassiveClustering - Inpainting Pipeline")
+    print("  MassiveClustering - Inpainting Pipeline")
     print(f"  Target: {target}")
     print(f"{'='*60}")
 
@@ -2373,10 +2369,10 @@ def inpaint_cmd(args):
         if rc != 0:
             print(f"  [ERROR] PatchR failed with return code {rc}")
             return
-        print(f"  PatchR completed successfully")
+        print("  PatchR completed successfully")
     elif not args.analyze_only:
-        print(f"\n[Step 2] Skipped (use --run-patchr to execute)")
-        print(f"  Run manually:")
+        print("\n[Step 2] Skipped (use --run-patchr to execute)")
+        print("  Run manually:")
         print(f"    CUDA_VISIBLE_DEVICES={args.gpu} patchr predict {yaml_path} "
               f"--out_dir {results_dir} --diffusion_samples {args.n_samples}")
 
@@ -2391,10 +2387,10 @@ def inpaint_cmd(args):
             break
 
     if pred_dir is None:
-        print(f"\n[Step 3] No prediction results found. Run PatchR first.")
+        print("\n[Step 3] No prediction results found. Run PatchR first.")
         return
 
-    print(f"\n[Step 3] Analyzing inpainting results")
+    print("\n[Step 3] Analyzing inpainting results")
     meta_path = out / f"{target}_inpainting_metadata.json"
     summary = analyze_inpainting(
         pred_dir=str(pred_dir),
@@ -2414,13 +2410,13 @@ def inpaint_cmd(args):
         print(f"\n  Structural Diversity ({summary['n_models']} models, pairwise after superpose):")
         print(f"    Fixed RMSD:     {summary['rmsd_fixed_mean']:.3f}Å")
         print(f"    Inpainted RMSD: {summary['rmsd_inpainted_mean']:.3f}Å")
-        print(f"\n  Per-region RMSF:")
+        print("\n  Per-region RMSF:")
         print(f"    Fixed region:     {summary['rmsf_fixed_mean']:.3f}Å")
         print(f"    Inpainted region: {summary['rmsf_inpainted_mean']:.3f}Å")
         print(f"\n  Confidence Scores: {summary['confidence_scores']}")
         if 'dockq_scores' in summary:
             print(f"  DockQ Scores: {summary['dockq_scores']}")
-        print(f"\n  Output files:")
+        print("\n  Output files:")
         print(f"    Analysis CSV: {summary['analysis_csv']}")
         print(f"    RMSF CSV:     {summary['rmsf_csv']}")
         print(f"    Figure:       {summary['figure']}")

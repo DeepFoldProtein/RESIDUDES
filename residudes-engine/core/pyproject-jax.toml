@@ -1,5 +1,5 @@
 [project]
-# JAX-only environment for Bio-TRT.
+# JAX-only environment for residudes-engine.
 #
 # Why a separate project file?
 #   tokamax 0.0.12+ requires JAX >= 0.9.2, which in turn pulls numpy >= 2.0.
@@ -12,9 +12,9 @@
 #
 # Set up: `bash scripts/setup_jax_venv.sh`
 # Activate: `source .venv-jax/bin/activate`
-name = "bio-trt-jax"
+name = "residudes-engine-core-jax"
 version = "0.1.0"
-description = "JAX (+ tokamax) inference environment for Bio-TRT models"
+description = "JAX (+ tokamax) inference environment for residudes-engine models"
 requires-python = ">=3.11"
 readme = "README.md"
 

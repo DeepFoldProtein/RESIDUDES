@@ -1,1 +1,1 @@
-# Bio-TRT Boltz2 adapter
+# residudes-engine Boltz2 adapter

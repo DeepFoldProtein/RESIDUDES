@@ -484,7 +484,7 @@ _CACHE: dict = {}
 def lookup_inputs_meta(model: str, name: str) -> Optional[dict]:
     """Return the per-(query/job/record) inputs_meta entry, or None.
 
-    Reads `BIO_TRT_INPUT_PATH` env var (set by each runner's entry shim
+    Reads `RESIDUDES_ENGINE_INPUT_PATH` env var (set by each runner's entry shim
     before invoking the model). Caches by path so repeated calls within
     the same process don't re-parse.
 
@@ -494,11 +494,11 @@ def lookup_inputs_meta(model: str, name: str) -> Optional[dict]:
                input file). For af3 it's ignored — af3 input has 1 job.
     """
     import os as _os
-    p = _os.environ.get("BIO_TRT_INPUT_PATH")
+    p = _os.environ.get("RESIDUDES_ENGINE_INPUT_PATH")
     if not p:
         return None
 
-    # bt2 in bulk mode: BIO_TRT_INPUT_PATH may be a *directory* of yamls.
+    # bt2 in bulk mode: RESIDUDES_ENGINE_INPUT_PATH may be a *directory* of yamls.
     # Resolve to the per-record yaml on the fly.
     if model == "bt2" and _os.path.isdir(p):
         yaml_path = _os.path.join(p, f"{name}.yaml")

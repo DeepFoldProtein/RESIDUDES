@@ -129,8 +129,8 @@ def plot_cluster_2d_heatmap(
     loop_labels = ([cdr_map.get(p, "other") for p in para_keys_kept]
                    if cdr_map is not None else None)
     if cdr_map is not None:
-        para_labels = [f"{p[0]}.{int(p[1])}·{_SHORT_LOOP.get(l, l)}"
-                       for p, l in zip(para_keys_kept, loop_labels)]
+        para_labels = [f"{p[0]}.{int(p[1])}·{_SHORT_LOOP.get(lab, lab)}"
+                       for p, lab in zip(para_keys_kept, loop_labels)]
     else:
         para_labels = [f"{p[0]}.{int(p[1])}" for p in para_keys_kept]
     epi_labels = [f"{e[0]}.{int(e[1])}" for e in epi_keys_kept]
@@ -147,7 +147,7 @@ def plot_cluster_2d_heatmap(
         gs = fig.add_gridspec(1, 2, width_ratios=[0.05, 1.0], wspace=0.02)
         strip_ax = fig.add_subplot(gs[0, 0])
         ax = fig.add_subplot(gs[0, 1], sharey=strip_ax)
-        loop_colors = [CDR_LOOP_COLORS.get(l, "#cccccc") for l in loop_labels]
+        loop_colors = [CDR_LOOP_COLORS.get(lab, "#cccccc") for lab in loop_labels]
         strip_ax.imshow(
             np.arange(len(para_keys_kept))[:, None],
             aspect="auto",
@@ -157,8 +157,8 @@ def plot_cluster_2d_heatmap(
         # residue labels live on the strip (left), colored by loop
         strip_ax.set_yticks(range(len(para_labels)))
         strip_ax.set_yticklabels(para_labels, fontsize=7)
-        for tick, l in zip(strip_ax.get_yticklabels(), loop_labels):
-            tick.set_color(_LOOP_TEXT_COLORS.get(l, "#333333"))
+        for tick, lab in zip(strip_ax.get_yticklabels(), loop_labels):
+            tick.set_color(_LOOP_TEXT_COLORS.get(lab, "#333333"))
         strip_ax.set_ylabel("Paratope residue · CDR loop")
     else:
         ax = fig.add_subplot(1, 1, 1)
@@ -183,11 +183,11 @@ def plot_cluster_2d_heatmap(
         from matplotlib.patches import Patch
         loops_present = sorted(
             set(loop_labels),
-            key=lambda l: CDR_LOOP_ORDER.index(l) if l in CDR_LOOP_ORDER else len(CDR_LOOP_ORDER),
+            key=lambda lab: CDR_LOOP_ORDER.index(lab) if lab in CDR_LOOP_ORDER else len(CDR_LOOP_ORDER),
         )
         ax.legend(
-            handles=[Patch(facecolor=CDR_LOOP_COLORS.get(l, "#ccc"), label=l)
-                     for l in loops_present],
+            handles=[Patch(facecolor=CDR_LOOP_COLORS.get(lab, "#ccc"), label=lab)
+                     for lab in loops_present],
             loc="upper left", bbox_to_anchor=(1.12, 1.0), fontsize=8,
             title="CDR loop", title_fontsize=9, framealpha=0.9,
         )

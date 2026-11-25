@@ -226,7 +226,7 @@ def run_mpnn_sequential(
     n = len(records)
     t0 = time.time()
     print(f"  mpnn features: {n} cifs  gpu={gpu}", flush=True)
-    print(f"  loading MPNN scorer...", flush=True)
+    print("  loading MPNN scorer...", flush=True)
     scorer = _load_scorer(ema_path)
     print(f"  MPNN initialized ({time.time()-t0:.1f}s)", flush=True)
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""JAX hot-module backend for Bio-TRT.
+"""JAX hot-module backend for residudes-engine.
 
 Mirrors the TRT injection scope: replaces `pairformer` and `token_transformer`
 PyTorch modules inside OpenFold3, Protenix, and Boltz-2 with JAX (Haiku)

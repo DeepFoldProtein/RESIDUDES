@@ -417,7 +417,7 @@ def analyze_inpainting(
                         break
                 else:
                     dockq_results.append({"model": i, "dockq": None})
-            except Exception as e:
+            except Exception:
                 dockq_results.append({"model": i, "dockq": None})
 
     # Save analysis CSV

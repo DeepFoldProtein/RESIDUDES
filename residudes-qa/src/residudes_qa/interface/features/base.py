@@ -45,7 +45,7 @@ import warnings
 from dataclasses import dataclass, field
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd

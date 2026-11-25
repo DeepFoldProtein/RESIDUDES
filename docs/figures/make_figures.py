@@ -155,13 +155,14 @@ def fig_overview():
         s.text(x, yb + 52, name, size=22, weight="bold")
         s.text(x, yb + 80, sub, size=18, fill=MUTED)
     mx = X["PREDICT"]
-    for name, dy in (("Protenix v2", -96), ("OpenFold 3", -32), ("Boltz-2", 32), ("AlphaFold 3", 96)):
+    for name, dy in (("Protenix v2", -128), ("OpenFold 3", -64), ("Boltz-2", 0), ("AlphaFold 3", 64),
+                     ("ESMFold2", 128)):
         y = yb + dy
         s.path(f"M 480 {yb} C 560 {yb}, {mx - 110} {y}, {mx - 50} {y} L {mx + 50} {y} C {mx + 120} {y}, {pool_x - 90} {yb}, "
                f"{pool_x} {yb}", stroke=BLUE)
         s.circle(mx, y, 10, stroke=BLUE, sw=4)
         s.text(mx, y - 16, name, size=19)
-    s.text(mx, yb + 150, "PyTorch · TensorRT · JAX", size=20, fill=BLUE, weight="bold")
+    s.text(mx, yb + 176, "PyTorch · TensorRT · JAX", size=20, fill=BLUE, weight="bold")
 
     # ---- residudes-qa lane -----------------------------------------------------------------------------------------
     mid = (pool_x + ranked_x) / 2
@@ -180,13 +181,13 @@ def fig_overview():
 
     # ---- which station drives which tool -------------------------------------------------------------------------
     s.arrow(X["ANALYSE"], yt + 300, yb - 24, BLUE, "residudes-engine msa")
-    s.arrow(X["PREDICT"], yt + 300, yb - 146, BLUE, "residudes-engine predict", left=True)
+    s.arrow(X["PREDICT"], yt + 300, yb - 178, BLUE, "residudes-engine predict", left=True)
     s.arrow(pool_x, yt + 300, yb - 28, GREEN, "residudes-qa")
     s.arrow(ranked_x, yb - 28, yt + 300, TRACK, "review · slate")
 
     # ---- lane names ----------------------------------------------------------------------------------------------
     s.tag(60, 1225, "residudes-engine", BLUE)
-    s.text(60, 1280, "inputs and predictions: four models, one input file", size=21, fill=MUTED, anchor="start")
+    s.text(60, 1280, "inputs and predictions: five models, one input file", size=21, fill=MUTED, anchor="start")
     s.tag(pool_x - 30, 1225, "residudes-qa", GREEN)
     s.text(pool_x - 30, 1280, "the CASP17 QA stack: which predictions to trust", size=21, fill=MUTED, anchor="start")
     s.save("overview")

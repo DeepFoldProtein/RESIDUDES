@@ -4,7 +4,7 @@
 model runs from. It is two steps that can also be run separately:
 
 ```sh
-residudes-engine msa    --fasta q.fasta [--sto A2B1] --source plmmsa|colabfold|mmseqs2   # → <out>/msa/
+residudes-engine msa    --fasta q.fasta [--sto A2B1] --source plmmsa|colabfold|mmseqs2|af3  # → <out>/msa/
 residudes-engine inputs --fasta q.fasta [--sto A2B1] [templates / ligands / glycans …]    # → <out>/input.json
 residudes-engine prepare …                                                                # both
 residudes-engine predict --model pt2 --input <out>/input.json
@@ -23,8 +23,26 @@ measurable difference there, the table says so.
 | `plmmsa` (default) | **DeepFold-PLM MSA API** (`https://plmmsa.deepfold.org`): the query is embedded with a protein language model, neighbours are retrieved from a UniRef50 PLM index and aligned with `otalign` (default), `plmalign` or `plm_blast` | unpaired A3M per chain | network | 3–10 min per chain |
 | `colabfold` | **MMseqs2** through the ColabFold MSA server API (public `https://api.colabfold.com`, or a self-hosted server): UniRef30 + environmental DB, species pairing for complexes, PDB70 template hits | unpaired + paired A3M, template hits | network | 1–5 min |
 | `mmseqs2` | **MMseqs2 on this machine** (`scripts/mmseqs2_search.sh`, the ColabFold recipe used in CASP17, GPU-capable) | unpaired A3M, PDB100 template hits | `mmseqs` + databases (`--db`, ~500 GB) | 30 s – minutes |
+| `af3` | **AlphaFold 3's own data pipeline** (`run_alphafold.py --run_data_pipeline=true --run_inference=false`): jackhmmer over UniRef90, MGnify and BFD, UniProt for the paired alignment, nhmmer for nucleic chains, hmmsearch over `pdb_seqres` for templates — the MSA AF3 builds for itself, and the one its published numbers were measured on | unpaired + paired A3M, templates in the AF3 data JSON | the AF3 genetic databases (`--af3-db`, ~260 GB), the HMMER tools, CPU | **hours** per chain |
 
-Why two very different sources: HMMER and MMseqs2 find homologues by sequence
+`af3` is the slow, faithful one: it is what AlphaFold 3 does when you let it
+run its own pipeline, so it is the comparison to make when an MSA is suspect,
+and the one to use when a result has to match the published behaviour. It runs
+in the site's AF3 environment, or in a container when the site sets
+`[msa] af3_container` (then `apptainer exec` runs the same flags). Because it
+takes hours of CPU and no GPU, submit it rather than waiting on it:
+
+```sh
+residudes-engine msa --fasta q.fasta --sto A2B1 --source af3 --af3-db /path/to/af3_databases
+# site file instead of the flag:  [msa] af3_db_dir = "/path/to/af3_databases"
+```
+
+The templates the pipeline found stay in the AF3 data JSON it wrote
+(`<out>/msa/_af3/query/query_data.json`, recorded in `msa.json` under
+`meta.af3.data_json`); the A3Ms land in the usual `unpaired_<L>.a3m` and
+`paired_<L>.a3m`.
+
+Why so many very different sources: HMMER and MMseqs2 find homologues by sequence
 similarity, so they go quiet together on shallow families; the PLM search
 finds neighbours in representation space and recovers remote homologues
 (with more noise). In CASP17, 107 targets used MMseqs2-GPU MSAs and 32 used

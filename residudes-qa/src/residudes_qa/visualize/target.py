@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import logging
 import re
-import sys
 from itertools import groupby
 from pathlib import Path
 
@@ -40,6 +39,7 @@ import numpy as np
 # residudes-qa: part of the residudes_qa.visualize package (was /viz inside the af3-viz container)
 
 from residudes_qa.visualize.reader import (
+    PredictionRun,
     discover_prediction_types,
     find_best_sample,
     find_chain_msa_a3ms,

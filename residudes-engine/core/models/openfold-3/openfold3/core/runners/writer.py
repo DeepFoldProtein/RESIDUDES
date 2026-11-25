@@ -52,9 +52,9 @@ from openfold3.core.utils.tensor_utils import tensor_tree_map
 
 
 def _load_cif_normalize():
-    """Import cif_normalize.normalize_model_cif from Bio-TRT/scripts/.
+    """Import cif_normalize.normalize_model_cif from core/scripts/.
 
-    Bio-TRT's scripts/ dir is located relative to this module
+    residudes-engine's scripts/ dir is located relative to this module
     (models/openfold-3/openfold3/core/runners/writer.py → 5 levels up).
     """
     scripts_dir = str(Path(__file__).resolve().parents[5] / "scripts")
@@ -435,9 +435,10 @@ class OF3OutputWriter(BasePredictionWriter):
         # by single_datasets/inference.py at $OF3_OUTPUT_DIR; fall back to
         # input.json provenance when the runtime file isn't present.
         try:
-            import sys as _sys
-            _sys.path.insert(0, "/data/bio-trt/scripts")
-            _sys.path.insert(0, "/gpfs/deepfold/casp/casp17/Bio-TRT/scripts")
+            import os as _os, sys as _sys
+            _sys.path.insert(0, _os.path.join(
+                _os.environ.get("RESIDUDES_ENGINE_CORE")
+                or _os.path.abspath(_os.path.join(_os.path.dirname(__file__), *[_os.pardir] * 5)), "scripts"))
             from inputs_meta import read_runtime_inputs as _rri, lookup_inputs_meta as _lim
             rt = _rri(sample_dir)
             if rt is not None:

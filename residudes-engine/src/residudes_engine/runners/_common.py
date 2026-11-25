@@ -261,7 +261,7 @@ def write_manifest(req: Request, plan: Plan, rc: int, t0: float, t1: float) -> P
         "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
         "cmd": plan.cmd,
         "env_overrides": {k: plan.env[k] for k in sorted(plan.env)
-                          if k.startswith(("RESIDUDES_ENGINE_", "BIO_TRT_", "PT2_", "OF3_", "BT2_", "BOLTZ_", "XLA_", "JAX_",
+                          if k.startswith(("RESIDUDES_ENGINE_", "RESIDUDES_ENGINE_", "PT2_", "OF3_", "BT2_", "BOLTZ_", "XLA_", "JAX_",
                                            "LD_PRELOAD", "LD_LIBRARY_PATH", "PYTHONPATH", "LAYERNORM_TYPE",
                                            "PYTORCH_CUDA_ALLOC_CONF", "DS_BUILD_OPS", "CUDA_"))},
         "exit_code": rc,

@@ -9,10 +9,9 @@ Compares predictions with experimental/native structures using:
 - lDDT
 """
 
-import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import Optional, Dict, List, Union
+from typing import Optional, List, Union
 from dataclasses import dataclass
 
 

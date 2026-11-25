@@ -24,9 +24,7 @@ Burley & Petsko 1985 (aromatic Ï€-stacking), Gallivan & Dougherty 1999 (cation-Ï
 """
 from __future__ import annotations
 
-from typing import Iterable
 
-import numpy as np
 import pandas as pd
 
 

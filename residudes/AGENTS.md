@@ -53,7 +53,9 @@ Decisions rest on the priors you collected, and they say which ones:
   - `literature`: what the papers on the target and on **each partner** say, every claim with its source — where a
      partner binds, the oligomeric state, the chemistry, which state a published structure is, and what is not known.
      The gates and the input variants come from this reading (`residudes-intake`, `docs/literature.md`);
-  - `public_structures` (exact-sequence and foldseek sweeps);
+  - `public_structures` from `residudes structures T` (the exact-sequence sweep of every chain, with each entry's
+     method, resolution and release date, and the age of the local template mirrors); a foldseek sweep of a predicted
+     model on top of it, once there is one;
   - `msa_depth` from `residudes msa T --depth`. If the MSA is thin, deepen it with `residudes msa T --crawl` or `--plm`
     (skill `residudes-intake`);
   - `templates`;
@@ -109,6 +111,10 @@ residudes slides T | residudes render T --pml report/pml/x.pml       # the slide
 residudes evidence T KEY JSON | residudes note T "..." | residudes decide T --type ... --evidence ... --alt ...
 residudes stage T NEXT_STAGE                                       # when the stage's goal is met
 residudes msa T --depth | --crawl --family PF… | --plm             # MSA depth; deepen a thin MSA (family crawl, OTalign)
+residudes structures T [--identity 0.5] [--chain B]                # public structures of each chain -> public_structures
+residudes structures T --foldseek model.cif | --read-foldseek t.tsv  # the structural half (sbatch), then read it back
+residudes relax T [--sc-fc N] [--models K,..] | --read              # GROMACS+Rosetta on chosen models (sbatch); repair, not ranking
+residudes structures T --hhsearch [--chain B] | --read-hhsearch f.hhr  # profile against profile, before any model
 residudes pool T                                                   # import a residudes-engine layout pool
 residudes qa T --sto A3 --what interface|cluster [--mode ab ...]  # residudes-qa through sbatch (ab: antibody)
 residudes jobs T                                                   # refresh recorded jobs
@@ -121,7 +127,8 @@ residudes package T --server|--human [--check-only]               # after approv
 residudes run-record T --job ID --what "..." --scheduler slurm|pueue
 ```
 
-residudes-engine builds inputs and runs predictions (`residudes-engine msa`, `residudes-engine inputs`, `residudes-engine predict`); residudes-qa scores,
+residudes-engine builds inputs and runs predictions (`residudes-engine msa --source plmmsa|colabfold|mmseqs2|af3`,
+`residudes-engine inputs`, `residudes-engine predict`); residudes-qa scores,
 clusters and plots the pool. Both sit next to this folder in the RESIDUDES repo.
 
 ## Rules

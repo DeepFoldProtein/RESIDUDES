@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-OpenFold3 inference with Bio-TRT acceleration.
+OpenFold3 inference with residudes-engine acceleration.
 
 Drops in TRT-accelerated pairformer + token transformer in place of the
 standard PyTorch modules, then runs the standard OF3 prediction pipeline.
@@ -22,13 +22,13 @@ standard PyTorch modules, then runs the standard OF3 prediction pipeline.
 Usage:
     python openfold3/inference.py \\
         --query examples/query_ubiquitin.json \\
-        --checkpoint /home/jovyan/.openfold3/of3-p2-155k.pt \\
+        --checkpoint <checkpoints>/of3-p2-155k.pt \\
         --engines-dir /workspace/engines/openfold3 \\
         --output-dir results/ubiquitin_trt
 
 If engines don't exist yet, build them first:
     bash openfold3/trt/build_engines.sh \\
-        --checkpoint /home/jovyan/.openfold3/of3-p2-155k.pt \\
+        --checkpoint <checkpoints>/of3-p2-155k.pt \\
         --engines-dir /workspace/engines/openfold3
 
 Flags:
@@ -47,7 +47,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# ── Bio-TRT thirdparty ──────────────────────────────────────────────────────
+# ── residudes-engine thirdparty ──────────────────────────────────────────────────────
 _REPO_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(_REPO_ROOT / "thirdparty"))
 sys.path.insert(0, str(_REPO_ROOT))   # for openfold3.compat
@@ -55,7 +55,7 @@ sys.path.insert(0, str(_REPO_ROOT))   # for openfold3.compat
 
 def parse_args():
     p = argparse.ArgumentParser(
-        description="OpenFold3 inference with Bio-TRT TRT acceleration"
+        description="OpenFold3 inference with residudes-engine TRT acceleration"
     )
     p.add_argument("--query", required=True, type=Path,
                    help="Path to input query JSON file")
@@ -144,13 +144,13 @@ def _maybe_convert_af3_query(query_path: Path) -> Path:
         return p
 
     spec = importlib.util.spec_from_file_location(
-        "biotrt_af3_adapter",
+        "residudes_af3_adapter",
         str(_REPO_ROOT / "scripts" / "af3_input_adapter.py"),
     )
     adapter = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(adapter)
 
-    sidecar = Path(tempfile.mkdtemp(prefix="biotrt_of3_af3_"))
+    sidecar = Path(tempfile.mkdtemp(prefix="residudes_of3_af3_"))
     pairing_mode = os.environ.get("OF3_PAIRING_MODE", "")
     if pairing_mode not in ("precomputed", "online"):
         raise SystemExit(
@@ -343,7 +343,7 @@ def main():
 
     # Surface the input query path so OF3OutputWriter (and any cross-model
     # writer) can attach MSA / template provenance to summary.json.
-    os.environ["BIO_TRT_INPUT_PATH"] = str(Path(args.query).resolve())
+    os.environ["RESIDUDES_ENGINE_INPUT_PATH"] = str(Path(args.query).resolve())
 
     # Honour the `seeds` list inside the query JSON as the model inference
     # seed list. Without this override, OF3 uses experiment_settings.seeds
@@ -437,7 +437,7 @@ def main():
     query_set = InferenceQuerySet.from_json(args.query)
 
     has_extra_inputs = args.msa_a3m or args.template_cif or args.template_pdb
-    _tmp_ctx = tempfile.TemporaryDirectory(prefix="biotrt_") if has_extra_inputs else None
+    _tmp_ctx = tempfile.TemporaryDirectory(prefix="residudes_") if has_extra_inputs else None
     try:
         if has_extra_inputs:
             tmp_dir = Path(_tmp_ctx.name)

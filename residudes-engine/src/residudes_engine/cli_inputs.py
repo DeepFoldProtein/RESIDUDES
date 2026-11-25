@@ -34,7 +34,37 @@ def _msa_settings(site, ns) -> dict:
         "colabfold_api": ns.api or env.get("RESIDUDES_ENGINE_COLABFOLD_API") or m.get("colabfold_api") or msa_mod.COLABFOLD_API,
         "mmseqs_bin": ns.mmseqs or env.get("RESIDUDES_ENGINE_MMSEQS") or m.get("mmseqs_bin") or "mmseqs",
         "mmseqs_db": ns.db or env.get("RESIDUDES_ENGINE_MMSEQS_DB") or m.get("mmseqs_db"),
+        # AlphaFold 3's own pipeline: the genetic databases, and optionally a container to run it in
+        "af3_db_dir": getattr(ns, "af3_db", None) or env.get("RESIDUDES_ENGINE_AF3_DB_DIR") or m.get("af3_db_dir"),
+        "af3_container": env.get("RESIDUDES_ENGINE_AF3_CONTAINER") or m.get("af3_container"),
+        "af3_script": m.get("af3_script"),
+        "af3_binaries": m.get("af3_binaries") or {},
+        "af3_max_template_date": getattr(ns, "max_template_date", None) or m.get("af3_max_template_date"),
     }
+
+
+def _af3(chains: list[Chain], out_dir: Path, ns, site, s: dict, log):
+    """AlphaFold 3's data pipeline, from the site's AF3 entry point or a container."""
+    from .config import SiteError, venv_python
+    if not s["af3_db_dir"]:
+        raise MsaError("the af3 source needs the AlphaFold 3 genetic databases: --af3-db DIR, "
+                       "[msa] af3_db_dir in the site file, or $RESIDUDES_ENGINE_AF3_DB_DIR")
+    container = s["af3_container"]
+    script, python = s["af3_script"], None
+    if not container:
+        if site is None:
+            raise MsaError("the af3 source needs a site (for the AF3 checkout and its venv), or a container")
+        script = script or (site.core / "models" / "alphafold3" / "run_alphafold.py")
+        if not Path(script).is_file():
+            raise MsaError(f"AlphaFold 3 entry point missing: {script}")
+        try:
+            python = venv_python(site.jax_venv_for("af3"))
+        except SiteError as e:
+            raise MsaError(f"{e} — the data pipeline runs in the AF3 environment") from None
+    return msa_mod.af3_search(
+        chains, out_dir=out_dir / "msa", script=script, python=python, db_dir=s["af3_db_dir"],
+        binaries=s["af3_binaries"], container=container, max_template_date=s["af3_max_template_date"],
+        n_cpu=ns.threads, timeout=max(ns.timeout, 86400.0), log=log)
 
 
 def run_msa(chains: list[Chain], out_dir: Path, ns, site) -> Path:
@@ -56,6 +86,8 @@ def run_msa(chains: list[Chain], out_dir: Path, ns, site) -> Path:
                 chains, api=s["colabfold_api"], use_env=not ns.no_env, use_filter=not ns.no_filter,
                 use_templates=not no_templates, pair=not ns.no_pair, pairing=ns.pairing,
                 poll=ns.poll, timeout=ns.timeout, workdir=out_dir / "msa" / "_colabfold", log=_log))
+        elif src == "af3":
+            results.append(_af3(chains, out_dir, ns, site, s, _log))
         else:
             if not s["mmseqs_db"]:
                 raise MsaError("local mmseqs2 needs --db (or [msa] mmseqs_db in the site file / RESIDUDES_ENGINE_MMSEQS_DB)")
@@ -241,7 +273,7 @@ def _common(sp: argparse.ArgumentParser) -> None:
 
 def _msa_opts(sp: argparse.ArgumentParser) -> None:
     g = sp.add_argument_group("MSA search")
-    g.add_argument("--source", default="plmmsa", help="plmmsa | colabfold | mmseqs2, or a comma list to merge (default plmmsa)")
+    g.add_argument("--source", default="plmmsa", help="plmmsa | colabfold | mmseqs2 | af3, or a comma list to merge (default plmmsa)")
     g.add_argument("--api", default=None, help="API base URL for plmmsa/colabfold (site [msa], RESIDUDES_ENGINE_PLMMSA_API / RESIDUDES_ENGINE_COLABFOLD_API)")
     g.add_argument("--token", default=None, help="bearer token for the plmmsa API ($PLMMSA_TOKEN)")
     g.add_argument("--aligner", default="otalign", choices=msa_mod.PLMMSA_ALIGNERS, help="plmmsa aligner (default otalign)")
@@ -253,6 +285,7 @@ def _msa_opts(sp: argparse.ArgumentParser) -> None:
     g.add_argument("--pairing", default="greedy", choices=("greedy", "complete"), help="colabfold pairing strategy")
     g.add_argument("--db", default=None, help="mmseqs2: database directory ([msa] mmseqs_db)")
     g.add_argument("--mmseqs", default=None, help="mmseqs2: binary or wrapper command ([msa] mmseqs_bin)")
+    g.add_argument("--af3-db", default=None, help="af3: the AlphaFold 3 genetic databases ([msa] af3_db_dir)")
     g.add_argument("--gpu", action="store_true", help="mmseqs2: GPU prefilter (MMseqs2-GPU build)")
     g.add_argument("--threads", type=int, default=8)
     g.add_argument("--poll", type=float, default=10.0, help="API poll interval, s")

@@ -33,9 +33,7 @@ Two angles differing by Δθ contribute 2|sin(Δθ/2)| to the L2.
 from __future__ import annotations
 from pathlib import Path
 from typing import List, Sequence, Union, Tuple, Optional
-import os
 import subprocess
-import sys
 import tempfile
 import numpy as np
 
@@ -77,7 +75,8 @@ def load_angles_csv(
         c = row.get("crossing_deg")
         i = row.get("incident_deg")
         try:
-            c = float(c); i = float(i)
+            c = float(c)
+            i = float(i)
         except (TypeError, ValueError):
             continue
         if np.isnan(c) or np.isnan(i):

@@ -92,8 +92,59 @@ def _venv_python_snippet(site: Site, family_pythonpath: list[Path], code: str, d
     return subprocess.run(cmd, env=env, cwd=str(workdir)).returncode
 
 
-def setup_checkpoints(site: Site, tags: list[str], *, dry_run: bool = False, force: bool = False) -> int:
+AF3_REQUEST_FORM = ("https://docs.google.com/forms/d/e/"
+                    "1FAIpQLSfWZAgo1aYk0O4MuAXZj8xRQ8DafeFJnldNOnh_13qAx2ceZw/viewform")
+
+
+def install_af3_weights(site: Site, source: str, *, dry_run: bool = False) -> int:
+    """Install AlphaFold 3 parameters that the user already has access to.
+
+    Google DeepMind grants access to the parameters per person, through a request form, and the
+    terms forbid passing them on. There is therefore no URL this project could download them from
+    and no copy it could host: the source has to be one the user was granted. This installs from
+    such a source - a file, a directory holding one, or a URL issued to the user - into
+    [site] af3_weights, so that the only manual step left is the request itself.
+    """
+    dest_dir = site.af3_weights or (site.checkpoints / "af3")
+    src = Path(source).expanduser()
+    if src.is_dir():
+        found = [src / f for f in ("af3.bin", "af3.bin.zst") if (src / f).is_file()]
+        if not found:
+            print(f"✗ no af3.bin or af3.bin.zst in {src}", file=sys.stderr)
+            return 1
+        src = found[0]
+    if dry_run:
+        print(f"▶ would install {source} → {dest_dir}/")
+        return 0
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    if src.is_file():
+        dest = dest_dir / src.name
+        print(f"▶ copying {src} → {dest}")
+        shutil.copyfile(src, dest)
+    elif source.startswith(("http://", "https://")):
+        dest = dest_dir / ("af3.bin.zst" if source.endswith(".zst") else "af3.bin")
+        print(f"▶ downloading your copy → {dest}")
+        try:
+            with urllib.request.urlopen(source) as r, open(dest, "wb") as f:   # noqa: S310
+                shutil.copyfileobj(r, f)
+        except Exception as e:                                     # noqa: BLE001
+            print(f"✗ download failed: {e}", file=sys.stderr)
+            return 1
+    else:
+        print(f"✗ not a file, directory or URL: {source}", file=sys.stderr)
+        return 1
+    dest.chmod(0o600)                 # licensed to one person; do not leave it world-readable
+    print(f"▶ installed {dest}  ({dest.stat().st_size / 1e9:.2f} GB, mode 600)")
+    return 0
+
+
+def setup_checkpoints(site: Site, tags: list[str], *, dry_run: bool = False, force: bool = False,
+                      af3_from: str | None = None) -> int:
     """Fetch model weights into <site.checkpoints> using each publisher's channel."""
+    if af3_from:
+        rc_af3 = install_af3_weights(site, af3_from, dry_run=dry_run)
+        if rc_af3:
+            return rc_af3
     rc = 0
     for tag in tags:
         spec = registry.get_model(tag)
@@ -132,6 +183,10 @@ def setup_checkpoints(site: Site, tags: list[str], *, dry_run: bool = False, for
             where = f" (or {alt}, from [site] af3_weights)" if alt else ""
             print(f"  not downloadable: {w.get('note')}{where}")
             if not (dest.exists() or (alt and any((alt / f).is_file() for f in ("af3.bin", "af3.bin.zst")))):
+                # the parameters are granted per person and may not be passed on, so the most this
+                # command can do is say where to ask and then install the copy that is granted
+                print(f"  request access: {AF3_REQUEST_FORM}")
+                print("  then: residudes-engine setup checkpoints --models af3 --af3-from <file|dir|your-url>")
                 rc = 1
             continue
         else:

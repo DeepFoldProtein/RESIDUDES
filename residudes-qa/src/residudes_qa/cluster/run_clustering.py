@@ -232,7 +232,7 @@ def verify_sequence_consistency(
     if len(by_shape) == 1:
         only_shape = next(iter(by_shape))
         _log(f"  shape ok: every structure has chains "
-             f"{', '.join(f'{c}={l}' for c, l in only_shape)}")
+             f"{', '.join(f'{c}={lab}' for c, lab in only_shape)}")
         return only_shape
 
     # Multiple shapes → diagnose, broken down by variant + model
@@ -242,7 +242,7 @@ def verify_sequence_consistency(
         per_vm: dict[tuple[str, str], int] = {}
         for v, m, _, _, _, _ in group:
             per_vm[(v, m)] = per_vm.get((v, m), 0) + 1
-        shape_str = ", ".join(f"{c}={l}" for c, l in shape)
+        shape_str = ", ".join(f"{c}={lab}" for c, lab in shape)
         vm_str = ", ".join(f"{v}/{m}:{n}" for (v, m), n in sorted(per_vm.items()))
         _log(f"    {shape_str}  -- {len(group)} structures ({vm_str})")
 
@@ -589,7 +589,6 @@ def compute_matrix(
         if not names_list:
             # fall back to deriving from cif_paths
             names_list = []
-            import re as _re
             for p in cif_paths:
                 pp = Path(p)
                 if pp.name == "model.cif" and len(pp.parts) >= 4:
@@ -933,12 +932,12 @@ def plot_confidence_distributions(
     # Drop fields where >50% of values are NaN — they tend to have empty
     # cluster slices that break violinplot's reduction ops.
     available = []
-    for c, l in fields:
+    for c, lab in fields:
         if c not in merged.columns:
             continue
         non_na_frac = merged[c].notna().mean()
         if non_na_frac >= 0.5:
-            available.append((c, l))
+            available.append((c, lab))
     if not available:
         return
 
@@ -1019,7 +1018,6 @@ def plot_variant_cluster_breakdown(
         Lets you spot which variants dominate which clusters at a glance.
     """
     import pandas as pd
-    import numpy as np
     import matplotlib.pyplot as plt
 
     if not clustering_csv.is_file():
@@ -1130,7 +1128,6 @@ def plot_msa_template_model_breakdown(
     in any name, or yields fewer than 2 distinct keys.
     """
     import pandas as pd
-    import numpy as np
     import matplotlib.pyplot as plt
 
     if not clustering_csv.is_file():
@@ -1845,10 +1842,10 @@ def main(argv: list[str] | None = None) -> int:
             ap.error(str(exc))
         # Empty-group safety
         if not anchor_groups or not probe_groups:
-            ap.error(f"empty anchor or probe spec")
+            ap.error("empty anchor or probe spec")
         for chains, _ in anchor_groups + probe_groups:
             if not chains:
-                ap.error(f"a group has no chains in spec")
+                ap.error("a group has no chains in spec")
 
         # Disjoint check at the chain level only when modes are also same
         # for every chain that appears on both sides. The detailed
@@ -2023,7 +2020,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.list:
         return 0
 
-    canonical_shape = verify_sequence_consistency(items, args.allow_mismatch)
+    verify_sequence_consistency(items, args.allow_mismatch)
 
     # Output dir layout
     if is_anchored:
@@ -2225,7 +2222,7 @@ def main(argv: list[str] | None = None) -> int:
     matrix_path = matrices_dir / f"{args.method}_matrix.npy"
     names_path = matrices_dir / "structure_names.npy"
 
-    cached = (
+    (
         args.skip_existing
         and matrix_path.is_file()
         and names_path.is_file()

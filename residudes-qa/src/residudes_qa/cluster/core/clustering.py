@@ -11,7 +11,7 @@ Supports:
 
 import numpy as np
 from typing import Optional, Literal, Tuple, Dict, Any, List
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 ClusterMethod = Literal["fuzzy", "kmeans", "hierarchical", "gmm", "leiden"]
 
@@ -666,7 +666,6 @@ def _leiden_clustering(
             labels[node] = membership[idx]
 
         modularity = partition.modularity
-        method_note = "leiden"
 
     except ImportError:
         import networkx as nx
@@ -676,7 +675,6 @@ def _leiden_clustering(
             for m in members:
                 labels[m] = comm_id
         modularity = nx.community.modularity(G, community_map, weight='weight')
-        method_note = "louvain_fallback"
 
     actual_k = len(np.unique(labels))
 

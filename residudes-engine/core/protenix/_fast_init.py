@@ -4,7 +4,7 @@ Protenix's `trunc_normal_init_` uses `scipy.stats.truncnorm.rvs`, which runs a
 numerical inverse-CDF for every weight tensor. Building the 464M-param v2 model
 calls this ~1581 times, taking ~267s per process start.
 
-Since Bio-TRT always loads weights from a checkpoint immediately after model
+Since residudes-engine always loads weights from a checkpoint immediately after model
 construction, the initial weight values are discarded — we only care about
 tensor shapes. Replacing scipy with `torch.nn.init.trunc_normal_` drops model
 construction time from ~4.5 min to ~20 s.
@@ -21,7 +21,7 @@ def _fast_trunc_normal_init_(
 ) -> None:
     """No-op stand-in for protenix trunc_normal_init_.
 
-    Bio-TRT always loads a checkpoint immediately after model construction, so
+    residudes-engine always loads a checkpoint immediately after model construction, so
     any initial weight values are discarded. This no-op replacement avoids the
     ~90s spent on scipy/torch truncated normal sampling during inference model
     construction.

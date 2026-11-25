@@ -55,7 +55,8 @@ def test_plots_render():
         f1 = plot_cluster_dendrogram(d, labels, output_path=t / "dn.png")
         f2 = plot_cluster_clustermap(d, labels, output_path=t / "cm.png")
         assert (t / "dn.png").exists() and (t / "cm.png").exists()
-        plt.close(f1); plt.close(f2)
+        plt.close(f1)
+        plt.close(f2)
         # < 2 clusters -> None
         assert plot_cluster_clustermap(d, np.zeros(len(d), int)) is None
 
@@ -63,4 +64,5 @@ def test_plots_render():
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
-            fn(); print(f"PASS {name}")
+            fn()
+            print(f"PASS {name}")

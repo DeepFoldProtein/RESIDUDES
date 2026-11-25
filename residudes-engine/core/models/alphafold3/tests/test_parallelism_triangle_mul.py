@@ -4,7 +4,7 @@
 
 Run::
 
-    source /gpfs/deepfold/casp/casp17/Bio-TRT/.venv/bin/activate
+    source <core>/.venv/bin/activate
     PYTHONPATH=src python tests/test_parallelism_triangle_mul.py
 
 Verifies that:

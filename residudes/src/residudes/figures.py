@@ -19,7 +19,7 @@ import json
 import re
 from pathlib import Path
 
-from residudes.dossier import Dossier
+from residudes.dossier import Dossier, chain_letter
 from residudes.gate import SITE_KEYS, parse_select, site_from_value, target_ids
 from residudes.report import _chains as chains
 
@@ -243,7 +243,7 @@ def chain_map_svg(d: Dossier, out, width: int = 1400, ddir=None) -> Path | None:
     cs = chains(d)
     if not cs:
         return None
-    letters = {chr(ord("A") + i): len(s) for i, (_, s) in enumerate(cs)}
+    letters = {chain_letter(i): len(s) for i, (_, s) in enumerate(cs)}
     doms, dom_skipped = domains(d, letters)
     marks, site_skipped = sites(d, letters)
     if len(cs) < 2 and not doms and not marks:
@@ -262,7 +262,7 @@ def chain_map_svg(d: Dossier, out, width: int = 1400, ddir=None) -> Path | None:
     notes = ([f"sites: {', '.join(_n(k) for k in keys)}"] if keys else []) \
         + ([f"not placed: {'; '.join(dom_skipped + site_skipped)}"] if dom_skipped or site_skipped else [])
     for i, (name, seq) in enumerate(cs):
-        letter, L = chr(ord("A") + i), len(seq)
+        letter, L = chain_letter(i), len(seq)
         y = 70 + row * i
         fx = lambda r: x0 + w * (r - 1) / max(1, L - 1)                              # noqa: B023 - per-chain scale
         short = name.split(",", 1)[1] if name.startswith(f"{d.target},") and "," in name else name
@@ -489,9 +489,9 @@ def sites_svg(d: Dossier, out, width: int = 1400, ddir=None) -> Path | None:
     cs = chains(d)
     if not cs:
         return None
-    letters = {chr(ord("A") + i): len(s) for i, (_, s) in enumerate(cs)}
-    seqs = {chr(ord("A") + i): s for i, (_, s) in enumerate(cs)}
-    names = {chr(ord("A") + i): n for i, (n, _) in enumerate(cs)}
+    letters = {chain_letter(i): len(s) for i, (_, s) in enumerate(cs)}
+    seqs = {chain_letter(i): s for i, (_, s) in enumerate(cs)}
+    names = {chain_letter(i): n for i, (n, _) in enumerate(cs)}
     skipped: list[str] = []
     recs = site_records(d, letters, skipped)
     if not recs:
@@ -629,8 +629,8 @@ def motif_svg(d: Dossier, out, width: int = 1400, ddir=None) -> Path | None:
     ms = motifs(d)
     if not cs or not ms:
         return None
-    letters = {chr(ord("A") + i): len(s) for i, (_, s) in enumerate(cs)}
-    seqs = {chr(ord("A") + i): s for i, (_, s) in enumerate(cs)}
+    letters = {chain_letter(i): len(s) for i, (_, s) in enumerate(cs)}
+    seqs = {chain_letter(i): s for i, (_, s) in enumerate(cs)}
     cands = candidates(d)
     rows: list[dict] = []
     nowhere: list[dict] = []
@@ -739,41 +739,47 @@ def cluster_points(ddir, sto: str | None = None) -> list[dict]:
     qa = Path(ddir) / "qa"
     if not qa.is_dir():
         return out
+    tables: list[tuple[Path, str, str, str]] = []          # (csv, sto, run, method)
     for cd in sorted(qa.glob(f"cluster_{sto}*" if sto else "cluster_*")):
-        if not cd.is_dir():
+        if cd.is_dir():
+            for p in sorted(cd.rglob("*clustering.csv")):
+                rel = p.relative_to(cd).parts                 # (<sto>, <run>, <method>, results, file)
+                tables.append((p, rel[0] if rel else (sto or "?"),
+                               *((rel[1], rel[2]) if len(rel) >= 5 else ("?", "?"))))
+        elif cd.name.endswith("clustering.csv"):
+            # the table on its own, as an example or an export ships it: cluster_<sto>_<run>_clustering.csv
+            stem = cd.name[len("cluster_"):].removesuffix("clustering.csv").rstrip("_")
+            s, _, run = stem.partition("_")
+            tables.append((cd, s or (sto or "?"), run or "?", "?"))
+    for p, s, run, method in tables:
+        try:
+            rows = list(csv.DictReader(p.read_text().splitlines()))
+        except OSError:
             continue
-        for p in sorted(cd.rglob("*clustering.csv")):
-            rel = p.relative_to(cd).parts                     # (<sto>, <run>, <method>, results, file)
-            s = rel[0] if rel else (sto or "?")
-            run, method = (rel[1], rel[2]) if len(rel) >= 5 else ("?", "?")
-            try:
-                rows = list(csv.DictReader(p.read_text().splitlines()))
-            except OSError:
+        for r in rows:
+            raw = (r.get("structure") or r.get("name") or "").removesuffix(".pdb").removesuffix(".cif")
+            # one variant at a time: `af3_seed1_sample0` under a directory named for the variant. Several
+            # variants clustered together: `af3_seed1_sample0__af3_msa_pS548` under `pool-<hash>`, and then
+            # the name is the only place the variant is written.
+            name, _, suffix = raw.partition("__")
+            variant = suffix or run
+            m = _CLUSTER_NAME.fullmatch(name)
+            x, y = r.get("umap1"), r.get("umap2")
+            if not m or r.get("cluster") in (None, ""):
                 continue
-            for r in rows:
-                raw = (r.get("structure") or r.get("name") or "").removesuffix(".pdb").removesuffix(".cif")
-                # one variant at a time: `af3_seed1_sample0` under a directory named for the variant. Several
-                # variants clustered together: `af3_seed1_sample0__af3_msa_pS548` under `pool-<hash>`, and then
-                # the name is the only place the variant is written.
-                name, _, suffix = raw.partition("__")
-                variant = suffix or run
-                m = _CLUSTER_NAME.fullmatch(name)
-                x, y = r.get("umap1"), r.get("umap2")
-                if not m or r.get("cluster") in (None, ""):
-                    continue
-                try:
-                    pt = {"x": float(x), "y": float(y)} if x not in (None, "") and y not in (None, "") else {}
-                except ValueError:
-                    pt = {}
-                try:                       # how strongly this model belongs to its cluster: the highest value is
-                    pt["mem"] = float(r["max_membership"])     # the cluster's medoid, the pose worth looking at
-                except (KeyError, TypeError, ValueError):
-                    pass
-                from residudes.slate import key as model_key          # the name the pool, the slate and QA share
-                out.append({"sto": s, "run": run, "variant": variant, "method": method,
-                            "runner": m["runner"].lower(), "seed": int(m["seed"]), "sample": int(m["sample"]),
-                            "cluster": str(r["cluster"]),
-                            "key": model_key(s, variant, m["runner"].lower(), m["seed"], m["sample"]), **pt})
+            try:
+                pt = {"x": float(x), "y": float(y)} if x not in (None, "") and y not in (None, "") else {}
+            except ValueError:
+                pt = {}
+            try:                       # how strongly this model belongs to its cluster: the highest value is
+                pt["mem"] = float(r["max_membership"])     # the cluster's medoid, the pose worth looking at
+            except (KeyError, TypeError, ValueError):
+                pass
+            from residudes.slate import key as model_key          # the name the pool, the slate and QA share
+            out.append({"sto": s, "run": run, "variant": variant, "method": method,
+                        "runner": m["runner"].lower(), "seed": int(m["seed"]), "sample": int(m["sample"]),
+                        "cluster": str(r["cluster"]),
+                        "key": model_key(s, variant, m["runner"].lower(), m["seed"], m["sample"]), **pt})
     return out
 
 
@@ -1001,9 +1007,11 @@ def clusters_svg(d: Dossier, out, width: int = 1400, ddir=None) -> Path | None:
     head = 86
     C = Canvas(width)
     sto = sorted({p["sto"] for p in pts})[0]
-    C.text(pad, 48, f"{len({p['key'] for p in pts}):,} {sto} models, {len(rows)} clusters "
-                    f"({sorted({p['method'] for p in pts})[0]}-score), {len({p['variant'] for p in pts})} input "
-                    f"variants, {len(runners)} predictors", 20, INK, weight="bold")
+    method = sorted({p["method"] for p in pts})[0]
+    how = f" ({method}-score)" if method != "?" else ""     # a flat table does not say which score it clustered on
+    C.text(pad, 48, f"{len({p['key'] for p in pts}):,} {sto} models, {len(rows)} clusters{how}, "
+                    f"{len({p['variant'] for p in pts})} input variants, {len(runners)} predictors",
+           20, INK, weight="bold")
     for ln in wrap("Every panel is the same UMAP of the same models; only the colouring changes. ● medoid of its "
                    "cluster (highest membership) ringed; ★ a model already on a slate. Size, confidence and "
                    "predicted DockQ rarely pick the same cluster, which is why the slate takes one model from "

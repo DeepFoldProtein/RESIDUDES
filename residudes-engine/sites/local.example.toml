@@ -15,10 +15,17 @@ venv = "{residudes_engine_root}/core/.venv"
 checkpoints = "{residudes_engine_root}/data/checkpoints"   # protenix-v2.pt, of3-p2-155k.pt, boltz2/boltz2_conf.ckpt, af3/af3.bin
 # venv_jax = "{residudes_engine_root}/core/jaxenv/.venv"    # JAX 0.11 environment (bash core/jaxenv/build.sh): needed for AlphaFold 3
 # af3_weights = "/data/af3"                        # directory holding af3.bin, if not under checkpoints/af3
+# esm = "/data/esm"                                # ESMFold2 (ef2): the esm checkout, whose .conda env runs it
+# esm_python = "/data/esm/.conda/bin/python"       # that env's interpreter, if it is somewhere else
+# esmfold2_weights = "/data/esmfold2_hf"           # HF cache for biohub/ESMFold2, if not under checkpoints
 engines = "{residudes_engine_root}/data/engines"           # <gpu>/<model>_<kernel>_<maxN>/...
 libstdcxx = []                          # extra LD_PRELOAD candidates; system / gcc-13 / conda paths are tried automatically
 # kalign = "/usr/bin/kalign"
 cache_dir = "{home}/.cache/residudes-engine"
+
+# [msa]
+# af3_db_dir = "/data/af3_databases"       # --source af3: AlphaFold 3's own jackhmmer/hmmsearch pipeline
+# af3_container = "/data/af3.sif"          # run it with apptainer instead of the site's AF3 venv
 
 [slurm]
 partition = "gpu"

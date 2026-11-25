@@ -449,7 +449,7 @@ Each claim as it was recorded, with its source. The last column is drawn, not as
 
 ## The sites the analysis found
 
-The residues are the ones a gate would use: read by the same function as `lantern gate --init`, which prefers the numbering recorded as a field over the prose beside it. The residue letters come from the target FASTA, so a site on the wrong numbering shows up as the wrong residue.
+The residues are the ones a gate would use: read by the same function as `residudes gate --init`, which prefers the numbering recorded as a field over the prose beside it. The residue letters come from the target FASTA, so a site on the wrong numbering shows up as the wrong residue.
 
 | evidence | chain | residues | read as | what it is | source |
 |---|---|---|---|---|---|
@@ -503,7 +503,7 @@ Identity and coverage are quoted as the search reported them, not recomputed; a 
 
 ## The pool, clustered
 
-lantern-qa clusters the pool by TM-score. One run covers one input variant or several together, and when several are clustered together the variants column says which models landed in each cluster — a cluster that holds one variant and nothing else is that variant changing the structure. The slate takes at most one model per cluster in the first three slots, so these are the alternatives a slate hedges across.
+residudes-qa clusters the pool by TM-score. One run covers one input variant or several together, and when several are clustered together the variants column says which models landed in each cluster — a cluster that holds one variant and nothing else is that variant changing the structure. The slate takes at most one model per cluster in the first three slots, so these are the alternatives a slate hedges across.
 
 | stoichiometry | cluster | models | variants in it | best confidence | its model | best predicted DockQ |
 |---|---|---|---|---|---|---|
@@ -864,8 +864,12 @@ Found but not cited by any decision: `identity`, `report`, `pool`.
 - 08:20 **person**: dossier created
 - 08:20 **person**: OPERATOR: this run is an example of the pipeline from the start, so do the analysis yourself. The team's own submission for this target is on disk at /gpfs/deepfold/casp/casp17/targets/H1388/submit/ - do not read it, and do not read any native structure, until RETROSPECTIVE. Everything else under targets/H1388 (target.fasta, inputs/, results/, msas/) is yours to use, as is the literature. Record w
 - 08:21 **agent**: FYI: replay hindsight - the lantern-intake skill quotes H2388 (14-3-3 gamma + LARP1 phosphopeptide PKGLSASLPDL, SEP at peptide position 7) which looks like the same complex as H1388. Those outcome lines are hindsight; decisions here cite evidence collected in this step.
+- 08:24 **person**: agent step: success, $0.8866804999999999, turns 24, log /store/deepfold/lantern/targets/H1388/agent_logs/20261123-082033_NEW.log
+- 08:25 **person**: agent step: success, $0.28990809999999995, turns 11, log /store/deepfold/lantern/targets/H1388/agent_logs/20261123-082445_IDENTIFIED.log
+- 08:29 **person**: agent step: success, $0.34794100000000006, turns 12, log /store/deepfold/lantern/targets/H1388/agent_logs/20261123-082834_HYPOTHESES.log
 - 08:31 **agent**: FYI: lantern-consult skill quotes a CASP17 'H2388' phosphopeptide case (pS-X-P picked S7, DockQ 0.24->0.82) that matches this target's motif; if this is a replay, that line is hindsight and is not used to drive D1 - D1 rests on the motif/chemistry/literature evidence. Template 6A5S downloaded to /store/deepfold/lantern/targets/H1388/dl/pdb/6A5S.cif (928 kB) for the plan slide.
 - 08:32 **agent**: FYI: msa_depth re-recorded in lantern msa --depth shape (chain B af3 MSAs; same numbers) because the per-chain summary shape broke lantern slides; peptide A is query-only (11 aa), see existing_pool.msa_A.
+- 08:32 **person**: agent step: success, $0.6296013, turns 24, log /store/deepfold/lantern/targets/H1388/agent_logs/20261123-082951_PLAN_REVIEW.log
 
 ## What this proposes, and what it is asking
 
@@ -883,7 +887,7 @@ The decisions above in one line each, the two models the pool's two scales each 
 
 ## References
 
-What the analysis read, and which priors rest on it. A prior whose source is not written down cannot be checked against the paper later, and `lantern retro` cannot score it.
+What the analysis read, and which priors rest on it. A prior whose source is not written down cannot be checked against the paper later, and `residudes retro` cannot score it.
 
 | # | source | supports |
 |---|---|---|

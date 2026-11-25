@@ -584,7 +584,7 @@ def cmd_run_all(args: argparse.Namespace) -> None:
             flush=True,
         )
         print(
-            f"    or re-run with `--apply-filter` to use the in-tool legacy path.",
+            "    or re-run with `--apply-filter` to use the in-tool legacy path.",
             flush=True,
         )
         return
@@ -660,7 +660,6 @@ def cmd_run_ppi_v4(args: argparse.Namespace) -> None:
           parquet/               every parquet artifact (master / scores / index)
           csv/                   human-readable CSVs (master + scores per interface)
     """
-    import pandas as pd
     from residudes_qa.interface.features.ppi_v4 import (
         run_ppi_v4_multi, engineer_ppi_v4, detect_interface_pairs, parse_structure,
     )

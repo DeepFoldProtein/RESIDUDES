@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import re
 
-from residudes.dossier import tkey, Dossier
+from residudes.dossier import Dossier, chain_letter, tkey
 
 ALIASES = {"n-sweep": "stoichiometry_evidence", "nsweep": "stoichiometry_evidence"}
 PERSON_RX = re.compile(r"\bOPERATOR\b|\banswer(ed)?\b|\bperson\b", re.I)
@@ -376,8 +376,91 @@ def _msas(ev: dict, ddir=None) -> list[str]:
     return ["## How much the MSAs cover", ""] + out + [""] if out else []
 
 
+def _pct(x) -> str:
+    return f"{x:.0%}" if isinstance(x, (int, float)) else "–"
+
+
+def _sweep_rows(ev: dict) -> tuple[list[str], list[str]]:
+    """(table rows, notes) from what `residudes structures` recorded: the sequence sweep, foldseek and
+    hhsearch each write their own entry, so every one of them is read, not only the last."""
+    rows: list[str] = []
+    notes: list[str] = []
+    seen: set[tuple[str, str]] = set()
+
+    def add(h: dict, how: str, match: str) -> None:
+        key = (str(h.get("entry", "")).upper(), how)
+        if not key[0] or key in seen:
+            return
+        seen.add(key)
+        res = f"{h['resolution']:.2f} Å" if isinstance(h.get("resolution"), (int, float)) else "–"
+        method = h.get("method") or "–"
+        rows.append(f"| `{key[0].lower()}`{('_' + h['chain']) if h.get('chain') else ''} | {how} | {match} | "
+                    f"{_pct(h.get('coverage'))} | {method} {res} | {h.get('released') or '–'} | "
+                    f"{(h.get('title') or '–')[:70]} |")
+
+    for e in ev.get("public_structures", []):
+        v = e.get("value")
+        if not isinstance(v, dict):
+            continue
+        if isinstance(v.get("per_chain"), dict):
+            for letter, hits in v["per_chain"].items():
+                for h in hits if isinstance(hits, list) else []:
+                    add(h, f"sequence {letter}", _pct(h.get("identity")))
+        elif v.get("source") in ("foldseek", "hhsearch") and isinstance(v.get("hits"), list):
+            for h in v["hits"]:
+                match = (f"TM {h['tm']:.2f}" if isinstance(h.get("tm"), (int, float))
+                         else f"prob {h['prob']:.0f}" if isinstance(h.get("prob"), (int, float)) else "–")
+                add(h, v["source"], match)
+        found_only = v.get("new_to_the_sequence_sweep") or []
+        if found_only:
+            notes.append(f"**{', '.join('`' + x.lower() + '`' for x in found_only)}** came back from "
+                         f"{v.get('source', 'a structure search')} and not from the sequence sweep — the case a "
+                         f"sequence search cannot make.")
+        near = v.get("near_identical") or {}
+        for letter, entries in (near.items() if isinstance(near, dict) else []):
+            if entries:
+                notes.append(f"Chain {letter} has a near-identical public structure "
+                             f"({', '.join('`' + x.lower() + '`' for x in entries[:6])}"
+                             f"{' …' if len(entries) > 6 else ''}). AlphaFold 3 filters those out of its own "
+                             f"template search, so they only reach a prediction if they are passed in.")
+    return rows, notes
+
+
+def sweep_summary(ev: dict) -> str | None:
+    """One line about the public-structure sweeps, for a slide: how many entries, which are
+    near-identical, and which came back only from a structure or profile search."""
+    entries: set[str] = set()
+    near: list[str] = []
+    only: list[str] = []
+    for e in ev.get("public_structures", []):
+        v = e.get("value") if isinstance(e, dict) else None
+        if not isinstance(v, dict):
+            continue
+        for hits in list((v.get("per_chain") or {}).values()) + [v.get("hits") or []]:
+            entries |= {str(h["entry"]).lower() for h in hits if isinstance(h, dict) and h.get("entry")}
+        for letter, got in (v.get("near_identical") or {}).items():
+            near += [f"{x.lower()} ({letter})" for x in got]
+        only += [str(x).lower() for x in (v.get("new_to_the_sequence_sweep") or [])]
+    if not entries:
+        return None
+    out = f"{len(entries)} PDB entries"
+    if near:
+        out += "; near-identical " + ", ".join(dict.fromkeys(near))
+    if only:
+        out += "; only by structure or profile: " + ", ".join(dict.fromkeys(only))
+    return out
+
+
 def _templates(ev: dict) -> list[str]:
     """One row per structure a search returned, with the identity as the search reported it."""
+    swept, notes = _sweep_rows(ev)
+    if swept:
+        out = ["## Templates and public structures", "",
+               "What each search reported, not recomputed. `sequence X` is the PDB search of chain X, `foldseek` a "
+               "structural search of a model, `hhsearch` a profile against a profile.", "",
+               "| entry | found by | match | coverage | method | released | title |",
+               "|---|---|---|---|---|---|---|"] + swept + [""]
+        return out + ([*notes, ""] if notes else [])
     rows: list[str] = []
     for key in ("templates", "public_structures"):
         val = _latest(ev, key)
@@ -447,8 +530,8 @@ def _sites(d: Dossier, ddir=None) -> list[str]:
     cs = _chains(d)
     if not cs:
         return []
-    letters = {chr(ord("A") + i): len(s) for i, (_, s) in enumerate(cs)}
-    seqs = {chr(ord("A") + i): s for i, (_, s) in enumerate(cs)}
+    letters = {chain_letter(i): len(s) for i, (_, s) in enumerate(cs)}
+    seqs = {chain_letter(i): s for i, (_, s) in enumerate(cs)}
     skipped: list[str] = []
     recs = figures.site_records(d, letters, skipped)
     mods, mod_skipped = figures.modifications(d)
@@ -480,7 +563,7 @@ def _motifs(d: Dossier, ddir=None) -> list[str]:
     ms = figures.motifs(d)
     if not cs or not ms:
         return []
-    seqs = {chr(ord("A") + i): s for i, (_, s) in enumerate(cs)}
+    seqs = {chain_letter(i): s for i, (_, s) in enumerate(cs)}
     rows: list[str] = []
     for m in ms:
         for ch in ([m["chain"]] if m["chain"] in seqs else sorted(seqs)):
@@ -602,7 +685,7 @@ def key_points(d: Dossier, ddir=None) -> list[tuple[str, str]]:
     ident = _latest(d.evidence, "identity")
     bits = []
     for i, (name, seq) in enumerate(cs):
-        letter = chr(ord("A") + i)
+        letter = chain_letter(i)
         fields = [v for f, v in _fields(ident, ("uniprot", "name", "family", "organism", "fold"))
                   if f.startswith(f"{letter}.") or len(cs) == 1]
         short = name.split(",", 1)[1] if "," in name else name
@@ -628,10 +711,19 @@ def key_points(d: Dossier, ddir=None) -> list[tuple[str, str]]:
                                  f"over {len(counted)} measured alignment{'s' if len(counted) != 1 else ''}"))
     pdbs = {m.group(1).lower() for key in ("templates", "public_structures")
             for _, t in _fields(_latest(d.evidence, key), ()) for m in _PDB.finditer(t)}
+    only = []
+    for e in d.evidence.get("public_structures", []):      # every search, not only the last one
+        v = e.get("value") if isinstance(e, dict) else None
+        if not isinstance(v, dict):
+            continue
+        for hits in list((v.get("per_chain") or {}).values()) + [v.get("hits") or []]:
+            pdbs |= {str(h["entry"]).lower() for h in hits if isinstance(h, dict) and h.get("entry")}
+        only += [str(x).lower() for x in (v.get("new_to_the_sequence_sweep") or [])]
     if pdbs:
+        extra = f"; {', '.join('`' + x + '`' for x in sorted(set(only)))} only by structure or profile" if only else ""
         out.append(("Structures that exist", f"**{len(pdbs)}** PDB entries named in the record: "
                     + ", ".join(f"`{x}`" for x in sorted(pdbs)[:8])
-                    + (" …" if len(pdbs) > 8 else "")))
+                    + (" …" if len(pdbs) > 8 else "") + extra))
     pts = [p for p in (figures.cluster_points(ddir) if ddir else []) if "x" in p]
     if pts:
         scores = figures.pool_scores(ddir)

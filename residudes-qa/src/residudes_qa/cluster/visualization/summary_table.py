@@ -217,7 +217,6 @@ def create_cluster_summary_table(
 
     # Title
     ref_type = "Native Structure" if is_native else "Best Scoring Model"
-    marker_symbol = "Native" if is_native else "Best"
     metrics_str = ", ".join(m.upper() for m in metric_order)
     plt.title(
         f'{target_name} - Cluster Summary\n'

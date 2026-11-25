@@ -30,7 +30,8 @@ def _pins() -> dict[str, str]:
 
 def run(as_json: bool = False) -> int:
     rows: list[tuple[str, str, str]] = []           # (status, check, detail)
-    add = lambda st, name, detail="": rows.append((st, name, detail))
+    def add(st, name, detail=""):
+        return rows.append((st, name, detail))
 
     v = sys.version.split()[0]
     add("ok" if v.startswith("3.12.") else "fail", "python", f"{v} ({sys.executable})")

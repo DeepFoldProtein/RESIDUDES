@@ -1,0 +1,33 @@
+#!/bin/sh
+# Everything the agent image needs beyond its base layers. Run by both the Dockerfile and the
+# Apptainer definition, so the two cannot drift apart. Node comes from the official node image
+# (copied in by the caller), not from a script piped into a shell.
+set -eu
+
+PY=${PY:-python3}
+TYPST=${TYPST:-0.13.1}
+
+apt-get update
+apt-get install -y --no-install-recommends \
+    ca-certificates curl git \
+    librsvg2-bin \
+    xz-utils
+rm -rf /var/lib/apt/lists/*
+
+# the agent's own dependencies, at the versions residudes/pyproject.toml pins
+"$PY" -m pip install --no-cache-dir --root-user-action=ignore \
+    "claude-agent-sdk==0.2.187" "gemmi==0.6.5"
+
+# `residudes agent step` drives the Claude Code CLI through the SDK
+npm install -g --no-fund --no-audit @anthropic-ai/claude-code
+npm cache clean --force
+
+# `residudes slides` compiles the report with typst (a .tar.xz release, hence xz-utils)
+curl -fsSL "https://github.com/typst/typst/releases/download/v${TYPST}/typst-x86_64-unknown-linux-musl.tar.xz" \
+    | tar -xJ -C /tmp
+mv /tmp/typst-x86_64-unknown-linux-musl/typst /usr/local/bin/typst
+rm -rf /tmp/typst-x86_64-unknown-linux-musl
+
+node --version
+typst --version
+"$PY" -c "import gemmi, claude_agent_sdk; print('gemmi', gemmi.__version__)"

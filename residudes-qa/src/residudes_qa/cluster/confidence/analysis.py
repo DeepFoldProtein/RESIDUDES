@@ -11,7 +11,7 @@ Compares sequence recovery with RMSF profiles to identify:
 
 import csv
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional
 
 import numpy as np
 

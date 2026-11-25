@@ -7,6 +7,10 @@
   residudes next T                            the next step for T and the skill that covers it
   residudes report T [-o analysis.md]         the target analysis: priors, decisions, which priors each decision rests on
   residudes msa T --depth | --crawl --family PF… | --plm   MSA depth/coverage; deepen a thin MSA (T1331 recipe)
+  residudes structures T [--identity 0.5]     public structures of each chain's sequence (evidence: public_structures)
+  residudes structures T --foldseek MODEL     the structural half (sbatch); then --read-foldseek TSV
+  residudes structures T --hhsearch           profile against profile when there is no model yet (sbatch)
+  residudes relax T [--sc-fc N] | --read      GROMACS + Rosetta on the slate's models, under restraints (sbatch)
   residudes slides T                          the same as Typst slides with PyMOL pictures -> report/report.pdf
   residudes render T --pml FILE               render your own PyMOL scenes through sbatch -> report/figs/
   residudes agent step T                      let the agent do that step (Claude Agent SDK)
@@ -231,6 +235,26 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("--max-members", type=int, default=20000, help="UniProt members per family (cap)")
     p.add_argument("--aligner", default="otalign", choices=["otalign", "plmalign", "plm_blast", "hmm"],
                    help="--plm: the plmMSA aligner; --crawl: otalign (default) or hmm (offline, weaker for remote families)")
+    p = sub.add_parser("structures", help="the public-structure sweep: PDB entries of each chain's sequence")
+    p.add_argument("target")
+    p.add_argument("--identity", type=float, default=0.9, help="identity cutoff of the search (default 0.9)")
+    p.add_argument("--chain", help="one chain letter (default: every chain)")
+    p.add_argument("--rows", type=int, default=100, help="entities to ask the search for (default 100)")
+    p.add_argument("--limit", type=int, default=25, help="entries to look up and show per chain (default 25)")
+    p.add_argument("--foldseek", metavar="MODEL", help="structural search of this model instead (sbatch)")
+    p.add_argument("--read-foldseek", metavar="TSV", help="read a finished foldseek table into the dossier")
+    p.add_argument("--hhsearch", action="store_true", help="profile-profile search of one chain instead (sbatch)")
+    p.add_argument("--read-hhsearch", metavar="HHR", help="read a finished hhsearch .hhr into the dossier")
+    p.add_argument("--db", help="--foldseek: the database prefix or directory (default: [databases] in residudes.toml)")
+    p = sub.add_parser("relax", help="relax chosen models with GROMACS and Rosetta (sbatch); repair, never ranking")
+    p.add_argument("target")
+    p.add_argument("--models", help="comma list of model keys (default: the slate's)")
+    p.add_argument("--ssbond", default="auto", help="SSBOND file, or auto to find disulfides by distance (default auto)")
+    p.add_argument("--bb-fc", type=int, help="backbone position-restraint force constant, kJ/mol/nm² (default 1000000)")
+    p.add_argument("--sc-fc", type=int, help="side-chain position-restraint force constant (default 10000)")
+    p.add_argument("--dstres", help="distance restraints file (GROMACS leg)")
+    p.add_argument("--ligand", action="store_true", help="ligand-aware route (AmberTools topology) instead of protein-only")
+    p.add_argument("--read", action="store_true", help="read the finished runs: geometry before and after, how far it moved")
     p = sub.add_parser("slides", help="the target report as Typst slides with PyMOL structure pictures (report/report.pdf)")
     p.add_argument("target")
     p.add_argument("--no-render", action="store_true", help="do not submit the PyMOL render job")
@@ -436,6 +460,27 @@ def _main(argv: list[str] | None = None) -> int:
         if args.plm:
             return _with(cfg, args.target, lambda d: msa.plm_cmd(cfg, d, args.aligner, _actor()))
         return _with(cfg, args.target, lambda d: msa.depth_cmd(cfg, d, args.depth, _actor()))
+    if args.cmd == "structures":
+        from residudes import structures
+        if args.foldseek:
+            return _with(cfg, args.target, lambda d: structures.foldseek_cmd(cfg, d, args.foldseek, _actor(), args.db))
+        if args.read_foldseek:
+            return _with(cfg, args.target, lambda d: structures.read_foldseek_cmd(
+                cfg, d, args.read_foldseek, _actor(), limit=args.limit))
+        if args.hhsearch:
+            return _with(cfg, args.target, lambda d: structures.hhsearch_cmd(cfg, d, _actor(), args.chain, args.db))
+        if args.read_hhsearch:
+            return _with(cfg, args.target, lambda d: structures.read_hhsearch_cmd(
+                cfg, d, args.read_hhsearch, _actor(), limit=args.limit))
+        return _with(cfg, args.target, lambda d: structures.sweep_cmd(
+            cfg, d, _actor(), identity=args.identity, rows=args.rows, limit=args.limit, chain=args.chain))
+    if args.cmd == "relax":
+        from residudes import relax
+        if args.read:
+            return _with(cfg, args.target, lambda d: relax.read_cmd(cfg, d, _actor()))
+        models = [m.strip() for m in (args.models or "").split(",") if m.strip()]
+        return _with(cfg, args.target, lambda d: relax.submit_cmd(
+            cfg, d, _actor(), models or None, args.ssbond, args.bb_fc, args.sc_fc, args.dstres, args.ligand))
     if args.cmd in ("slides", "render"):
         from residudes import slides
         if args.cmd == "slides":

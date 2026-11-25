@@ -1,18 +1,18 @@
 #!/bin/bash
-# Run OpenFold3 inference with Bio-TRT TRT acceleration.
+# Run OpenFold3 inference with residudes-engine TRT acceleration.
 #
 # This script handles the Python environment setup (PYTHONPATH for
-# both the OF3 repo and Bio-TRT thirdparty) then calls inference.py.
+# both the OF3 repo and residudes-engine thirdparty) then calls inference.py.
 #
 # Step 1 (one-time): Build TRT engines
 #   bash openfold3/trt/build_engines.sh \
-#       --checkpoint /home/jovyan/.openfold3/of3-p2-155k.pt \
+#       --checkpoint <checkpoints>/of3-p2-155k.pt \
 #       --engines-dir /workspace/engines/openfold3
 #
 # Step 2: Run inference
 #   bash openfold3/run_inference.sh \
 #       --query  examples/query_ubiquitin.json \
-#       --checkpoint /home/jovyan/.openfold3/of3-p2-155k.pt \
+#       --checkpoint <checkpoints>/of3-p2-155k.pt \
 #       --engines-dir /workspace/engines/openfold3 \
 #       --output-dir results/ubiquitin_trt
 #

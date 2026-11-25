@@ -210,11 +210,11 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# Bio-TRT: built TRT engines and inference results (large binary files)
+# residudes-engine: built TRT engines and inference results (large binary files)
 engines/
 results/
 
-# Bio-TRT: model checkpoints
+# residudes-engine: model checkpoints
 *.pt
 *.ckpt
 *.safetensors

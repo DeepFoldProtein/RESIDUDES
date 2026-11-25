@@ -89,7 +89,17 @@ sizes, the best confidence and predicted DockQ in each). Nothing to record: it i
      is the team's own analysis of the target: on a replay it is hindsight, so read only `papers/` unless the
      operator says otherwise.
 4. **Public structures first, for every target.**
-   - Run an exact-sequence sweep against current PDB seqres and a structural search with a **current** foldseek DB.
+   - `residudes structures T` is the sequence half: every chain against the PDB, each hit with its method,
+     resolution and release date, near-identical ones marked, and the age of the local template mirrors printed
+     underneath. Add `--identity 0.5` for remote homologues. A short peptide chain will not be found by sequence
+     search — look at its partner instead.
+   - `residudes structures T --hhsearch` asks the same question of a profile, which is the only one of the three
+     that works before any model exists: a remote homologue at 20 % identity is a template candidate, not a match,
+     so check the alignment before using it. It needs an HH-suite database (`[databases] hhsearch_db`).
+   - `residudes structures T --foldseek <model.cif>` is the structural half, once a model exists: it searches a
+     **current** foldseek DB through sbatch, and `--read-foldseek <tsv>` reads the table back and names the entries
+     the sequence sweep did not have. That list is the point of running it — 8ARV is 21 % identical to T2451 and no
+     sequence search would have found it.
    - In CASP17 a sweep of the whole target set found 47 with a near-identical public structure, and several
      (8ARV, 7QV6, 3RIQ, 8YIV) were found only late, after the predictions had been run.
    - AF3's near-identity template filter hides 100 % matches, so a template search inside AF3 is not enough.

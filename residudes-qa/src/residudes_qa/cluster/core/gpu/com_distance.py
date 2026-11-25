@@ -29,7 +29,6 @@ import numpy as np
 from pathlib import Path
 from typing import Dict, List, Set, Tuple, Union
 
-from tqdm import tqdm
 
 try:
     import torch
@@ -81,7 +80,8 @@ def _com_load_one(path, anchor_residues, probe_chains):
 
 def _kabsch_Rt(P: np.ndarray, Q: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """R, t with P @ R + t ≈ Q (P rotates onto Q)."""
-    Pc = P.mean(0); Qc = Q.mean(0)
+    Pc = P.mean(0)
+    Qc = Q.mean(0)
     H = (P - Pc).T @ (Q - Qc)
     U, _, Vt = np.linalg.svd(H)
     d = float(np.sign(np.linalg.det(Vt.T @ U.T)))

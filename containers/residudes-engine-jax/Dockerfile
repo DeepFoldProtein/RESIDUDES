@@ -1,0 +1,26 @@
+# AlphaFold 3 and the JAX backends of Protenix, OpenFold 3 and Boltz-2.
+#
+# Mounted at run time: the checkout, the checkpoints, and af3.bin — which Google DeepMind
+# licenses to each user and which therefore cannot be inside any image.
+#
+# Build from residudes-engine/core/ as the context, because the vendored model sources are
+# copied in: docker build -f containers/residudes-engine-jax/Dockerfile residudes-engine/core
+#
+#   docker run --gpus all -v $PWD/residudes-engine:/opt/residudes-engine \
+#       -v /data/af3:/af3 residudes-engine-jax predict --model af3 --backend jax --input input.json
+FROM ghcr.io/astral-sh/uv:0.11.7 AS uv
+FROM nvidia/cuda:13.0.3-runtime-ubuntu24.04
+
+COPY --from=uv /uv /usr/local/bin/uv
+COPY jaxenv/pyproject.toml jaxenv/uv.lock /opt/jaxenv/
+COPY models/alphafold3 /opt/models/alphafold3
+COPY models/openfold-3 /opt/models/openfold-3
+COPY install.sh /tmp/install.sh
+RUN sh /tmp/install.sh && rm /tmp/install.sh
+
+WORKDIR /work
+ENV PATH=/opt/venv/bin:$PATH \
+    PYTHONPATH=/opt/residudes-engine/src \
+    RESIDUDES_ENGINE_CORE=/opt/residudes-engine/core
+ENTRYPOINT ["/opt/residudes-engine/bin/residudes-engine"]
+CMD ["doctor"]

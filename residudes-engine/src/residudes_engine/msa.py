@@ -25,6 +25,7 @@ import json
 import os
 import re
 import shutil
+import string
 import subprocess
 import tarfile
 import tempfile
@@ -35,7 +36,7 @@ from pathlib import Path
 PLMMSA_API = "https://plmmsa.deepfold.org"
 COLABFOLD_API = "https://api.colabfold.com"
 USER_AGENT = "residudes-engine-msa/0.1"
-SOURCES = ("plmmsa", "colabfold", "mmseqs2")
+SOURCES = ("plmmsa", "colabfold", "mmseqs2", "af3")
 PLMMSA_ALIGNERS = ("otalign", "plmalign", "plm_blast")
 # Each aligner is calibrated against a different PLM upstream (CASP17 msas/plmmsa/README).
 PLMMSA_SCORE_MODEL = {"plm_blast": "prott5", "plmalign": "prott5", "otalign": "ankh_large"}
@@ -56,6 +57,10 @@ class Chain:
 
 
 STO_TOKEN = re.compile(r"([A-Z])(\d+)")
+
+# Chain letters in order: A…Z, then AA, AB, … — the ids AlphaFold 3 accepts. Past Z,
+# chr(ord("A") + i) would hand out "[", "\\" and "]".
+LETTERS = list(string.ascii_uppercase) + [a + b for a in string.ascii_uppercase for b in string.ascii_uppercase]
 
 
 def parse_fasta(text: str) -> list[tuple[str, str]]:
@@ -94,7 +99,7 @@ def parse_sto(spec: str | None, n_chains: int) -> list[int]:
         if m.group(1) in counts:
             raise MsaError(f"repeated chain {m.group(1)} in {spec!r}")
         counts[m.group(1)] = int(m.group(2))
-    letters = [chr(ord("A") + i) for i in range(n_chains)]
+    letters = LETTERS[:n_chains]
     unknown = sorted(set(counts) - set(letters))
     if unknown:
         raise MsaError(f"stoichiometry names chain(s) {unknown} but the FASTA has {n_chains}")
@@ -104,7 +109,7 @@ def parse_sto(spec: str | None, n_chains: int) -> list[int]:
 def chains_from_fasta(path: Path, sto: str | None = None) -> list[Chain]:
     recs = parse_fasta(path.read_text())
     copies = parse_sto(sto, len(recs))
-    return [Chain(chr(ord("A") + i), name, seq, copies[i]) for i, (name, seq) in enumerate(recs)]
+    return [Chain(LETTERS[i], name, seq, copies[i]) for i, (name, seq) in enumerate(recs)]
 
 
 # ── HTTP via curl ─────────────────────────────────────────────────────────
@@ -411,6 +416,96 @@ def mmseqs2_search(chains: list[Chain], *, out_dir: Path, db_dir: Path, mmseqs: 
 
 
 # ── persisting results ────────────────────────────────────────────────────
+
+# ── AlphaFold 3's own data pipeline ───────────────────────────────────────
+
+AF3_BINARIES = ("jackhmmer", "nhmmer", "hmmalign", "hmmsearch", "hmmbuild")
+# What AlphaFold 3's data pipeline looks for under --db_dir, at the names it defaults to
+# (docs/installation.md: 630 GB unzipped in total). The floor is ~80 % of the released size, there
+# to catch a truncated or still-downloading file, which otherwise fails hours later inside
+# jackhmmer rather than at setup. bfd-first_non_consensus_sequences is AF3's *small* BFD
+# (--small_bfd_database_path), ~18 GB, not the 1.7 TB full BFD.
+AF3_DATABASES = (
+    ("uniref90_2022_05.fa", 57_000_000_000, "jackhmmer, the deep protein MSA"),
+    ("mgy_clusters_2022_05.fa", 100_000_000_000, "jackhmmer, environmental"),
+    ("bfd-first_non_consensus_sequences.fasta", 14_000_000_000, "jackhmmer, small BFD"),
+    ("uniprot_all_2021_04.fa", 85_000_000_000, "jackhmmer, pairing for complexes"),
+    ("pdb_seqres_2022_09_28.fasta", 150_000_000, "hmmsearch, templates"),
+    ("mmcif_files", 0, "template structures (a directory)"),
+    ("nt_rna_2023_02_23_clust_seq_id_90_cov_80_rep_seq.fasta", 60_000_000_000, "nhmmer, RNA"),
+    ("rfam_14_9_clust_seq_id_90_cov_80_rep_seq.fasta", 150_000_000, "nhmmer, RNA families"),
+    ("rnacentral_active_seq_id_90_cov_80_linclust.fasta", 11_000_000_000, "nhmmer, RNAcentral"),
+)
+AF3_IN_CONTAINER = "/app/alphafold/run_alphafold.py"
+
+
+def af3_search(chains: list[Chain], *, out_dir: Path, script: Path | str, python: Path | str,
+               db_dir: Path | str, binaries: dict[str, str] | None = None, container: str | None = None,
+               max_template_date: str | None = None, n_cpu: int = 8, timeout: float = 86400.0,
+               env: dict | None = None, log=print) -> MsaResult:
+    """The MSA AlphaFold 3 builds for itself: jackhmmer over UniRef90, MGnify and BFD, UniProt for the
+    paired alignment of a complex, and hmmsearch over pdb_seqres for templates.
+
+    `--run_data_pipeline=true --run_inference=false`, so this needs the genetic databases (260 GB+) and
+    hours of CPU, not a GPU. With `container` set it runs through apptainer instead of the site's venv.
+    The templates the pipeline found come back in the AF3 data JSON, which is kept beside the MSAs."""
+    work = Path(out_dir) / "_af3"
+    work.mkdir(parents=True, exist_ok=True)
+    name = "query"
+    spec = {"name": name, "dialect": "alphafold3", "version": 1, "modelSeeds": [1],
+            "sequences": [{"protein": {"id": ch.letter, "sequence": ch.seq}} for ch in chains]}
+    json_path = work / "input.json"
+    json_path.write_text(json.dumps(spec, indent=2) + "\n")
+
+    bins = dict(binaries or {})
+    flags = [f"--json_path={json_path}", f"--output_dir={work}", f"--db_dir={db_dir}",
+             "--run_data_pipeline=true", "--run_inference=false", "--force_output_dir=true",
+             f"--jackhmmer_n_cpu={n_cpu}", f"--nhmmer_n_cpu={n_cpu}"]
+    if max_template_date:
+        flags.append(f"--max_template_date={max_template_date}")
+    for b in AF3_BINARIES:
+        path = bins.get(b) or shutil.which(b)
+        if not path:
+            raise MsaError(f"{b} not found: AlphaFold 3's data pipeline needs the HMMER tools on PATH "
+                           f"(or [msa] af3_binaries in the site file)")
+        flags.append(f"--{b}_binary_path={path}")
+
+    if container:
+        cmd = ["apptainer", "exec", "-B", f"{db_dir}", "-B", f"{work}",
+               container, "python", str(script or AF3_IN_CONTAINER), *flags]
+    else:
+        cmd = [str(python), str(script), *flags]
+    log(f"af3: data pipeline on {len(chains)} chain(s), db_dir={db_dir}"
+        + (f", container={container}" if container else ""))
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
+    (work / "pipeline.log").write_text((r.stdout or "") + (r.stderr or ""))
+    if r.returncode != 0:
+        tail = "\n".join((r.stderr or r.stdout or "").strip().splitlines()[-12:])
+        raise MsaError(f"AlphaFold 3 data pipeline failed (exit {r.returncode}); {work / 'pipeline.log'}\n{tail}")
+
+    data = next((p for p in (work / name / f"{name}_data.json", work / f"{name}_data.json") if p.is_file()), None)
+    if data is None:
+        found = sorted(p.name for p in work.rglob("*_data.json"))
+        raise MsaError(f"AlphaFold 3 wrote no data JSON under {work} (found: {found or 'nothing'})")
+    parsed = json.loads(data.read_text())
+    res = MsaResult(source="af3", meta={"db_dir": str(db_dir), "data_json": str(data),
+                                        "max_template_date": max_template_date, "container": container})
+    by_letter = {ch.letter: ch for ch in chains}
+    for entity in parsed.get("sequences", []):
+        body = entity.get("protein") or entity.get("rna") or entity.get("dna") or {}
+        ids = body.get("id")
+        letter = (ids[0] if isinstance(ids, list) else ids) or ""
+        if letter not in by_letter:
+            continue
+        if body.get("unpairedMsa"):
+            res.unpaired[letter] = normalise_a3m(body["unpairedMsa"], by_letter[letter].seq, by_letter[letter].name)
+        if body.get("pairedMsa"):
+            res.paired[letter] = body["pairedMsa"]
+        res.meta.setdefault("templates", {})[letter] = len(body.get("templates") or [])
+    if not res.unpaired:
+        raise MsaError(f"AlphaFold 3's data JSON carried no MSA for any chain ({data})")
+    return res
+
 
 def write_msa_dir(res: MsaResult, chains: list[Chain], out_dir: Path) -> Path:
     """Lay out <out_dir>/msa/{unpaired_<L>.a3m, paired_<L>.a3m, templates_<L>.m8, msa.json}."""

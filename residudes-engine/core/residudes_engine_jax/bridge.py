@@ -16,7 +16,7 @@ ordering. Profiling on RTX 4090 showed that for Protenix v2 inference
 those barriers serialize host execution and dominate JAX hot-swap cost.
 
 The default now skips the host-side syncs and trusts the DLPack stream
-hand-off. Set ``BIO_TRT_JAX_BRIDGE_SYNC=1`` to restore the old behaviour
+hand-off. Set ``RESIDUDES_ENGINE_JAX_BRIDGE_SYNC=1`` to restore the old behaviour
 when running mixed CUDA streams or debugging a race.
 """
 
@@ -39,7 +39,7 @@ def _bridge_sync() -> bool:
     Enable for debugging if you suspect a race between PT and JAX
     streams.
     """
-    return os.environ.get("BIO_TRT_JAX_BRIDGE_SYNC", "0").lower() in (
+    return os.environ.get("RESIDUDES_ENGINE_JAX_BRIDGE_SYNC", "0").lower() in (
         "1", "true", "yes", "on")
 
 
@@ -75,7 +75,7 @@ def torch_to_jax(t: torch.Tensor) -> jax.Array:
     """Move a PyTorch CUDA tensor to a JAX array, zero-copy when possible.
 
     By default skips the explicit stream sync and trusts the DLPack
-    hand-off (set ``BIO_TRT_JAX_BRIDGE_SYNC=1`` to opt back in).
+    hand-off (set ``RESIDUDES_ENGINE_JAX_BRIDGE_SYNC=1`` to opt back in).
     """
     if not t.is_cuda:
         return jnp.asarray(t.detach().cpu().numpy())
@@ -95,7 +95,7 @@ def jax_to_torch(j: jax.Array, *, dtype: torch.dtype | None = None) -> torch.Ten
     By default skips ``block_until_ready()`` (PyTorch's next op on this
     tensor will see the same stream the JAX kernel queued on, so a host
     barrier is not required for correctness on a single GPU). Set
-    ``BIO_TRT_JAX_BRIDGE_SYNC=1`` to opt back into the old host-blocking
+    ``RESIDUDES_ENGINE_JAX_BRIDGE_SYNC=1`` to opt back into the old host-blocking
     behaviour.
     """
     if _bridge_sync():

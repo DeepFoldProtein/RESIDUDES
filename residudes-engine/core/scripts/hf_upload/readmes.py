@@ -123,7 +123,7 @@ def build_readme(repo_id, cfg, meta_map, has_confidence, existing_header_rows):
     header.append("")
     header.append(
         f"TensorRT BF16 engines for **{cfg['model']}**, built with "
-        f"[Bio-TRT](https://github.com/DeepFoldProtein/Bio-TRT)."
+        f"[residudes-engine](https://github.com/DeepFoldProtein/RESIDUDES)."
     )
     header.append("")
     header.append(f"Triangle attention backend: **{cfg['backend']}**")
@@ -164,7 +164,7 @@ def build_readme(repo_id, cfg, meta_map, has_confidence, existing_header_rows):
     header.append("```")
     header.append("")
     header.append(
-        "See the [Bio-TRT](https://github.com/DeepFoldProtein/Bio-TRT) "
+        "See the [residudes-engine](https://github.com/DeepFoldProtein/RESIDUDES) "
         "inference scripts for how to consume `engines/<gpu_tag>/`."
     )
     header.append("")

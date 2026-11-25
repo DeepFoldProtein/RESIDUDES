@@ -47,6 +47,7 @@ from residudes_qa.cluster.visualization.dendrogram import (
 )
 
 __all__ = [
+    "create_comprehensive_report",
     # Embeddings
     "plot_umap",
     "plot_tsne",

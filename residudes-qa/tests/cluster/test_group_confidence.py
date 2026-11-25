@@ -12,17 +12,25 @@ from residudes_qa.cluster.analysis.group_confidence import (
 
 def _write_struct(path, chain_coords, bfac=80.0):
     import gemmi
-    st = gemmi.Structure(); m = gemmi.Model("1")
+    st = gemmi.Structure()
+    m = gemmi.Model("1")
     for cname, coords in zip("ABCDEFGH", chain_coords):
         ch = gemmi.Chain(cname)
         for i, (x, y, z) in enumerate(coords, 1):
-            r = gemmi.Residue(); r.name = "ALA"; r.seqid = gemmi.SeqId(i, " ")
-            a = gemmi.Atom(); a.name = "CA"; a.element = gemmi.Element("C")
+            r = gemmi.Residue()
+            r.name = "ALA"
+            r.seqid = gemmi.SeqId(i, " ")
+            a = gemmi.Atom()
+            a.name = "CA"
+            a.element = gemmi.Element("C")
             a.pos = gemmi.Position(float(x), float(y), float(z))
-            a.b_iso = float(bfac); a.occ = 1.0
-            r.add_atom(a); ch.add_residue(r)
+            a.b_iso = float(bfac)
+            a.occ = 1.0
+            r.add_atom(a)
+            ch.add_residue(r)
         m.add_chain(ch)
-    st.add_model(m); st.write_pdb(str(path))
+    st.add_model(m)
+    st.write_pdb(str(path))
 
 
 def test_read_mean_plddt():
@@ -95,4 +103,5 @@ def test_confidence_from_paths_and_plot():
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
-            fn(); print(f"PASS {name}")
+            fn()
+            print(f"PASS {name}")

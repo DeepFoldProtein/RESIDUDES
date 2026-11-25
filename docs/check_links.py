@@ -18,7 +18,12 @@ SKIP = ("residudes-engine/core/models/",)
 
 
 def broken() -> list[tuple[str, str]]:
-    files = subprocess.run(["git", "ls-files", "*.md"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.split()
+    # tracked files AND new ones not yet committed: a page was unchecked until it landed,
+    # which is exactly when a moved link is easiest to fix
+    tracked = subprocess.run(["git", "ls-files", "*.md"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.split()
+    untracked = subprocess.run(["git", "ls-files", "-o", "--exclude-standard", "*.md"],
+                               cwd=ROOT, capture_output=True, text=True, check=True).stdout.split()
+    files = sorted(set(tracked) | set(untracked))
     out = []
     for f in files:
         if f.startswith(SKIP):

@@ -257,7 +257,7 @@ def plot_ranking_bars(
     colors = [cmap(norm(s)) for s in scores]
 
     fig, ax = plt.subplots(figsize=figsize)
-    bars = ax.bar(range(len(scores)), scores, color=colors, edgecolor="none", width=0.7)
+    ax.bar(range(len(scores)), scores, color=colors, edgecolor="none", width=0.7)
 
     # Add seed group separators
     seeds = df["seed"].values

@@ -31,7 +31,7 @@ from residudes_engine_jax.haiku.diffusion_sampler import (
 from residudes_engine_jax.weights._rules import apply_rules
 from residudes_engine_jax.weights.protenix import diffusion_module_rules
 
-logger = logging.getLogger("biotrt-jax-sampler")
+logger = logging.getLogger("residudes-jax-sampler")
 
 
 def _make_dm_apply(config: DiffusionModuleConfig, dtype: jnp.dtype):

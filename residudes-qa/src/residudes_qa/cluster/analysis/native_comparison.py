@@ -72,7 +72,7 @@ def analyze_native_scores(
     Returns:
         DataFrame with per-cluster score summary
     """
-    n = len(labels)
+    len(labels)
     unique_clusters = sorted(np.unique(labels))
 
     # Build name-to-index mapping for quick lookup

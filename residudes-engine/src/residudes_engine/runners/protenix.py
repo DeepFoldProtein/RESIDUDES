@@ -47,8 +47,8 @@ def plan(req: Request) -> Plan:
     # Triangle modules at the Python layer: torch unless the JAX path owns them (cueq-jax).
     jax_env = (site.jax.get("env") or {})
     per_model = jax_env.get(req.model.tag) or {}
-    cueq = str(per_model.get("RESIDUDES_ENGINE_JAX_CUEQ", per_model.get("BIO_TRT_JAX_CUEQ",
-               jax_env.get("RESIDUDES_ENGINE_JAX_CUEQ", jax_env.get("BIO_TRT_JAX_CUEQ", "0")))))
+    cueq = str(per_model.get("RESIDUDES_ENGINE_JAX_CUEQ", per_model.get("RESIDUDES_ENGINE_JAX_CUEQ",
+               jax_env.get("RESIDUDES_ENGINE_JAX_CUEQ", jax_env.get("RESIDUDES_ENGINE_JAX_CUEQ", "0")))))
     if not (jax and cueq == "1"):
         cmd += ["--triangle_attention", "torch", "--triangle_multiplicative", "torch"]
     cmd += req.extra_args

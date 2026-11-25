@@ -19,7 +19,7 @@ For a cluster of N structures:
 import numpy as np
 from pathlib import Path
 from typing import List, Tuple, Optional, Union, Dict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 try:
     import torch

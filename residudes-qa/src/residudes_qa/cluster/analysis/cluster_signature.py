@@ -206,10 +206,10 @@ def render_cluster_fingerprint_md(signature: dict, output_path: str | Path) -> P
 
     if "method_dominance" in signature:
         items = sorted(signature["method_dominance"].items(), key=lambda kv: -kv[1])
-        lines.append(f"- Method dominance: " + ", ".join(f"{k} ({v*100:.0f}%)" for k, v in items[:4]))
+        lines.append("- Method dominance: " + ", ".join(f"{k} ({v*100:.0f}%)" for k, v in items[:4]))
     if "variant_dominance" in signature:
         items = sorted(signature["variant_dominance"].items(), key=lambda kv: -kv[1])
-        lines.append(f"- Variant dominance: " + ", ".join(f"{k} ({v*100:.0f}%)" for k, v in items[:4]))
+        lines.append("- Variant dominance: " + ", ".join(f"{k} ({v*100:.0f}%)" for k, v in items[:4]))
 
     if "recommended_pick" in signature:
         rp = signature["recommended_pick"]

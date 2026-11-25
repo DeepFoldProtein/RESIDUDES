@@ -5,7 +5,7 @@ This repository holds three tools from the DeepFold team's CASP17 entry:
 | folder | what it is | its own instructions |
 |---|---|---|
 | `residudes/` | the campaign agent: target analysis, checkpoints with a person, slate | `residudes/AGENTS.md` (read it before any campaign work) |
-| `residudes-engine/` | inputs and predictions: Protenix v2, OpenFold 3, Boltz-2, AlphaFold 3 on PyTorch, TensorRT or JAX | `residudes-engine/README.md` |
+| `residudes-engine/` | inputs and predictions: Protenix v2, OpenFold 3, Boltz-2, AlphaFold 3, ESMFold2 on PyTorch, TensorRT or JAX | `residudes-engine/README.md` |
 | `residudes-qa/` | QA of a prediction pool: interface scores, clustering, plots | `residudes-qa/README.md` |
 
 Harnesses read this file (Codex, Antigravity) or `CLAUDE.md` (Claude Code, which imports it). Opened from here,

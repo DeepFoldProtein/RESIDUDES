@@ -6,13 +6,13 @@ Tokamax's `_AUTOTUNING_CACHE` is a module-level dict keyed by
 JSON files only cover shapes DeepMind benchmarked; on user shapes the
 runtime triggers an autotune cache miss + microbenchmark on first use.
 
-For the Bio-TRT Protenix v2 pipeline, the warm pairformer hits ~288
+For the residudes-engine Protenix v2 pipeline, the warm pairformer hits ~288
 unique call signatures per inference. Each microbenchmark costs
 50-100 ms, so warm runs spend ~10-15 s re-tuning identical shapes
 across processes. Pickling `_AUTOTUNING_CACHE` after the first run and
 restoring it on subsequent runs eliminates this overhead.
 
-Activate via env var `BIO_TRT_JAX_AUTOTUNE_CACHE_DIR` (default
+Activate via env var `RESIDUDES_ENGINE_JAX_AUTOTUNE_CACHE_DIR` (default
 `~/.cache/jax_protenix/tokamax_autotune`). Files are pickled per-device
 to keep cross-GPU runs isolated.
 """
@@ -39,7 +39,7 @@ def _info(msg: str) -> None:
 
 def _cache_dir() -> Path:
     p = os.environ.get(
-        "BIO_TRT_JAX_AUTOTUNE_CACHE_DIR",
+        "RESIDUDES_ENGINE_JAX_AUTOTUNE_CACHE_DIR",
         os.path.expanduser("~/.cache/jax_protenix/tokamax_autotune"),
     )
     return Path(p)
@@ -83,14 +83,14 @@ def _force_autotune_fallback() -> None:
     over multiple kernel tile configs and picks the fastest — and that
     result lands in the in-memory cache.
 
-    Set BIO_TRT_JAX_AUTOTUNE_FALLBACK=heuristics to opt out.
+    Set RESIDUDES_ENGINE_JAX_AUTOTUNE_FALLBACK=heuristics to opt out.
     """
     # Default 'heuristics' — real autotune microbenchmarks each shape over
     # multiple kernel configs (~20-30s/shape on a 4090), and with ~288 unique
     # call sites that's >2 hours of cold time for any non-trivial pipeline.
-    # Set BIO_TRT_JAX_AUTOTUNE_FALLBACK=autotune to opt in for offline
+    # Set RESIDUDES_ENGINE_JAX_AUTOTUNE_FALLBACK=autotune to opt in for offline
     # population (recommended only if you'll cache the result).
-    fb = os.environ.get("BIO_TRT_JAX_AUTOTUNE_FALLBACK", "heuristics")
+    fb = os.environ.get("RESIDUDES_ENGINE_JAX_AUTOTUNE_FALLBACK", "heuristics")
     try:
         from tokamax._src import config as _tk_config  # type: ignore
         # _ConfigOption only exposes a ``__call__(value)`` context manager;

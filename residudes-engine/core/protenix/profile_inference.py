@@ -22,11 +22,11 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 
-logger = logging.getLogger("biotrt-profile")
+logger = logging.getLogger("residudes-profile")
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-_BIO_TRT_ROOT = os.path.dirname(_SCRIPT_DIR)
-_PROTENIX_ROOT = os.path.join(_BIO_TRT_ROOT, "models/protenix")
+_CORE_ROOT = os.path.dirname(_SCRIPT_DIR)
+_PROTENIX_ROOT = os.path.join(_CORE_ROOT, "models/protenix")
 
 _pre = argparse.ArgumentParser(add_help=False)
 _pre.add_argument("--no_jax", action="store_true")
@@ -44,12 +44,12 @@ jax.config.update("jax_compilation_cache_dir", cache_dir)
 jax.config.update("jax_persistent_cache_min_compile_time_secs", 1.0)
 jax.config.update("jax_persistent_cache_min_entry_size_bytes", 0)
 
-sys.path.insert(0, _BIO_TRT_ROOT)
+sys.path.insert(0, _CORE_ROOT)
 sys.path.insert(0, _PROTENIX_ROOT)
 os.chdir(_PROTENIX_ROOT)
 
 import importlib.util
-_fi = importlib.util.spec_from_file_location("biotrt_fast_init",
+_fi = importlib.util.spec_from_file_location("residudes_fast_init",
     os.path.join(_SCRIPT_DIR, "_fast_init.py"))
 _fim = importlib.util.module_from_spec(_fi)
 _fi.loader.exec_module(_fim); _fim.patch_protenix_trunc_normal()

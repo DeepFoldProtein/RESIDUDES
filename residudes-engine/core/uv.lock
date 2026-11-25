@@ -265,7 +265,7 @@ wheels = [
 ]
 
 [[package]]
-name = "bio-trt"
+name = "residudes-engine-core"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

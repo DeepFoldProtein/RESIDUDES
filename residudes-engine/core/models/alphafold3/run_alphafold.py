@@ -1118,8 +1118,8 @@ def main(_):
         pathlib.Path(_JSON_PATH.value)
     )
     # Surface json_path for the unified-writer's MSA / template provenance.
-    # post_processing.write_output reads BIO_TRT_INPUT_PATH lazily.
-    os.environ['BIO_TRT_INPUT_PATH'] = str(pathlib.Path(_JSON_PATH.value).resolve())
+    # post_processing.write_output reads RESIDUDES_ENGINE_INPUT_PATH lazily.
+    os.environ['RESIDUDES_ENGINE_INPUT_PATH'] = str(pathlib.Path(_JSON_PATH.value).resolve())
   else:
     raise AssertionError(
         'Exactly one of --json_path or --input_dir must be specified.'
@@ -1258,13 +1258,13 @@ def main(_):
     if _NUM_SEEDS.value is not None:
       print(f'Expanding fold job {fold_input.name} to {_NUM_SEEDS.value} seeds')
       fold_input = fold_input.with_multiple_seeds(_NUM_SEEDS.value)
-    # For --input_dir (bulk) mode, refresh BIO_TRT_INPUT_PATH per fold_input
+    # For --input_dir (bulk) mode, refresh RESIDUDES_ENGINE_INPUT_PATH per fold_input
     # so post_processing.write_output sees the right input.json (not the
     # dir set above).
     if _INPUT_DIR.value is not None:
       _candidate = pathlib.Path(_INPUT_DIR.value) / f'{fold_input.sanitised_name()}.json'
       if _candidate.exists():
-        os.environ['BIO_TRT_INPUT_PATH'] = str(_candidate.resolve())
+        os.environ['RESIDUDES_ENGINE_INPUT_PATH'] = str(_candidate.resolve())
     process_fold_input(
         fold_input=fold_input,
         data_pipeline_config=data_pipeline_config,

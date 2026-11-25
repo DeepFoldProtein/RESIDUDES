@@ -11,7 +11,6 @@ Provides visualizations for network analysis results:
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 from typing import Optional, Union, List, Dict, Any, Tuple
 from pathlib import Path
 
@@ -387,7 +386,6 @@ def create_network_report(
     """
     import seaborn as sns
 
-    n_panels = 4
     fig = plt.figure(figsize=(18, 14))
 
     # Panel 1: Network graph (top-left)
@@ -500,7 +498,6 @@ def create_pretty_community_graph(
     Returns:
       matplotlib.figure.Figure.
     """
-    import networkx as nx
     import re
     from collections import Counter
     from matplotlib.patches import Wedge, Circle, PathPatch
@@ -555,8 +552,10 @@ def create_pretty_community_graph(
     for u, v in graph.edges():
         cu = idx_to_comm.get(int(u))
         cv = idx_to_comm.get(int(v))
-        if cu is None or cv is None or cu == cv: continue
-        if cu not in kept or cv not in kept: continue
+        if cu is None or cv is None or cu == cv:
+            continue
+        if cu not in kept or cv not in kept:
+            continue
         inter[(min(cu, cv), max(cu, cv))] += 1
     # adaptive threshold: keep top-100 inter-comm pairs
     max_inter_pairs = 100
@@ -615,16 +614,19 @@ def create_pretty_community_graph(
     # Edges (curved)
     max_w = max(edges_w.values()) if edges_w else 1
     for (u, v), w in edges_w.items():
-        if u not in pos or v not in pos: continue
+        if u not in pos or v not in pos:
+            continue
         alpha = 0.30 + 0.55 * (w / max_w)
         lw = 0.8 + 4.0 * (w / max_w)
-        x0, y0 = pos[u]; x1, y1 = pos[v]
+        x0, y0 = pos[u]
+        x1, y1 = pos[v]
         mx, my = (x0 + x1) / 2, (y0 + y1) / 2
         dx, dy = x1 - x0, y1 - y0
         nrm = (dx**2 + dy**2)**0.5 + 1e-9
         px, py = -dy / nrm, dx / nrm
         cxp, cyp = mx + 0.12 * px, my + 0.12 * py
-        g_u = comm_meta[u]['dom_group']; g_v = comm_meta[v]['dom_group']
+        g_u = comm_meta[u]['dom_group']
+        g_v = comm_meta[v]['dom_group']
         color = grouping_palette[g_u] if g_u == g_v else '#64748b'
         path = MplPath([(x0, y0), (cxp, cyp), (x1, y1)],
                        [MplPath.MOVETO, MplPath.CURVE3, MplPath.CURVE3])
@@ -637,7 +639,8 @@ def create_pretty_community_graph(
 
     # Nodes
     for c, m in comm_meta.items():
-        x, y = pos[c]; sz = m['size']
+        x, y = pos[c]
+        sz = m['size']
         r_outer = 0.06 + 0.0035 * np.sqrt(sz / 5)
         r_outer = min(r_outer, 0.20)
         r_inner = r_outer * 0.74
@@ -645,11 +648,13 @@ def create_pretty_community_graph(
                             facecolor=grouping_palette[m['dom_group']],
                             edgecolor='black', lw=1.5, zorder=5))
         # predictor pie
-        pm = m['pred_mix']; total = sum(pm.values()) or 1
+        pm = m['pred_mix']
+        total = sum(pm.values()) or 1
         a0 = 90
         for p in sorted(pred_pal_default, key=lambda x: -pm.get(x, 0)):
             cnt = pm.get(p, 0)
-            if cnt == 0: continue
+            if cnt == 0:
+                continue
             a1 = a0 - 360 * cnt / total
             ax.add_patch(Wedge((x, y), r_inner, a1, a0,
                                facecolor=pred_pal_default[p],
@@ -679,14 +684,18 @@ def create_pretty_community_graph(
     leg2 = ax.legend(handles=pred_leg, title='inner pie = predictor mix',
                      loc='upper right', fontsize=9, frameon=True, facecolor='white')
     ax.add_artist(leg1)
-    leg3 = ax.legend(handles=edge_leg,
+    ax.legend(handles=edge_leg,
                      title=f'edge = inter-community kNN edges (max {max_w:,})',
                      loc='lower right', fontsize=9, frameon=True, facecolor='white')
     ax.add_artist(leg2)
 
-    ax.set_xlim(-4, 4); ax.set_ylim(-4, 4)
-    ax.set_aspect('equal'); ax.set_xticks([]); ax.set_yticks([])
-    for s in ax.spines.values(): s.set_color('#ddd')
+    ax.set_xlim(-4, 4)
+    ax.set_ylim(-4, 4)
+    ax.set_aspect('equal')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for s in ax.spines.values():
+        s.set_color('#ddd')
     sub_title = (f'top {top_k} of {len(comm_sizes)} communities by size'
                  if top_k and len(comm_sizes) > top_k
                  else f'{len(comm_sizes)} communities')

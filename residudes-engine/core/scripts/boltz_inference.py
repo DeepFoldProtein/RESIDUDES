@@ -67,7 +67,7 @@ def _maybe_convert_af3_predict_arg(argv):
             if not os.path.exists(arg):
                 return
             spec = importlib.util.spec_from_file_location(
-                "biotrt_af3_adapter",
+                "residudes_af3_adapter",
                 str(_REPO_ROOT / "scripts" / "af3_input_adapter.py"),
             )
             adapter = importlib.util.module_from_spec(spec)
@@ -158,13 +158,13 @@ def _maybe_convert_af3_predict_arg(argv):
                 jsons = sorted(p for p in Path(arg).iterdir() if _is_af3(str(p)))
                 if not jsons:
                     return
-                tmp_dir = Path(tempfile.mkdtemp(prefix="biotrt_bt2_af3_"))
+                tmp_dir = Path(tempfile.mkdtemp(prefix="residudes_bt2_af3_"))
                 for jp in jsons:
                     _convert_one(str(jp), tmp_dir)
                 logger.info(f"AF3 dialect dir → bt2 yamls: {tmp_dir} ({len(jsons)} files)")
                 argv[i + 1] = str(tmp_dir)
             elif _is_af3(arg):
-                tmp_dir = Path(tempfile.mkdtemp(prefix="biotrt_bt2_af3_"))
+                tmp_dir = Path(tempfile.mkdtemp(prefix="residudes_bt2_af3_"))
                 out = _convert_one(arg, tmp_dir)
                 logger.info(f"AF3 dialect → bt2 yaml: {out}")
                 argv[i + 1] = str(out)
@@ -380,11 +380,11 @@ def _reset_bt2_pairing_runtime():
 
 
 def _inject_trt(model, engines_dir: str) -> None:
-    # Import our local Bio-TRT compat module directly (site-packages `boltz`
+    # Import our local residudes-engine compat module directly (site-packages `boltz`
     # has no compat submodule).
     import importlib.util
     _compat_path = _REPO_ROOT / "boltz" / "compat.py"
-    _spec = importlib.util.spec_from_file_location("_biotrt_boltz_compat", str(_compat_path))
+    _spec = importlib.util.spec_from_file_location("_residudes_boltz_compat", str(_compat_path))
     compat = importlib.util.module_from_spec(_spec)
     _spec.loader.exec_module(compat)
     from tensorrt_bionemo.models.helper import AcceleratedConfig
@@ -879,7 +879,7 @@ def _set_input_path_env(argv):
         if a == "predict" and i + 1 < len(argv):
             yaml_arg = argv[i + 1]
             if os.path.exists(yaml_arg):
-                os.environ["BIO_TRT_INPUT_PATH"] = str(Path(yaml_arg).resolve())
+                os.environ["RESIDUDES_ENGINE_INPUT_PATH"] = str(Path(yaml_arg).resolve())
             return
 
 
@@ -1060,7 +1060,7 @@ def _install_unified_boltz_writer():
                 # boltz YAML's templates: block has cif paths in the same
                 # order as record.templates; pair them up by index.
                 yaml_text = ""
-                _input_arg = os.environ.get("BIO_TRT_INPUT_PATH")
+                _input_arg = os.environ.get("RESIDUDES_ENGINE_INPUT_PATH")
                 if _input_arg and os.path.isfile(_input_arg):
                     yaml_text = Path(_input_arg).read_text()
                 import re as _re
@@ -1145,10 +1145,10 @@ def _install_unified_boltz_writer():
                     _payload = {"msa": _msa_view, "templates": rt_tpls}
                     # Variant: read sidecar dropped by _convert_one (the
                     # converted YAML loses `inputs/<sto>/<variant>/` paths).
-                    # BIO_TRT_INPUT_PATH may be a single YAML or a directory
+                    # RESIDUDES_ENGINE_INPUT_PATH may be a single YAML or a directory
                     # of converted YAMLs (batch mode); handle both.
                     try:
-                        _yaml = os.environ.get("BIO_TRT_INPUT_PATH", "")
+                        _yaml = os.environ.get("RESIDUDES_ENGINE_INPUT_PATH", "")
                         _vp = None
                         if _yaml.endswith(".yaml"):
                             _vp = Path(_yaml).with_suffix(".variant")
@@ -1402,9 +1402,10 @@ def _install_unified_boltz_writer():
                 # (inputs_runtime.json) dropped at OUTPUT by _log_input_summary;
                 # fall back to lazy yaml lookup if the runtime file isn't present.
                 try:
-                    import sys as _sys
-                    _sys.path.insert(0, "/data/bio-trt/scripts")
-                    _sys.path.insert(0, "/gpfs/deepfold/casp/casp17/Bio-TRT/scripts")
+                    import os as _os, sys as _sys
+                    _sys.path.insert(0, _os.path.join(
+                        _os.environ.get("RESIDUDES_ENGINE_CORE")
+                        or _os.path.abspath(_os.path.join(_os.path.dirname(__file__), _os.pardir)), "scripts"))
                     from inputs_meta import read_runtime_inputs as _rri, lookup_inputs_meta as _lim
                     # Walk up from sample_dir (deeper than self.output_dir):
                     # inputs_runtime.json lives at <self.output_dir>/<record.id>/.
@@ -1576,7 +1577,7 @@ try:
     _bt2_install_torch_compile()
     # Per-template loop in TemplateV2Module: peak O(T·N²) → O(N²). Backend-agnostic
     # (pure torch reordering of a linear sum); this was the 1627-token OOM on the
-    # torch/TRT path, which the JAX entry had already fixed. BIO_TRT_BT2_TEMPLATE_CHUNK=0 disables.
+    # torch/TRT path, which the JAX entry had already fixed. RESIDUDES_ENGINE_BT2_TEMPLATE_CHUNK=0 disables.
     _bt2_install_template_chunking()
     # RESIDUDES_ENGINE_PROFILE=1 → per-stage timing/peak-memory JSON (see install_stage_profiler).
     _bt2_install_stage_profiler()

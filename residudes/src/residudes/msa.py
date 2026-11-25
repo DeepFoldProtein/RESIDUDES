@@ -143,6 +143,9 @@ def coverage_svg(stats: list[dict], out: Path, width: int = 1400, height: int = 
     return out
 
 
+PREFERRED_A3M = ("custom.a3m", "merged.a3m", "uniref90.a3m")
+
+
 def target_msas(cfg, d) -> list[Path]:
     """The MSAs this target already has: the residudes-engine tree (targets_root/T/msas) and residudes's own (dossier/msas)."""
     from residudes.dossier import Dossier
@@ -154,8 +157,14 @@ def target_msas(cfg, d) -> list[Path]:
         if r.is_dir():
             for sub in sorted(r.iterdir()):
                 if sub.is_dir():
-                    a3ms = sorted(sub.glob("*.a3m"))
-                    pick = [p for p in a3ms if p.name in ("custom.a3m", "merged.a3m", "uniref90.a3m")] or a3ms[:1]
+                    # templates_*.a3m is an alignment of template hits, not of the query's homologues
+                    a3ms = sorted(p for p in sub.glob("*.a3m") if not p.name.startswith("templates"))
+                    pick = ([p for p in a3ms if p.name in PREFERRED_A3M]
+                            # residudes-engine writes unpaired_<L>.a3m beside paired_<L>.a3m, and "paired"
+                            # sorts first: without this the depth of a complex would be read off the
+                            # row-aligned paired alignment, which is a different and much shallower thing.
+                            or [p for p in a3ms if p.name.startswith("unpaired_")]
+                            or a3ms[:1])
                     out += pick
     return out
 

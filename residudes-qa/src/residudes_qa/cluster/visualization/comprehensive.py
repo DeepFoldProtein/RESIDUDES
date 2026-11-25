@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.colors import LinearSegmentedColormap
 from pathlib import Path
-from typing import Optional, Dict, List, Tuple, Union
+from typing import Optional, Dict, List, Union
 from scipy import linalg
 import warnings
 warnings.filterwarnings('ignore')
@@ -143,7 +143,7 @@ def create_comprehensive_figure(
                 medoid_indices=medoid_indices,
                 native_idx=native_idx,
                 best_idx=best_idx,
-                title=f"Membership Confidence",
+                title="Membership Confidence",
                 metric_name=metric_name.upper(),
                 method_name=method.upper(),
                 membership_confidence=membership_confidence,
@@ -391,7 +391,7 @@ def _plot_membership(
 
     # Map confidence to size and alpha
     sizes = 3 + 30 * confidence ** 2  # emphasize high-confidence points
-    alphas = 0.15 + 0.7 * confidence  # range 0.15-0.85
+    0.15 + 0.7 * confidence  # range 0.15-0.85
 
     # Plot points colored by confidence (RdYlGn)
     sc = ax.scatter(

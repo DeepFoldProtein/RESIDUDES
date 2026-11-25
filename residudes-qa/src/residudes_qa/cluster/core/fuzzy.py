@@ -11,7 +11,6 @@ Main clustering is now in clustering.py (run_clustering with method="fuzzy")
 
 import numpy as np
 from typing import Optional, List
-from dataclasses import dataclass
 
 # Re-export from clustering for backwards compatibility
 from residudes_qa.cluster.core.clustering import ClusteringResult, run_clustering

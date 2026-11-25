@@ -11,7 +11,7 @@ even at N=644, so we keep the simpler form.)
 At inference on N≳600 the [N, N, 2*intermediate] intermediate becomes
 ~1.6 GB. AF3 chunks this over the leading "broadcast" residue dim via
 ``mapping.sharded_apply``. We do the same when N×N×intermediate exceeds
-``BIO_TRT_JAX_TRANSITION_SHARD_THRESHOLD`` (default 1 GB), using
+``RESIDUDES_ENGINE_JAX_TRANSITION_SHARD_THRESHOLD`` (default 1 GB), using
 ``hk.scan`` + ``dynamic_update_slice`` so XLA cannot unroll the loop.
 """
 
@@ -53,13 +53,13 @@ class TransitionBlock(hk.Module):
         # + dispatch overhead at typical scales — opt in only when needed.
         try:
             shard_thresh = int(os.environ.get(
-                "BIO_TRT_JAX_TRANSITION_SHARD_THRESHOLD",
+                "RESIDUDES_ENGINE_JAX_TRANSITION_SHARD_THRESHOLD",
                 str(1 << 63)))
         except ValueError:
             shard_thresh = 1 << 63
         try:
             shard_size = int(os.environ.get(
-                "BIO_TRT_JAX_TRANSITION_SHARD_SIZE", "32"))
+                "RESIDUDES_ENGINE_JAX_TRANSITION_SHARD_SIZE", "32"))
         except ValueError:
             shard_size = 32
 

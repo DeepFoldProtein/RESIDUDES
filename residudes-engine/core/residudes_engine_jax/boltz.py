@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Boltz-2 JAX hot-module backend.
 
-Mirrors ``Bio-TRT/boltz/compat.py`` but routes pairformers through Haiku/JAX.
+Mirrors ``core/boltz/compat.py`` but routes pairformers through Haiku/JAX.
 
 Module attribute paths:
   structure pairformer:    model.pairformer_module
@@ -99,7 +99,7 @@ class _CompatPairformerJAXBoltz(nn.Module):
         super().__init__()
         self._config = config
         variant = PairformerVariant.boltz2(num_blocks=num_layers)
-        # Same knobs the Protenix wrapper honours (BIO_TRT_JAX_PAIRFORMER_SCAN /
+        # Same knobs the Protenix wrapper honours (RESIDUDES_ENGINE_JAX_PAIRFORMER_SCAN /
         # _REMAT). With scan the 64 blocks share one compiled body via
         # hk.experimental.layer_stack instead of being compiled one by one.
         remat, use_scan = _pairformer_knobs()
@@ -160,7 +160,7 @@ def _param_dtype(x, target):
     return a.dtype
 
 
-_INPUT_FP32 = os.environ.get("BIO_TRT_JAX_INPUT_DTYPE", "compute") == "fp32"
+_INPUT_FP32 = os.environ.get("RESIDUDES_ENGINE_JAX_INPUT_DTYPE", "compute") == "fp32"
 
 
 _NOSEQ_APPLY: dict = {}
@@ -181,10 +181,10 @@ def _shared_noseq_apply(variant: PairformerVariant, jit: bool):
 
 
 def _pairformer_knobs() -> tuple[bool, bool]:
-    """(remat, use_scan) from BIO_TRT_JAX_PAIRFORMER_REMAT / _SCAN, as in protenix.py."""
+    """(remat, use_scan) from RESIDUDES_ENGINE_JAX_PAIRFORMER_REMAT / _SCAN, as in protenix.py."""
     on = ("1", "true", "yes", "on")
-    remat = os.environ.get("BIO_TRT_JAX_PAIRFORMER_REMAT", "1").lower() in on
-    use_scan = os.environ.get("BIO_TRT_JAX_PAIRFORMER_SCAN", "0").lower() in on
+    remat = os.environ.get("RESIDUDES_ENGINE_JAX_PAIRFORMER_REMAT", "1").lower() in on
+    use_scan = os.environ.get("RESIDUDES_ENGINE_JAX_PAIRFORMER_SCAN", "0").lower() in on
     return remat, use_scan
 
 
@@ -197,7 +197,7 @@ def _act(t: torch.Tensor, dtype) -> torch.Tensor:
     materialised path: a 4·H·N³-byte fp32 logits tensor (36 GB at 1315
     tokens) and a 2–3× slower pairformer. Protenix's wrapper never upcast,
     which is why its JAX path was the only one faster than PyTorch.
-    BIO_TRT_JAX_INPUT_DTYPE=fp32 restores the old behaviour. Masks stay fp32."""
+    RESIDUDES_ENGINE_JAX_INPUT_DTYPE=fp32 restores the old behaviour. Masks stay fp32."""
     if _INPUT_FP32 or dtype == jnp.float32:
         return t.to(torch.float32)
     return t.to(torch.bfloat16)

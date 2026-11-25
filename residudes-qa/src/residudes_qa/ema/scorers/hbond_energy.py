@@ -177,7 +177,7 @@ def find_backbone_hbonds(pdb_path: str, d_max: float = 3.5) -> List[HBond]:
     
     for chain in model:
         residues = [r for r in chain]
-        n_res = len(residues)
+        len(residues)
         
         # Extract backbone atoms
         backbone = []

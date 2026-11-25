@@ -10,7 +10,6 @@ Supports multiple distance/similarity metrics:
 import numpy as np
 from pathlib import Path
 from typing import Union, Literal, Optional, Tuple
-from tqdm import tqdm
 
 MetricType = Literal["tm", "itm", "drmsd"]
 
@@ -41,7 +40,7 @@ def compute_distance_matrix(
         ...     metric="tm"
         ... )
     """
-    n = len(structures)
+    len(structures)
     structure_names = [Path(s).name if isinstance(s, (str, Path)) else f"struct_{i}"
                        for i, s in enumerate(structures)]
 
@@ -67,7 +66,7 @@ def compute_distance_matrix(
 def _compute_tm_matrix(structures: list, use_gpu: bool, n_jobs: int) -> np.ndarray:
     """Compute TM-score matrix using US-align or similar tool."""
     n = len(structures)
-    matrix = np.zeros((n, n))
+    np.zeros((n, n))
 
     # TODO: Integrate with US-align or TMalign
     # For now, placeholder implementation

@@ -433,7 +433,8 @@ def test_plan_gaps_lists_the_basics_that_were_never_recorded(tmp_path):
     assert consult.plan_gaps(d, None) == [
         "no `identity`: what the chains are was never recorded",
         "no `msa_depth`: the MSAs were never measured",
-        "no `templates` or `public_structures`: the structures that exist were never looked for"]
+        "no `templates` or `public_structures`: the structures that exist were never looked for "
+        "(`residudes structures T`)"]
 
     d.evidence["identity"] = [{"time": "2026-01-01T09:00:00+09:00", "by": "agent",
                                "value": {"name": "a kinase, Homo sapiens", "family": "Pfam PF08757"}}]
@@ -505,3 +506,62 @@ def test_the_environment_from_before_the_rename_still_names_the_actor(monkeypatc
     monkeypatch.setattr(cli, "_main", lambda argv: 0)
     assert cli.main([]) == 0
     assert os.environ["RESIDUDES_ACTOR"] == "agent"
+
+
+def test_catalog_paths_come_from_the_site_config(tmp_path):
+    """A machine's own layout belongs in residudes.toml, not in the catalog everyone shares."""
+    from residudes import catalog
+    c = tmp_path / "catalog.toml"
+    c.write_text('[[component]]\nname = "foldseek PDB 2026"\nkind = "database"\n'
+                 'any_of = ["{foldseek_pdb_2026}"]\nfix = "rebuild it"\n')
+    unset = catalog.check_all(c)[0]
+    assert unset["status"] == "unconfigured" and "[databases] foldseek_pdb_2026" in unset["note"]
+    assert unset["fix"] == "rebuild it"
+
+    db = tmp_path / "db"; db.mkdir()
+    ok = catalog.check_all(c, {"foldseek_pdb_2026": str(db)})[0]
+    assert ok["status"] == "ok" and ok["fix"] == ""
+    gone = catalog.check_all(c, {"foldseek_pdb_2026": str(tmp_path / "nowhere")})[0]
+    assert gone["status"] == "missing"
+
+
+def test_the_msa_the_depth_command_picks(tmp_path):
+    """residudes-engine writes unpaired_<L>.a3m beside paired_<L>.a3m, and `paired` sorts first."""
+    from residudes import msa
+    from residudes.config import Config
+    from residudes.dossier import Dossier
+    cfg = Config(work_root=str(tmp_path))
+    d = Dossier(target="T1")
+    root = Dossier.path(cfg.targets_dir, "T1").parent / "msas"
+    for sub, names in (("af3", ["bfd.a3m", "mgnify.a3m", "templates_hmmsearch.a3m", "uniprot.a3m", "uniref90.a3m"]),
+                       ("mmseqs2_gpu", ["envdb.a3m", "merged.a3m", "uniref30.a3m"]),
+                       ("engine", ["paired_A.a3m", "unpaired_A.a3m", "unpaired_B.a3m"]),
+                       ("odd", ["templates_x.a3m", "whatever.a3m"])):
+        (root / sub).mkdir(parents=True)
+        for n in names:
+            (root / sub / n).write_text(">q\nMKT\n")
+    got = [p.parent.name + "/" + p.name for p in msa.target_msas(cfg, d)]
+    assert got == ["af3/uniref90.a3m", "engine/unpaired_A.a3m", "engine/unpaired_B.a3m",
+                   "mmseqs2_gpu/merged.a3m", "odd/whatever.a3m"]
+
+
+def test_chain_letters_do_not_run_past_z_into_punctuation(tmp_path):
+    """A 27-record FASTA used to get "[" as a chain id; AlphaFold 3 wants A…Z, AA, AB, …"""
+    from residudes import structures
+    from residudes.dossier import CHAIN_LETTERS, Dossier, chain_letter
+    assert CHAIN_LETTERS[:3] == ["A", "B", "C"]
+    assert chain_letter(25) == "Z" and chain_letter(26) == "AA" and chain_letter(27) == "AB"
+    assert chain_letter(len(CHAIN_LETTERS)) == f"X{len(CHAIN_LETTERS)}"      # never punctuation
+    p = tmp_path / "many.fasta"
+    p.write_text("".join(f">c{i}\nMKT\n" for i in range(28)))
+    d = Dossier(target="T1")
+    d.sequence = {"fasta": str(p)}
+    letters = [c[0] for c in structures.chains(d)]
+    assert letters[25:] == ["Z", "AA", "AB"]
+
+
+def test_the_first_stage_names_the_command_that_finds_public_structures():
+    """`residudes next` is what the agent reads to know what to do; a capability it cannot see is not one."""
+    from residudes.dossier import PLAYBOOK
+    goal, skill = PLAYBOOK["NEW"]
+    assert "residudes structures T" in goal and "--hhsearch" in goal and skill == "residudes-intake"

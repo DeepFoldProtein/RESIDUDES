@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""MSAModule (AF3 Algorithm 8) — JAX/Haiku port for Bio-TRT.
+"""MSAModule (AF3 Algorithm 8) — JAX/Haiku port for residudes-engine.
 
 Mirrors Protenix's ``MSAModule`` block stack. Inputs already-embedded MSA
 (``m: [N_msa, N_token, c_m]``) + pair (``z: [N_token, N_token, c_z]``) +
@@ -45,7 +45,7 @@ def _chunked_ln(x: jax.Array, *, name: str, leading_axis: int = 0,
     if chunk_size is None:
         try:
             chunk_size = int(os.environ.get(
-                "BIO_TRT_JAX_MSA_LN_CHUNK", "256"))
+                "RESIDUDES_ENGINE_JAX_MSA_LN_CHUNK", "256"))
         except ValueError:
             chunk_size = 256
 
@@ -156,7 +156,7 @@ class OuterProductMean(hk.Module):
             "output_b", (self.c_z,), a.dtype, init=jnp.zeros)
 
         try:
-            chunk = int(os.environ.get("BIO_TRT_JAX_MSA_OPM_CHUNK", "64"))
+            chunk = int(os.environ.get("RESIDUDES_ENGINE_JAX_MSA_OPM_CHUNK", "64"))
         except ValueError:
             chunk = 64
         chunk = min(chunk, N)
@@ -256,7 +256,7 @@ class MSATransition(hk.Module):
        sequences (e.g. 9fm7 has S≈3194). The intermediate tensor
        ``[S, N, 2*intermediate]`` would be 16+ GB in bf16. We split the S
        axis into chunks (default 256) and run the FFN per chunk. Output is
-       gathered. Chunk size controlled by ``BIO_TRT_JAX_MSA_TRANSITION_CHUNK``
+       gathered. Chunk size controlled by ``RESIDUDES_ENGINE_JAX_MSA_TRANSITION_CHUNK``
        (default 256, set ≥S to disable chunking).
     """
 
@@ -288,7 +288,7 @@ class MSATransition(hk.Module):
 
         try:
             chunk = int(os.environ.get(
-                "BIO_TRT_JAX_MSA_TRANSITION_CHUNK", "256"))
+                "RESIDUDES_ENGINE_JAX_MSA_TRANSITION_CHUNK", "256"))
         except ValueError:
             chunk = 256
 

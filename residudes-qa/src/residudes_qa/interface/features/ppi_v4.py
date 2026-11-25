@@ -853,7 +853,7 @@ def _mpnn_features(cif_path, chain_a, chain_b, scorers):
         res = scorers.mpnn.score_structure(str(cif_path))
         rec["mpnn_score"] = float(res.mpnn_score)
         per_res = np.asarray(res.per_residue_score, dtype=np.float32)
-        chain_idx = _chain_residue_idx(cif_path)
+        _chain_residue_idx(cif_path)
         residues = parse_residues(cif_path)
         a_iface, b_iface = _iface_res_idx(residues, chain_a, chain_b)
         # iface mask over global residue index (residues list order == mpnn order)
@@ -916,7 +916,6 @@ def detect_interface_pairs(cif_path, min_contacts=10):
 
 def find_summary_json(cif_path):
     """Locate the summary/confidence JSON paired with a cif (p2 logic)."""
-    import json as _json
     cif = Path(cif_path)
     stem = cif.stem.replace("_postprocessed", "")
     candidates = [

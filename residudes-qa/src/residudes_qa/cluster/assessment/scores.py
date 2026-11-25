@@ -4,7 +4,6 @@ Score loading and merging utilities
 Load pre-computed assessment scores and merge with clustering results.
 """
 
-import numpy as np
 import pandas as pd
 from pathlib import Path
 from typing import Optional, List, Union

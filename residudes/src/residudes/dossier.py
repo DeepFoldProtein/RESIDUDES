@@ -31,7 +31,8 @@ OUTCOMES = ("proceed", "loop:HYPOTHESES", "loop:RUNNING")
 PLAYBOOK = {
     "NEW": ("analyse the target: construct mapping, organism and family (UniProt, Pfam / InterPro), the literature on it "
             "and its partners (the site a partner binds, the chemistry, the oligomeric state, each with its source), "
-            "public structures with their identity, MSA depth per chain; then write it up in `notes/target.md`",
+            "public structures with their identity (`residudes structures T`, and `--hhsearch` for remote homologues), "
+            "MSA depth per chain; then write it up in `notes/target.md`",
             "residudes-intake"),
     "IDENTIFIED": ("form stoichiometry hypotheses with evidence", "residudes-stoichiometry"),
     "HYPOTHESES": ("design input variants (MSA, templates, PTMs, ligands) and the sampling plan (seeds, GPU hours) as decisions; then move to PLAN_REVIEW", "residudes-intake"),
@@ -43,7 +44,9 @@ PLAYBOOK = {
                    "while they run); when they are done, `residudes gate T --show` and move to RESULTS_REVIEW", "residudes-selection"),
     "SLATE_PROPOSED": ("wait for a person to run `residudes approve`", None),
     "APPROVED": ("package the approved slate: `residudes package T --server|--human` (geometry checks, polymer-only TS files "
-                 "through casp17-utils); read package/checks.md and report anything a person should look at", "residudes-selection"),
+                 "through casp17-utils); read package/checks.md and report anything a person should look at. If the checks "
+                 "show clashes or non-proline cis peptides, `residudes relax T` repairs them under restraints and says what "
+                 "changed - a person decides whether to submit the relaxed file", "residudes-selection"),
     "PACKAGED": ("a person submits; record it with `residudes stage T SUBMITTED`", None),
     "SUBMITTED": ("wait for the native structure; on a stage-2 reissue go back to HYPOTHESES", None),
     "RETROSPECTIVE": ("score each recorded decision against the native and write the lessons", None),
@@ -70,6 +73,16 @@ def tkey(t: str) -> dt.datetime:
         return x if x.tzinfo else x.replace(tzinfo=dt.timezone.utc)
     except (TypeError, ValueError, OverflowError):
         return _EPOCH
+
+
+# Chain letters in order: A…Z, then AA, AB, … — the ids AlphaFold 3 accepts, and what the
+# engine assigns. Past Z, chr(ord("A") + i) hands out "[", "\\" and "]".
+CHAIN_LETTERS = [chr(ord("A") + i) for i in range(26)] + [a + b for a in (chr(ord("A") + i) for i in range(26))
+                                                          for b in (chr(ord("A") + i) for i in range(26))]
+
+
+def chain_letter(i: int) -> str:
+    return CHAIN_LETTERS[i] if i < len(CHAIN_LETTERS) else f"X{i}"
 
 
 @dataclass

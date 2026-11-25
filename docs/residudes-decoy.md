@@ -8,7 +8,7 @@ confidence its predictor reported. It is the raw pool of CASP17 group 077 (*RESI
 of good models.
 
 That is the point of it. A set of best models shows what a pipeline chose; a pool shows what it chose
-*from*, which is what a study of ranking, selection or decoy discrimination needs. Every claim this
+*from*, as required for studies of ranking, selection or decoy discrimination. Every claim this
 repository makes about selection — the [`+0.088 DockQ over ranking the whole pool by
 confidence`](../residudes/docs/casp17_cases.md), residudes-qa's interface scorer, the gates in
 [`residudes/docs/gates.md`](../residudes/docs/gates.md) — was measured on pools of this shape, and 82 of those
@@ -16,9 +16,9 @@ targets are now public.
 
 [![The residudes-decoy overview: the pool in a line, and the example target T1417 with its structure in a Mol* viewer beside the list of viewable models](figures/residudes-decoy-home.png)](https://residudes-decoy.deepfold.org)
 
-## What is in it
+## Contents
 
-| | |
+| Property | Value |
 |---|---|
 | Targets | **82** — 47 `H` assemblies, 31 `T` monomers, 4 `M` protein–nucleic-acid, each at the official stoichiometry |
 | Structures | **726,097**, unrelaxed, unfiltered, no clash repair |
@@ -41,7 +41,7 @@ ligands.
 *The targets page: every target with its stoichiometry, how many structures and input variants it has, which
 predictors produced them, and what the download costs. T1364 alone is 81,120 structures and 3.5 GB.*
 
-## Predictors, and the terms each shard keeps
+## Predictors and per-shard terms
 
 Shards are split by predictor, so the terms that apply are identified by the file name and by the
 `model_family` column of the index.
@@ -62,7 +62,7 @@ why the split is by predictor and not by target. The full text ships with the da
 (`licenses/LEGALLY_BINDING_TERMS_OF_USE.txt`) and the site's
 [terms page](https://residudes-decoy.deepfold.org/terms) summarises it.
 
-## Getting it
+## Obtaining the data
 
 No credentials, no API: the bucket is public and serves `Access-Control-Allow-Origin: *`.
 
@@ -86,7 +86,7 @@ aws s3 --no-sign-request --endpoint-url https://s3.deepfold.org \
 `SHA256SUMS` carries a checksum for every object (`sha256sum -c`), and every structure also carries its own
 `content_sha256` in the index and in its metadata record, so one mmCIF can be verified without its shard.
 
-## The layout, and how a record joins up
+## Layout and record structure
 
 ```
 README.md  TERMS.md  licenses/  SHA256SUMS
@@ -123,7 +123,7 @@ Index columns: `structure_id`, `target_id`, `truth_target`, `truth_stoichiometry
 *The variant dictionary: what each input name means, where that meaning came from, and how much of the pool it
 covers. The rows without a written meaning are the ones described below.*
 
-## What it does not claim
+## Scope and limitations
 
 - **The confidences are not comparable across predictors**, and inside one predictor a templated run is not
   comparable with a template-free one. They are what each predictor reported for that sample, nothing more.
@@ -141,14 +141,14 @@ covers. The rows without a written meaning are the ones described below.*
   [`residudes/AGENTS.md`](../residudes/AGENTS.md): record findings as fields, not as sentences.
 - Nothing here was experimentally validated. These are blind predictions of varying quality.
 
-## What it has to do with this repository
+## Relation to this repository
 
 - [`residudes`](../residudes/) reads a pool in exactly this shape (`residudes pool`, then gates, QA and a slate),
   and its selection rules were set on pools from this campaign.
 - [`residudes-qa`](../residudes-qa/) scores interfaces and clusters pools; its interface model was fitted and
   tested on pools of these runs.
-- [`residudes-engine`](../residudes-engine/) is what produced the structures — four of the five predictors run
-  from one input file.
+- [`residudes-engine`](../residudes-engine/) is what produced the structures — all five predictors run from
+  one input file.
 - The per-target cases behind the selection claims are in
   [`residudes/docs/casp17_cases.md`](../residudes/docs/casp17_cases.md).
 
@@ -174,7 +174,7 @@ Center](https://predictioncenter.org/casp17/) and carry CASP's own conditions.
 }
 ```
 
-## Licence, separately from this repository
+## Licence
 
 This repository is [MIT](../LICENSE). **That licence does not cover this dataset**, and nothing here grants
 rights over it.

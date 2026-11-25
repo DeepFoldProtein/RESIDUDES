@@ -93,7 +93,7 @@ def _compute_gpde(pde, contact_probs):
 
 
 # Canonical _atom_site column order (AF3-native order kept verbatim) and the
-# noise categories we drop on normalize. Mirrors Bio-TRT/scripts/cif_normalize.py
+# noise categories we drop on normalize. Mirrors core/scripts/cif_normalize.py
 # so all four runners produce byte-equivalent model.cif.
 _AF3_ATOM_SITE_COLS = (
     'group_PDB', 'id', 'type_symbol', 'label_atom_id', 'label_alt_id',
@@ -463,9 +463,10 @@ def write_output(
   # <seed_dir>/inputs_runtime.json by run_alphafold.write_outputs; fall
   # back to lookup_inputs_meta (input.json provenance) if not present.
   try:
-    import sys as _sys
-    _sys.path.insert(0, '/data/bio-trt/scripts')
-    _sys.path.insert(0, '/gpfs/deepfold/casp/casp17/Bio-TRT/scripts')
+    import os as _os, sys as _sys
+    _sys.path.insert(0, _os.path.join(
+        _os.environ.get('RESIDUDES_ENGINE_CORE')
+        or _os.path.abspath(_os.path.join(_os.path.dirname(__file__), *[_os.pardir] * 5)), 'scripts'))
     from inputs_meta import read_runtime_inputs as _rri, lookup_inputs_meta as _lim  # type: ignore
     rt = _rri(output_dir)
     if rt is not None:

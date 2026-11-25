@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Set up Bio-TRT/.venv-jax — a parallel uv-managed environment with
+# Set up core/.venv-jax — a parallel uv-managed environment with
 # JAX >= 0.9.2 + tokamax + numpy >= 2.
 #
 # This venv lives alongside the main .venv (TRT path) — they are entirely

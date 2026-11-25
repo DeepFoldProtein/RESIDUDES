@@ -12,7 +12,6 @@ import numpy as np
 from pathlib import Path
 from typing import List, Tuple, Optional, Union
 from scipy.spatial.distance import pdist
-from tqdm import tqdm
 
 try:
     import torch

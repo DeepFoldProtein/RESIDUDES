@@ -91,11 +91,11 @@ class LayerNorm(hk.Module):
 
         # Manual path. Optionally upcast bf16/fp16 → fp32 for AF3-style precision
         # (~+2x compute time at small N). Default OFF — set
-        # ``BIO_TRT_JAX_LAYERNORM_FP32=1`` to opt in. Most Protenix / Boltz / OF3
+        # ``RESIDUDES_ENGINE_JAX_LAYERNORM_FP32=1`` to opt in. Most Protenix / Boltz / OF3
         # production checkpoints were trained + scored with native bf16 LN, so
         # bf16-internal is the closer numerics match for downstream PT inference.
         import os
-        upcast = os.environ.get("BIO_TRT_JAX_LAYERNORM_FP32", "0").lower() not in (
+        upcast = os.environ.get("RESIDUDES_ENGINE_JAX_LAYERNORM_FP32", "0").lower() not in (
             "0", "false", "no", "off", "")
         orig_dtype = x.dtype
         is_low = orig_dtype in (jnp.bfloat16, jnp.float16)

@@ -12,8 +12,7 @@ These capture fold quality beyond simple energy sums.
 """
 
 import numpy as np
-import gemmi
-from typing import Dict, List, Tuple
+from typing import Dict
 from pathlib import Path
 import sys
 

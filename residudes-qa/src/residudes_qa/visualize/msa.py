@@ -258,8 +258,8 @@ def main() -> int:
                     msa_name = a3m.stem
                     title = f"{target_dir.name} chain {chain_label} - {variant_label}/{msa_name}"
                     out_path = out_dir / f"{msa_name}.png"
-                    n, l, neff = render_per_msa([a3m], out_path, title, args.dpi)
-                    print(f"    -> {out_path.relative_to(target_dir)}  N={n} L={l} Neff={neff:.2f}")
+                    n, length, neff = render_per_msa([a3m], out_path, title, args.dpi)
+                    print(f"    -> {out_path.relative_to(target_dir)}  N={n} L={length} Neff={neff:.2f}")
                     n_rendered += 1
 
     if not args.no_summary:

@@ -5,7 +5,8 @@ Keeps original E_chi = -log Σ_r P(r|φ,ψ) × VM(χ_obs|μ_r, κ_r) formula
 but interpolates P(r|φ,ψ) linearly across 4 corner (φ,ψ) bins
 instead of snapping to single bin.
 """
-import sys, os
+import sys
+import os
 from pathlib import Path
 import numpy as np
 import gemmi
@@ -81,13 +82,15 @@ CHI_ATOMS = {
 def get_chi_angles(residue):
     """Return list of χ angles in degrees."""
     name = residue.name
-    if name not in CHI_ATOMS: return []
+    if name not in CHI_ATOMS:
+        return []
     chis = []
     for atoms in CHI_ATOMS[name]:
         pos = []
         for a in atoms:
             atom = residue.find_atom(a, '*')
-            if atom is None: return chis  # missing atom
+            if atom is None:
+                return chis  # missing atom
             pos.append(atom.pos)
         if len(pos) == 4:
             chi = np.degrees(gemmi.calculate_dihedral(*pos))
@@ -104,7 +107,8 @@ def vm_logprob(chi, mu, kappa):
 
 def get_rotamers_interpolated(lib, restype, phi, psi, method='bilinear'):
     """Get rotamer list with weighted averaging over 4 corner bins."""
-    if restype not in lib.data: return []
+    if restype not in lib.data:
+        return []
 
     # 4 corner bins (10° spacing)
     phi_floor = int(np.floor(phi / 10) * 10)
@@ -114,8 +118,10 @@ def get_rotamers_interpolated(lib, restype, phi, psi, method='bilinear'):
 
     # Wrap
     def wrap(b):
-        if b >= 180: return b - 360
-        if b < -180: return b + 360
+        if b >= 180:
+            return b - 360
+        if b < -180:
+            return b + 360
         return b
 
     corners = [(wrap(phi_floor), wrap(psi_floor)),
@@ -149,13 +155,16 @@ def get_rotamers_interpolated(lib, restype, phi, psi, method='bilinear'):
 
 def compute_residue_chi_E(lib, restype, phi, psi, chi_obs, method='bilinear'):
     """E_chi for one residue with interpolated rotamers."""
-    if not chi_obs: return 0.0
+    if not chi_obs:
+        return 0.0
     rots = get_rotamers_interpolated(lib, restype, phi, psi, method=method)
-    if not rots: return 10.0
+    if not rots:
+        return 10.0
 
     total = 0.0
     for r in rots:
-        if r['prob'] < 1e-6: continue
+        if r['prob'] < 1e-6:
+            continue
         n_chi = min(len(chi_obs), len(r['chi_mean']))
         log_prob = np.log(r['prob'] + 1e-10)
         for i in range(n_chi):
@@ -167,14 +176,16 @@ def compute_residue_chi_E(lib, restype, phi, psi, chi_obs, method='bilinear'):
             log_prob += vm_logprob(chi, mu, kappa)
         total += np.exp(log_prob)
 
-    if total < 1e-10: return 10.0
+    if total < 1e-10:
+        return 10.0
     return -np.log(total)
 
 
 _LIB = None
 def get_lib():
     global _LIB
-    if _LIB is None: _LIB = BBDepRotamerLibrary(LIB_PATH)
+    if _LIB is None:
+        _LIB = BBDepRotamerLibrary(LIB_PATH)
     return _LIB
 
 
@@ -183,9 +194,11 @@ def score_bbdep_chi_v2(pdb_path, methods=('grid', 'bilinear')):
     try:
         st = gemmi.read_structure(str(pdb_path))
     except Exception:
-        import tempfile, shutil
+        import tempfile
+        import shutil
         tmp = tempfile.NamedTemporaryFile(suffix='.pdb', delete=False)
-        shutil.copy(str(pdb_path), tmp.name); tmp.close()
+        shutil.copy(str(pdb_path), tmp.name)
+        tmp.close()
         st = gemmi.read_structure(tmp.name)
         os.unlink(tmp.name)
 
@@ -197,25 +210,32 @@ def score_bbdep_chi_v2(pdb_path, methods=('grid', 'bilinear')):
             for i in range(1, len(residues) - 1):
                 r = residues[i]
                 try:
-                    N = r.find_atom('N','*'); CA = r.find_atom('CA','*'); C = r.find_atom('C','*')
+                    N = r.find_atom('N','*')
+                    CA = r.find_atom('CA','*')
+                    C = r.find_atom('C','*')
                     C_prev = residues[i-1].find_atom('C','*')
                     N_next = residues[i+1].find_atom('N','*')
                     phi = np.degrees(gemmi.calculate_dihedral(C_prev.pos, N.pos, CA.pos, C.pos))
                     psi = np.degrees(gemmi.calculate_dihedral(N.pos, CA.pos, C.pos, N_next.pos))
                     chi_obs = get_chi_angles(r)
-                except Exception: continue
-                if not chi_obs: continue
+                except Exception:
+                    continue
+                if not chi_obs:
+                    continue
                 for m in methods:
                     totals[m] += compute_residue_chi_E(lib, r.name, phi, psi, chi_obs, m)
                 n += 1
         break
-    if n == 0: return None
+    if n == 0:
+        return None
     return {f'E_bbdep_chi_v2_{m}_per_res': totals[m] / n for m in methods}
 
 
 if __name__ == '__main__':
     import argparse
-    ap = argparse.ArgumentParser(); ap.add_argument('pdb')
+    ap = argparse.ArgumentParser()
+    ap.add_argument('pdb')
     a = ap.parse_args()
     r = score_bbdep_chi_v2(a.pdb)
-    for k, v in r.items(): print(f'  {k:<42} {v:.4f}')
+    for k, v in r.items():
+        print(f'  {k:<42} {v:.4f}')

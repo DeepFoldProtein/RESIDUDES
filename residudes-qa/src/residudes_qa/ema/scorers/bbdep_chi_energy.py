@@ -10,9 +10,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List
 from collections import defaultdict
-import gemmi
 
 # =============================================================================
 # BBDep2010 Parser
@@ -53,8 +52,6 @@ class BBDepRotamerLibrary:
         """Parse the library file"""
         print(f"Loading bbdep rotamer library from {path}...")
         
-        current_restype = None
-        rotamer_count = 0
         
         with open(path) as f:
             for line in f:
@@ -70,7 +67,7 @@ class BBDepRotamerLibrary:
                     restype = parts[0]
                     phi = int(parts[1])
                     psi = int(parts[2])
-                    count = int(parts[3])
+                    int(parts[3])
                     r1, r2, r3, r4 = int(parts[4]), int(parts[5]), int(parts[6]), int(parts[7])
                     prob = float(parts[8])
                     
@@ -207,7 +204,6 @@ class BBDepChiEnergy(nn.Module):
         
         # Compute weighted probability over all rotamers
         log_probs = []
-        log_weights = []
         
         for rot in rotamers:
             prob = rot['prob']

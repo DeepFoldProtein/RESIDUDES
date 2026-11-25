@@ -18,6 +18,10 @@ prediction made during CASP17 with the original TensorRT pipeline.
 | JAX | – | 77.4 | 95.0 | 86.1 |
 | reference | 89.5 | 76.9 | 95.2 | 86.3 |
 
+ESMFold2 is not in this table: it has one backend, so there is nothing to
+compare across backends, and the CASP17 runs that would be the reference were
+made by the same code this calls.
+
 Differences of a few tenths come from BF16 arithmetic and kernel
 nondeterminism; Boltz-2 seeds 2 and 3 agree as well. AlphaFold 3 draws a
 random 1024-row subset of this target's 6157-row MSA at every recycle, so

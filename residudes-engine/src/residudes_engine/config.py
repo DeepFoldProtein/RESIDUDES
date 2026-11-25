@@ -50,6 +50,9 @@ class Site:
     cache_dir: Path
     boltz_cache: Path | None
     af3_weights: Path | None = None        # directory holding af3.bin (default <checkpoints>/af3)
+    esm: Path | None = None                # esm checkout: ESMFold2's runner and its conda env
+    esm_python: Path | None = None         # interpreter of that env (default <esm>/.conda/bin/python)
+    esmfold2_weights: Path | None = None   # HF cache for biohub/ESMFold2 (default <checkpoints>/esmfold2_hf)
     slurm: dict[str, Any] = field(default_factory=dict)
     jax: dict[str, Any] = field(default_factory=dict)
     raw: dict[str, Any] = field(default_factory=dict)
@@ -151,6 +154,9 @@ def load_site(name_or_path: str | None = None) -> Site:
         cache_dir=P("cache_dir", "{home}/.cache/residudes-engine"),
         boltz_cache=P("boltz_cache", required=False),
         af3_weights=P("af3_weights", required=False),
+        esm=P("esm", required=False),
+        esm_python=P("esm_python", required=False),
+        esmfold2_weights=P("esmfold2_weights", required=False),
         slurm=d.get("slurm", {}) or {},
         jax=d.get("jax", {}) or {},
         raw=d,
@@ -247,6 +253,7 @@ def runtime_env(
             merged.append(p)
     env["PYTHONPATH"] = ":".join(merged)
 
+    env["RESIDUDES_ENGINE_CORE"] = str(site.core)      # how a vendored module finds core/scripts
     env["VIRTUAL_ENV"] = str(venv)
     env["PATH"] = f"{venv / 'bin'}:{env.get('PATH', '')}"
     env["LAYERNORM_TYPE"] = "torch_layernorm"
@@ -268,17 +275,11 @@ def runtime_env(
         env.setdefault("XLA_PYTHON_CLIENT_MEM_FRACTION", str(jcfg.get("mem_fraction", 0.65)))
         if jcfg.get("allocator"):
             env.setdefault("XLA_PYTHON_CLIENT_ALLOCATOR", str(jcfg["allocator"]))
-        # Site files use the RESIDUDES_ENGINE_JAX_* names; the runtime modules still read
-        # the legacy BIO_TRT_JAX_* names, so every knob is exported under both.
+        # Site files and the runtime modules both use the RESIDUDES_ENGINE_JAX_* names;
+        # a value already in the environment wins unless the site sets it per model.
         def put(k: str, v: Any, force: bool) -> None:
-            names = [k]
-            if k.startswith("RESIDUDES_ENGINE_JAX_"):
-                names.append("BIO_TRT_JAX_" + k[len("RESIDUDES_ENGINE_JAX_"):])
-            elif k.startswith("BIO_TRT_JAX_"):
-                names.append("RESIDUDES_ENGINE_JAX_" + k[len("BIO_TRT_JAX_"):])
-            for n in names:
-                if force or n not in env:
-                    env[n] = str(v)
+            if force or k not in env:
+                env[k] = str(v)
 
         for k, v in (jcfg.get("env") or {}).items():
             if isinstance(v, dict):
@@ -287,10 +288,6 @@ def runtime_env(
         if model_tag:
             for k, v in ((jcfg.get("env") or {}).get(model_tag) or {}).items():
                 put(k, v, force=True)
-        # A user-set RESIDUDES_ENGINE_JAX_* in the shell wins and is mirrored too.
-        for k in list(env):
-            if k.startswith("RESIDUDES_ENGINE_JAX_"):
-                env.setdefault("BIO_TRT_JAX_" + k[len("RESIDUDES_ENGINE_JAX_"):], env[k])
 
     if extra:
         for k, v in extra.items():

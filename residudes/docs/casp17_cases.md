@@ -13,7 +13,7 @@ per-target jumps below (0.24 to 0.82, 0.33 to 0.70) say what the intervention *c
 average. The two findings that are averages over many targets, and carry intervals, are the selection comparison
 immediately below and the slate order after it. Cases where the campaign got it wrong are kept in the same table
 on purpose — M1439, M2377v1, the generic gates, T1416's copy number — because a list of successes would be the
-easiest thing to assemble and the least worth reading.
+easiest table to assemble and the least informative.
 
 ## Selection: gates first, confidence second
 

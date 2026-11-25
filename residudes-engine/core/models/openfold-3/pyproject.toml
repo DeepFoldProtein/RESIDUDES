@@ -31,7 +31,7 @@ dependencies = [
   "ijson",
   # deepspeed removed: only used for distributed training. Its
   # import-time op-compatibility check dereferences CUDA_HOME / nvcc
-  # which isn't present on our inference nodes, and Bio-TRT runs
+  # which isn't present on our inference nodes, and residudes-engine runs
   # single-GPU inference only. openfold3.core.model.primitives.linear
   # probes `importlib.util.find_spec("deepspeed")` and skips the
   # deepspeed path cleanly when it isn't installed.

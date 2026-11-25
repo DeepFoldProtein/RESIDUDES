@@ -22,7 +22,7 @@ from __future__ import annotations
 import itertools
 import math
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -102,7 +102,8 @@ def best_chain_permutation(
         P, Q = [], []
         for slot, mc in zip(ref_slots, perm):
             for rn in (ref_chains[slot].keys() & model_chains[mc].keys()):
-                Q.append(ref_chains[slot][rn]); P.append(model_chains[mc][rn])
+                Q.append(ref_chains[slot][rn])
+                P.append(model_chains[mc][rn])
         if len(P) < 10:
             continue
         tm = kabsch_tm(np.array(P, float), np.array(Q, float), l_norm)

@@ -13,6 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: python3 docs/check_links.py
+      # the figures are written by hand, so a label that grew has nothing to catch it but this
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-urw-base35 fonts-dejavu-core
+      - run: pip install --quiet pillow==11.3.0
+      - run: python3 docs/svg_text_overlap.py $(git ls-files '*.svg')
 
   residudes:
     runs-on: ubuntu-latest
@@ -45,3 +49,20 @@ jobs:
       - run: uv run --no-project --with pytest==9.0.3 python -m pytest -q tests
         env:
           PYTHONPATH: src
+
+  # The clustering suite needs no GPU and no torch: four pinned libraries and 72 s. The scorers and
+  # their CUDA stack are still only testable on the cluster (tests/parity, run_tests.sbatch).
+  residudes-qa:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: residudes-qa
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.4.0     # no floating major tag: pin the release
+        with:
+          python-version: "3.12"
+      # the lockfile knows the dependencies; a list written out here would be a worse copy of it.
+      # torch is an opt-in extra (cu130 / cu124), so a plain sync gives the CPU set and nothing more.
+      - run: uv sync --frozen
+      - run: uv run --frozen pytest -q tests -p no:cacheprovider

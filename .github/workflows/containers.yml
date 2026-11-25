@@ -1,0 +1,241 @@
+# Build the images and publish them, so a cluster can pull instead of build.
+#
+# Each one is checked before it is pushed: the agent regenerates the H1388 example's analysis
+# inside the image, the QA image runs its own 92 tests, the MSA image runs every binary it ships.
+# An image that cannot do its job is not published.
+#
+# A hosted runner has no GPU and about 14 GB of disk, which decides the shape of this file:
+#   - the three small images build and are checked on every push
+#   - the four large ones (the GPU stacks and relax) build only on a tag or by hand, after the
+#     runner's preinstalled toolchains are deleted to make room. residudes-qa-cu130 is here and
+#     not above because the CUDA base plus torch's wheels does not fit in a runner's 14 GB
+#   - GPU images are checked here by importing; that they can see a card is checked by
+#     containers/verify.sh --gpu on a machine that has one
+#   - residudes-engine-jax is never pushed automatically: it contains the vendored AlphaFold 3
+#     code, which is CC BY-NC-SA 4.0, so publishing it is a person's decision (publish_jax)
+#   - publishing needs main or a tag. A manual run on a branch builds and checks without
+#     pushing, which is how a Dockerfile gets proven before it is published
+name: containers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "containers/**"
+      - "residudes-qa/pyproject.toml"
+      - "residudes-qa/uv.lock"
+      - ".github/workflows/containers.yml"
+    tags: ["v*"]
+  pull_request:
+    paths: ["containers/**", ".github/workflows/containers.yml"]
+  workflow_dispatch:
+    inputs:
+      large:
+        description: "also build the large images (tensorrt, jax, relax)"
+        type: boolean
+        default: false
+      publish_jax:
+        description: "publish residudes-engine-jax too (contains CC BY-NC-SA AlphaFold 3 code)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [residudes, residudes-qa, residudes-msa]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v3.11.1
+
+      - id: meta
+        uses: docker/metadata-action@v5.9.0
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.name }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,format=short
+
+      # residudes-qa's recipe needs the lockfile that pins it, which lives outside containers/
+      - name: assemble the build context
+        run: |
+          ctx="$RUNNER_TEMP/ctx"
+          mkdir -p "$ctx"
+          cp containers/${{ matrix.name }}/* "$ctx"/
+          case "${{ matrix.name }}" in
+            residudes-qa|residudes-qa-cu130)
+              cp residudes-qa/pyproject.toml residudes-qa/uv.lock "$ctx"/ ;;
+          esac
+          echo "CTX=$ctx" >> "$GITHUB_ENV"
+
+      - name: build
+        uses: docker/build-push-action@v6.18.0
+        with:
+          context: ${{ env.CTX }}
+          load: true
+          tags: ${{ matrix.name }}:ci
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+      # the image has to do its job before it gets a name anyone can pull
+      - name: check — the agent reproduces the shipped example
+        if: matrix.name == 'residudes'
+        run: |
+          mkdir -p work/targets && cp -r residudes/examples/H1388 work/targets/
+          printf '[paths]\nwork_root = "/work"\n' > work/residudes.toml
+          docker run --rm -v "$PWD/residudes:/opt/residudes" -v "$PWD/work:/work" residudes:ci \
+              --config /work/residudes.toml report H1388 -o /work/out.md
+          cmp work/out.md residudes/examples/H1388/analysis.md
+
+      - name: check — the QA suite passes inside the image
+        if: matrix.name == 'residudes-qa'
+        run: |
+          docker run --rm -v "$PWD/residudes-qa:/opt/residudes-qa" --entrypoint python residudes-qa:ci \
+              -m pytest -q /opt/residudes-qa/tests -p no:cacheprovider
+
+      - name: check — every MSA binary runs
+        if: matrix.name == 'residudes-msa'
+        run: |
+          docker run --rm --entrypoint sh residudes-msa:ci -c \
+              'for b in jackhmmer nhmmer hmmsearch hmmbuild hmmalign hmmscan kalign mmseqs; do "$b" -h >/dev/null 2>&1 || "$b" --help >/dev/null 2>&1 || exit 1; done'
+
+      - name: log in to ghcr
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        uses: docker/login-action@v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: publish
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        uses: docker/build-push-action@v6.18.0
+        with:
+          context: ${{ env.CTX }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+
+  large-image:
+    # 10 GB of TensorRT and a C++ build of AlphaFold 3: only on a tag or when asked
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.large
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [residudes-qa-cu130, residudes-ef2, residudes-engine-trt, residudes-engine-jax, residudes-relax]
+    steps:
+      - uses: actions/checkout@v7
+
+      # Deleting the preinstalled toolchains frees / from ~15 GB to ~41 GB, and that is still not
+      # enough for the TensorRT image: buildkit's content store filled during export
+      # (ResourceExhausted ... no space left on device). A runner's second volume, /mnt, has far
+      # more room, so both docker's data root and buildkit's store are moved onto it.
+      - name: make room
+        run: |
+          before=$(df -BG --output=avail / | tail -1 | tr -dc 0-9)
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" || true
+          sudo docker image prune -af || true
+          sudo systemctl stop docker
+          sudo mv /var/lib/docker /mnt/docker
+          sudo ln -s /mnt/docker /var/lib/docker
+          sudo systemctl start docker
+          sudo mkdir -p /mnt/buildkit && sudo chmod 777 /mnt/buildkit
+          after=$(df -BG --output=avail / | tail -1 | tr -dc 0-9)
+          echo "free disk: / ${before}G -> ${after}G; /mnt $(df -BG --output=avail /mnt | tail -1 | tr -dc 0-9)G"
+
+      - uses: docker/setup-buildx-action@v3.11.1
+        with:
+          buildkitd-config-inline: |
+            root = "/mnt/buildkit"
+
+      - id: meta
+        uses: docker/metadata-action@v5.9.0
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.name }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,format=short
+
+      # the engine images copy the vendored model sources, so their context is core/
+      - name: assemble the build context
+        run: |
+          case "${{ matrix.name }}" in
+            residudes-engine-*)
+              ctx="$PWD/residudes-engine/core"
+              cp containers/${{ matrix.name }}/Dockerfile containers/${{ matrix.name }}/install.sh "$ctx"/
+              ;;
+            residudes-qa-cu130)
+              ctx="$RUNNER_TEMP/ctx"; mkdir -p "$ctx"
+              cp containers/${{ matrix.name }}/* "$ctx"/
+              cp residudes-qa/pyproject.toml residudes-qa/uv.lock "$ctx"/
+              ;;
+            *) ctx="$PWD/containers/${{ matrix.name }}" ;;
+          esac
+          echo "CTX=$ctx" >> "$GITHUB_ENV"
+
+      # `load: true` would keep a second full copy of the image in docker's store beside
+      # buildkit's, which these four cannot afford. The image is built to the local store only
+      # once, and the check runs against that.
+      - name: build
+        uses: docker/build-push-action@v6.18.0
+        with:
+          context: ${{ env.CTX }}
+          load: true
+          tags: ${{ matrix.name }}:ci
+          provenance: false
+          sbom: false
+
+      - name: reclaim the build cache before running the check
+        run: |
+          docker buildx prune -af >/dev/null 2>&1 || true
+          echo "free: / $(df -BG --output=avail / | tail -1 | tr -dc 0-9)G  /mnt $(df -BG --output=avail /mnt | tail -1 | tr -dc 0-9)G"
+
+      # no card on a hosted runner, so these check that the stack imports and reports itself
+      - name: check — the runtime imports
+        run: |
+          case "${{ matrix.name }}" in
+            residudes-qa-cu130)
+              docker run --rm --entrypoint python residudes-qa-cu130:ci -c \
+                'import torch; print("torch", torch.__version__, "built for cuda", torch.version.cuda)' ;;
+            residudes-ef2)
+              docker run --rm --entrypoint /opt/venv/bin/python residudes-ef2:ci -c \
+                'import torch; from transformers.models.esmfold2.modeling_esmfold2 import ESMFold2Model; print("torch", torch.__version__, "+ ESMFold2Model")' ;;
+            residudes-engine-trt)
+              docker run --rm --entrypoint python residudes-engine-trt:ci -c \
+                'import torch, tensorrt; print("torch", torch.__version__, "tensorrt", tensorrt.__version__)' ;;
+            residudes-engine-jax)
+              docker run --rm --entrypoint /opt/venv/bin/python residudes-engine-jax:ci -c \
+                'import jax, alphafold3; from alphafold3.cpp import cif_dict; print("jax", jax.__version__, "+ compiled af3")' ;;
+            residudes-relax)
+              docker run --rm --entrypoint sh residudes-relax:ci -c \
+                'gmx --version | grep -m1 "GROMACS version" && for t in tleap antechamber parmchk2 reduce; do command -v $t >/dev/null || exit 1; done' ;;
+          esac
+
+      - name: log in to ghcr
+        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && (matrix.name != 'residudes-engine-jax' || inputs.publish_jax)
+        uses: docker/login-action@v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: publish
+        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && (matrix.name != 'residudes-engine-jax' || inputs.publish_jax)
+        uses: docker/build-push-action@v6.18.0
+        with:
+          context: ${{ env.CTX }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

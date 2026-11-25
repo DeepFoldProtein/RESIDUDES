@@ -37,7 +37,7 @@ from pathlib import Path
 logger = logging.getLogger("openfold3-jax")
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-_BIO_TRT_ROOT = os.path.dirname(_SCRIPT_DIR)
+_CORE_ROOT = os.path.dirname(_SCRIPT_DIR)
 
 # ── Pre-parse JAX-only flags (so OF3's parser doesn't see them) ───────────
 _pre = argparse.ArgumentParser(add_help=False)
@@ -66,9 +66,9 @@ jax.config.update("jax_persistent_cache_min_compile_time_secs", 1.0)
 jax.config.update("jax_persistent_cache_min_entry_size_bytes", 0)
 
 # ── Import paths (must match openfold3/inference.py) ──────────────────────
-sys.path.insert(0, _BIO_TRT_ROOT)                        # residudes_engine_jax
-sys.path.insert(0, str(Path(_BIO_TRT_ROOT) / "thirdparty"))
-sys.path.insert(0, _BIO_TRT_ROOT)                        # openfold3.compat
+sys.path.insert(0, _CORE_ROOT)                        # residudes_engine_jax
+sys.path.insert(0, str(Path(_CORE_ROOT) / "thirdparty"))
+sys.path.insert(0, _CORE_ROOT)                        # openfold3.compat
 
 
 def _inject_jax(lightning_module, ckpt_path: str) -> None:

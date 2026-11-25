@@ -46,8 +46,8 @@ n_custom = txt.count("custom_call_target")
 ma = compiled.memory_analysis()
 temp_gb = getattr(ma, "temp_size_in_bytes", 0) / 1e9
 print(f"variant={ns.variant} blocks={ns.blocks} N={N} in_dtype={ns.in_dtype} "
-      f"env: FOLD_MASK={os.environ.get('BIO_TRT_JAX_FOLD_MASK','1')} SCAN={os.environ.get('BIO_TRT_JAX_PAIRFORMER_SCAN','?')} "
-      f"TOKAMAX={os.environ.get('BIO_TRT_JAX_TOKAMAX','?')} CUEQ={os.environ.get('BIO_TRT_JAX_CUEQ','?')}", flush=True)
+      f"env: FOLD_MASK={os.environ.get('RESIDUDES_ENGINE_JAX_FOLD_MASK','1')} SCAN={os.environ.get('RESIDUDES_ENGINE_JAX_PAIRFORMER_SCAN','?')} "
+      f"TOKAMAX={os.environ.get('RESIDUDES_ENGINE_JAX_TOKAMAX','?')} CUEQ={os.environ.get('RESIDUDES_ENGINE_JAX_CUEQ','?')}", flush=True)
 print(f"  cuDNN fused-attention custom calls in HLO: {n_fmha}   (all custom calls: {n_custom})", flush=True)
 print(f"  XLA temp buffers (program peak scratch): {temp_gb:.2f} GB", flush=True)
 # largest fp32 arrays mentioned in the HLO, as a hint of what is materialised

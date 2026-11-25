@@ -737,8 +737,8 @@ def install_template_chunking() -> None:
 
     Numerically faithful: same ops, same float32 accumulation, only the T loop
     is reordered (float add is non-associative but the delta is ~1e-6, far
-    below model noise). No-op via BIO_TRT_BT2_TEMPLATE_CHUNK=0."""
-    if os.environ.get("BIO_TRT_BT2_TEMPLATE_CHUNK", "1") != "1":
+    below model noise). No-op via RESIDUDES_ENGINE_BT2_TEMPLATE_CHUNK=0."""
+    if os.environ.get("RESIDUDES_ENGINE_BT2_TEMPLATE_CHUNK", "1") != "1":
         return
     try:
         import torch as _torch
@@ -819,7 +819,7 @@ def install_template_chunking() -> None:
 
     _Tmpl.forward = _chunked_forward
     logger.info("[bt2_jax] TemplateV2Module.forward → per-template chunked "
-                "(peak O(T·N²)→O(N²); set BIO_TRT_BT2_TEMPLATE_CHUNK=0 to disable)")
+                "(peak O(T·N²)→O(N²); set RESIDUDES_ENGINE_BT2_TEMPLATE_CHUNK=0 to disable)")
 
 
 # ── torch.compile of Boltz-2 submodules (BT2_TORCH_COMPILE) ───────────────

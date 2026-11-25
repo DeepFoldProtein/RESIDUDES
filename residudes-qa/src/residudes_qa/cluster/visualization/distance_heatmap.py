@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib.colors import LinearSegmentedColormap
-from typing import Optional, Union, List, Tuple
+from typing import Optional, Union, Tuple
 from pathlib import Path
 
 
@@ -330,8 +330,8 @@ def plot_inter_cluster_heatmap(
 
     ax.set_xticks(range(n_clusters))
     ax.set_yticks(range(n_clusters))
-    ax.set_xticklabels([f'C{l}' for l in unique_labels])
-    ax.set_yticklabels([f'C{l}' for l in unique_labels])
+    ax.set_xticklabels([f'C{lab}' for lab in unique_labels])
+    ax.set_yticklabels([f'C{lab}' for lab in unique_labels])
 
     ax.set_xlabel('Cluster', fontsize=11)
     ax.set_ylabel('Cluster', fontsize=11)

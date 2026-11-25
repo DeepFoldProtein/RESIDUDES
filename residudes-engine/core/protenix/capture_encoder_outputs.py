@@ -3,13 +3,13 @@
 import argparse, logging, os, pickle, sys
 logger = logging.getLogger("cap-enc")
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-_BIO_TRT_ROOT = os.path.dirname(_SCRIPT_DIR)
-_PROTENIX_ROOT = os.path.join(_BIO_TRT_ROOT, "models/protenix")
-sys.path.insert(0, _BIO_TRT_ROOT); sys.path.insert(0, _PROTENIX_ROOT)
+_CORE_ROOT = os.path.dirname(_SCRIPT_DIR)
+_PROTENIX_ROOT = os.path.join(_CORE_ROOT, "models/protenix")
+sys.path.insert(0, _CORE_ROOT); sys.path.insert(0, _PROTENIX_ROOT)
 os.chdir(_PROTENIX_ROOT)
 
 import importlib.util
-_fi = importlib.util.spec_from_file_location("biotrt_fast_init", os.path.join(_SCRIPT_DIR, "_fast_init.py"))
+_fi = importlib.util.spec_from_file_location("residudes_fast_init", os.path.join(_SCRIPT_DIR, "_fast_init.py"))
 _fim = importlib.util.module_from_spec(_fi); _fi.loader.exec_module(_fim); _fim.patch_protenix_trunc_normal()
 
 import torch

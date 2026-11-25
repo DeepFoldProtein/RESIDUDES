@@ -26,7 +26,6 @@ Usage (explicit):
 
 import os
 import sys
-import json
 from pathlib import Path
 
 
@@ -50,14 +49,12 @@ def _find_proteinmpnn_dir() -> str:
         '  - bash MassiveClustering_tool/proteinmpnn/setup_weights.sh\n'
         '  - or set EMA_PROTEINMPNN_DIR to your existing install.'
     )
-import copy
-import tempfile
-import warnings
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
-from dataclasses import dataclass, field
+import copy  # noqa: E402  (after the sys.path / availability block above)
+import warnings  # noqa: E402  (after the sys.path / availability block above)
+from typing import List, Optional, Union  # noqa: E402  (after the sys.path / availability block above)
+from dataclasses import dataclass, field  # noqa: E402  (after the sys.path / availability block above)
 
-import numpy as np
+import numpy as np  # noqa: E402  (after the sys.path / availability block above)
 
 try:
     import torch

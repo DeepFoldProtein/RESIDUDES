@@ -39,15 +39,15 @@ date_file = "/gpfs/database/foldseek/pdb.version"
 date_regex = "(\\d{6})\\s+PDB_DATE"
 date_format = "%y%m%d"
 max_age_days = 180
-fix = "promote playground/delibae_analysis/foldseek_pdb2026 to /gpfs/database/foldseek (CASP17 missed homologs on the 2024 DB)"
+fix = "point the shared foldseek DB at a 2026 rebuild (CASP17 missed homologs on the 2024 DB)"
 
 [[component]]
 name = "foldseek PDB 2026 (newer copy)"
 kind = "database"
 used_for = "same as above, newer"
-any_of = ["/gpfs/deepfold/casp/casp17/playground/delibae_analysis/foldseek_pdb2026"]
+any_of = ["{foldseek_pdb_2026}"]      # [databases] foldseek_pdb_2026 in residudes.toml
 max_age_days = 0
-fix = "rebuild with `foldseek databases PDB` on a compute node"
+fix = "rebuild with `foldseek databases PDB` on a compute node, then set [databases] foldseek_pdb_2026"
 
 [[component]]
 name = "ColabFold databases"

@@ -1,0 +1,36 @@
+Bootstrap: docker
+From: ghcr.io/astral-sh/uv:0.11.7
+Stage: uv
+
+# ---------------------------------------------------------------------------------------------
+Bootstrap: docker
+From: python:3.12-slim
+Stage: final
+
+%files from uv
+    /uv /usr/local/bin/uv
+
+%files
+    ../../residudes-qa/pyproject.toml /opt/qa/pyproject.toml
+    ../../residudes-qa/uv.lock /opt/qa/uv.lock
+    install.sh /opt/qa-install.sh
+
+%post
+    sh /opt/qa-install.sh
+    rm /opt/qa-install.sh
+
+%environment
+    export PATH=/opt/venv/bin:$PATH
+    export PYTHONPATH=/opt/residudes-qa/src
+
+%runscript
+    exec /opt/venv/bin/python -m residudes_qa "$@"
+
+%help
+    residudes-qa without CUDA: clustering, interface features, plots, and the 92-test suite.
+
+        apptainer run -B /path/to/repo/residudes-qa:/opt/residudes-qa qa.sif doctor
+        apptainer exec -B /path/to/repo/residudes-qa:/opt/residudes-qa qa.sif \
+            python -m pytest -q /opt/residudes-qa/tests
+
+    The GPU scorers need residudes-qa-cu130; see containers/README.md.

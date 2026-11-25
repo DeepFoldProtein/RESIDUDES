@@ -47,12 +47,20 @@ class FakeSite:
             e.mkdir(parents=True)
             (e / "rank0.engine").touch()
             (e / "config.json").write_text(json.dumps({"pretrained_config": {"max_seq_len": 1024}}))
+        # ESMFold2's runner and its own conda env live in an esm checkout beside the site.
+        esm = root / "esm"
+        (esm / "inferences" / "esmfold2").mkdir(parents=True)
+        (esm / "inferences" / "esmfold2" / "run_inference.py").touch()
+        (esm / ".conda" / "bin").mkdir(parents=True)
+        (esm / ".conda" / "bin" / "python").touch()
+        (esm / ".conda" / "lib" / "python3.12" / "site-packages").mkdir(parents=True)
         core = ROOT / "core"
         (root / "site.toml").write_text(
             "[site]\n"
             'name = "fake"\nscheduler = "slurm"\n'
             f'core = "{core}"\nvenv = "{root / "venv"}"\nvenv_jax = "{root / "venv"}"\n'
             f'checkpoints = "{root / "ckpt"}"\nengines = "{root / "engines"}"\ncache_dir = "{root / "cache"}"\n'
+            f'esm = "{esm}"\n'
             '[slurm]\npartition = "p"\n'
             '[jax]\nvenv = { pt2 = "venv_jax" }\n[jax.env]\nRESIDUDES_ENGINE_JAX_CUEQ = "0"\n'
         )
@@ -85,7 +93,7 @@ class PlanTests(unittest.TestCase):
                 with self.subTest(model=tag, backend=backend):
                     req = self.fs.request(tag, backend, seed=3)
                     plan = for_family(spec.family).plan(req)
-                    self.assertTrue(plan.cmd[0].endswith("venv/bin/python"))
+                    self.assertTrue(plan.cmd[0].endswith("bin/python"))
                     self.assertTrue(Path(plan.cmd[1]).is_file(), f"runner script missing: {plan.cmd[1]}")
                     staged = json.loads(plan.staged_input.read_text())
                     self.assertEqual(staged["modelSeeds"], [3])
@@ -95,14 +103,16 @@ class PlanTests(unittest.TestCase):
                         self.assertIn(spec.engines["rtx4090"], joined)
                     else:
                         self.assertNotIn("engines", joined)
-                    if backend == "torch" and spec.family != "alphafold3":
+                    if backend == "torch" and spec.family not in ("alphafold3", "esmfold2"):
                         self.assertTrue("--no_trt" in plan.cmd or "--no-trt" in plan.cmd)
                     if backend == "jax":
                         if spec.family != "alphafold3":
                             self.assertIn("--jax_dtype", plan.cmd)
                         self.assertIn("XLA_PYTHON_CLIENT_PREALLOCATE", plan.env)
-                    self.assertIn("tensorrt_libs", plan.env["LD_LIBRARY_PATH"])
+                    if spec.family != "esmfold2":                       # ef2 never loads the TensorRT plugin
+                        self.assertIn("tensorrt_libs", plan.env["LD_LIBRARY_PATH"])
                     self.assertEqual(plan.env["LAYERNORM_TYPE"], "torch_layernorm")
+                    self.assertEqual(plan.env["RESIDUDES_ENGINE_CORE"], str(self.fs.site.core))   # how a vendored module finds core/scripts
                     self.assertNotIn(str(ROOT / "src"), plan.env["PYTHONPATH"].split(":"))
                     for p in plan.cleanup:
                         if p.is_dir():
@@ -166,6 +176,66 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(_resolve_backend("auto", self.fs.site, spec, self.fs.gpu)[0], "trt")   # engines present → TensorRT
         with self.assertRaises(SystemExit):
             _resolve_backend("nope", self.fs.site, spec, self.fs.gpu)
+
+    def test_esmfold2_specifics(self) -> None:
+        from residudes_engine.cli import _resolve_backend
+        from residudes_engine.config import SiteError
+
+        ef2 = for_family("esmfold2").plan(self.fs.request("ef2", "torch", seed=4, diffusion_samples=2))
+        self.assertTrue(ef2.cmd[1].endswith("inferences/esmfold2/run_inference.py"))
+        self.assertEqual(ef2.cmd[ef2.cmd.index("--seeds") + 1], "4")
+        self.assertEqual(ef2.cmd[ef2.cmd.index("--layout") + 1], "flat")      # <out> is itself the seed dir
+        self.assertEqual(ef2.cmd[ef2.cmd.index("--diffusion-samples") + 1], "2")
+        self.assertNotIn("--num-loops", ef2.cmd)                              # ESMFold2's own default (3) stands
+        self.assertTrue(ef2.env["HF_HOME"].endswith("ckpt/esmfold2_hf"))
+        self.assertNotIn("LD_PRELOAD", ef2.env)         # no TensorRT plugin: the site's libstdc++ stays out of the way
+        self.assertEqual(json.loads(ef2.staged_input.read_text())["modelSeeds"], [4])
+        from_input = for_family("esmfold2").plan(self.fs.request("ef2", "torch"))
+        self.assertEqual(from_input.cmd[from_input.cmd.index("--seeds") + 1], "7")      # the input's own seed
+        loops = for_family("esmfold2").plan(self.fs.request("ef2", "torch", num_recycles=6))
+        self.assertEqual(loops.cmd[loops.cmd.index("--num-loops") + 1], "6")
+
+        spec = registry.get_model("ef2")
+        self.assertEqual(_resolve_backend("auto", self.fs.site, spec, self.fs.gpu), ("torch", "ef2 runs on torch"))
+        with self.assertRaises(SystemExit):                                   # there is no engine to ask for
+            _resolve_backend("trt", self.fs.site, spec, self.fs.gpu)
+        with self.assertRaises(SiteError):
+            for_family("esmfold2").plan(self.fs.request("ef2", "jax"))
+
+    def test_esmfold2_refuses_templates_before_the_job_starts(self) -> None:
+        from residudes_engine.config import SiteError
+        templated = dict(AF3_INPUT)
+        templated["sequences"] = [{"protein": {"id": "A", "sequence": "MKVLAAGIV",
+                                               "templates": [{"mmcif": "data_x"}]}}]
+        req = self.fs.request("ef2", "torch")
+        req.input = self.fs.root / "templated.json"
+        req.input.write_text(json.dumps(templated))
+        with self.assertRaises(SiteError) as ctx:
+            for_family("esmfold2").plan(req)
+        self.assertIn("no template embedder", str(ctx.exception))
+        self.assertIn("chain(s) A", str(ctx.exception))
+
+    def test_esmfold2_without_an_esm_checkout_says_what_to_do(self) -> None:
+        from residudes_engine.config import SiteError
+        req = self.fs.request("ef2", "torch")
+        object.__setattr__(req.site, "esm", None)
+        try:
+            with self.assertRaises(SiteError) as ctx:
+                for_family("esmfold2").plan(req)
+        finally:
+            object.__setattr__(req.site, "esm", self.fs.root / "esm")
+        self.assertIn("[site].esm", str(ctx.exception))
+        self.assertIn("setup_env.sh", str(ctx.exception))
+
+    def test_esmfold2_post_flattens_a_nested_run_and_drops_the_input_copy(self) -> None:
+        req = self.fs.request("ef2", "torch")
+        (req.out / "seed_4" / "sample_0").mkdir(parents=True, exist_ok=True)
+        (req.out / "seed_4" / "sample_0" / "model.cif").write_text("x")
+        (req.out / "input.json").write_text("{}")
+        moved = for_family("esmfold2").post(req, None)
+        self.assertTrue((req.out / "sample_0" / "model.cif").is_file())
+        self.assertEqual([p.name for p in moved], [req.out.name])
+        self.assertFalse((req.out / "input.json").exists())
 
     def test_trt_without_gpu_is_a_clear_error(self) -> None:
         req = self.fs.request("pt2", "trt")

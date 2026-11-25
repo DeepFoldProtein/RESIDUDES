@@ -107,7 +107,7 @@ def generate_report(
         print("  [2b/5] Generating K selection diagnostic...")
         try:
             from residudes_qa.cluster.visualization.comprehensive import create_k_diagnostic_figure
-            selected_k = k_scores.get('optimal_k', n_clusters)
+            k_scores.get('optimal_k', n_clusters)
             fig_k = create_k_diagnostic_figure(
                 k_scores, target_name=target_name, metric_name=metric_type
             )
@@ -250,7 +250,7 @@ def _generate_text_report(
     """Generate text report."""
     lines = [
         "=" * 60,
-        f"  MassiveClustering Analysis Report",
+        "  MassiveClustering Analysis Report",
         "=" * 60,
         "",
         f"Target: {target_name}",

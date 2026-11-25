@@ -54,7 +54,7 @@ def report(cfg: Config) -> dict:
     paths = [cfg.work_root, cfg.targets_root, str(RESIDUDES_DIR), "/gpfs/deepfold", "/store/deepfold"]
     r = resources.detect(paths)
     return {"resources": r, "recommendations": resources.recommendations(r, cfg.work_root),
-            "catalog": catalog.check_all(),
+            "catalog": catalog.check_all(paths=cfg.extra.get("databases") or {}),
             "components": [_component(cfg.residudes_engine, "residudes-engine"), _component(cfg.residudes_qa, "residudes-qa")]}
 
 
@@ -80,7 +80,7 @@ def _print_report(rep: dict) -> None:
         print(f"   -> {rec}")
     print("\n== 2. databases, weights, tools (catalog.toml)")
     for c in rep["catalog"]:
-        mark = {"ok": "ok   ", "stale": "STALE", "missing": "MISS "}[c["status"]]
+        mark = {"ok": "ok   ", "stale": "STALE", "missing": "MISS ", "unconfigured": "UNSET"}[c["status"]]
         print(f"   [{mark}] {c['name']:32s} {c['date'] or '':10s}  {c['note']}")
         if c["fix"]:
             print(f"           fix: {c['fix']}")

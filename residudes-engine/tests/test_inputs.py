@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -129,3 +131,80 @@ class Cli(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Af3DataPipeline(unittest.TestCase):
+    """`residudes-engine msa --source af3`: AlphaFold 3's own jackhmmer/hmmsearch pipeline."""
+
+    def _chains(self):
+        return [msa.Chain("A", "alpha", "MKTAYIAK"), msa.Chain("B", "beta", "GGGSGGGS")]
+
+    def _fake_run(self, out, payload, rc=0, stderr=""):
+        """Stand in for the pipeline: write the data JSON it would write, remember the command."""
+        seen = {}
+
+        def run(cmd, capture_output=True, text=True, timeout=None, env=None):
+            seen["cmd"] = cmd
+            work = Path([c for c in cmd if str(c).startswith("--output_dir=")][0].split("=", 1)[1])
+            (work / "query").mkdir(parents=True, exist_ok=True)
+            (work / "query" / "query_data.json").write_text(json.dumps(payload))
+            return subprocess.CompletedProcess(cmd, rc, "out", stderr)
+        return run, seen
+
+    def test_the_data_json_becomes_unpaired_and_paired_msas(self) -> None:
+        payload = {"sequences": [
+            {"protein": {"id": "A", "sequence": "MKTAYIAK", "unpairedMsa": ">q\nMKTAYIAK\n>h\nMKTAYIAR\n",
+                         "pairedMsa": ">p\nMKTAYIAK\n", "templates": [{"mmcif": "data_x"}]}},
+            {"protein": {"id": "B", "sequence": "GGGSGGGS", "unpairedMsa": ">q\nGGGSGGGS\n", "templates": []}},
+        ]}
+        with tempfile.TemporaryDirectory() as t:
+            out = Path(t)
+            run, seen = self._fake_run(out, payload)
+            with mock.patch.object(msa.subprocess, "run", run), mock.patch.object(msa.shutil, "which", lambda b: f"/u/{b}"):
+                res = msa.af3_search(self._chains(), out_dir=out, script="/af3/run_alphafold.py",
+                                     python="/venv/bin/python", db_dir="/db/af3", max_template_date="2026-01-01",
+                                     log=lambda *a: None)
+        self.assertEqual(res.source, "af3")
+        self.assertEqual(msa.a3m_depth(res.unpaired["A"]), 2)
+        self.assertIn("B", res.unpaired)
+        self.assertEqual(res.paired["A"], ">p\nMKTAYIAK\n")
+        self.assertEqual(res.meta["templates"], {"A": 1, "B": 0})
+        cmd = " ".join(str(c) for c in seen["cmd"])
+        self.assertIn("--run_data_pipeline=true", cmd)
+        self.assertIn("--run_inference=false", cmd)          # no GPU, no weights: this is the search only
+        self.assertIn("--db_dir=/db/af3", cmd)
+        self.assertIn("--max_template_date=2026-01-01", cmd)
+        for b in msa.AF3_BINARIES:
+            self.assertIn(f"--{b}_binary_path=/u/{b}", cmd)
+
+    def test_a_container_runs_the_same_pipeline(self) -> None:
+        payload = {"sequences": [{"protein": {"id": "A", "sequence": "MKTAYIAK", "unpairedMsa": ">q\nMKTAYIAK\n"}}]}
+        with tempfile.TemporaryDirectory() as t:
+            out = Path(t)
+            run, seen = self._fake_run(out, payload)
+            with mock.patch.object(msa.subprocess, "run", run), mock.patch.object(msa.shutil, "which", lambda b: f"/u/{b}"):
+                msa.af3_search([msa.Chain("A", "alpha", "MKTAYIAK")], out_dir=out, script=None, python=None,
+                               db_dir="/db/af3", container="/img/af3.sif", log=lambda *a: None)
+        cmd = [str(c) for c in seen["cmd"]]
+        self.assertEqual(cmd[:2], ["apptainer", "exec"])
+        self.assertIn("/img/af3.sif", cmd)
+        self.assertIn(msa.AF3_IN_CONTAINER, cmd)
+
+    def test_a_missing_hmmer_binary_says_which(self) -> None:
+        with tempfile.TemporaryDirectory() as t, mock.patch.object(msa.shutil, "which", lambda b: None):
+            with self.assertRaises(msa.MsaError) as ctx:
+                msa.af3_search(self._chains(), out_dir=Path(t), script="/s.py", python="/p",
+                               db_dir="/db", log=lambda *a: None)
+        self.assertIn("jackhmmer not found", str(ctx.exception))
+
+    def test_a_failed_pipeline_keeps_its_log_and_says_so(self) -> None:
+        with tempfile.TemporaryDirectory() as t:
+            out = Path(t)
+            run, _ = self._fake_run(out, {}, rc=1, stderr="jackhmmer: no such database")
+            with mock.patch.object(msa.subprocess, "run", run), mock.patch.object(msa.shutil, "which", lambda b: f"/u/{b}"):
+                with self.assertRaises(msa.MsaError) as ctx:
+                    msa.af3_search(self._chains(), out_dir=out, script="/s.py", python="/p", db_dir="/db",
+                                   log=lambda *a: None)
+            self.assertIn("no such database", str(ctx.exception))
+            self.assertTrue((out / "msa" / "_af3" / "pipeline.log").is_file()
+                            or (out / "_af3" / "pipeline.log").is_file())

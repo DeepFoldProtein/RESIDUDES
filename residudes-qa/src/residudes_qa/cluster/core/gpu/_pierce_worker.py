@@ -40,8 +40,8 @@ if _VENV_CDR_BIN not in os.environ.get("PATH", ""):
 # without monkey-patching, so do it here so children inherit.
 
 # Patch tcr3d_pierce so the renumber subprocess uses .venv-cdr python.
-import tcr3d_pierce
-import subprocess as _sp
+import tcr3d_pierce  # noqa: E402  (after the sys.path / availability block above)
+import subprocess as _sp  # noqa: E402  (after the sys.path / availability block above)
 
 _VENV_PY = os.path.join(_VENV_CDR_BIN, "python")
 _orig_run = _sp.run

@@ -14,9 +14,8 @@ file and is non-destructive (output to ``-o``).
 """
 from __future__ import annotations
 
-import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # Bring XGBDimer in via PYTHONPATH (set by wrapper) or analysis/ sibling layout.
 # residudes-qa: XGBDimerScorer is residudes_qa.interface in the same package; no sys.path needed.
@@ -146,7 +145,6 @@ def _load_parquet(path: str):
 
 
 def cmd_filter_clash(args) -> None:
-    import pandas as pd
     from residudes_qa.interface.filter.clash import run_clash_audit_parallel
 
     df = _load_parquet(args.master)
@@ -213,7 +211,6 @@ def cmd_filter_strict(args) -> None:
 
 
 def cmd_filter_regional_rmsd(args) -> None:
-    import pandas as pd
     from residudes_qa.interface.filter.template_rmsd import run_regional_rmsd_parallel
 
     df = _load_parquet(args.master)
@@ -315,7 +312,6 @@ def _resolve_id_col(df, preferred, candidates, side):
 
 
 def cmd_join_xgb(args) -> None:
-    import pandas as pd
 
     cl = _load_parquet(args.clustering)
     xb = _load_parquet(args.xgb_scores)

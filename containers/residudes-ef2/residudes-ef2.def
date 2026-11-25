@@ -1,0 +1,24 @@
+Bootstrap: docker
+From: nvidia/cuda:13.0.3-runtime-ubuntu24.04
+
+%files
+    install.sh /opt/ef2-install.sh
+
+%post
+    sh /opt/ef2-install.sh
+    rm /opt/ef2-install.sh
+
+%environment
+    export HF_HOME=${HF_HOME:-/hf}
+
+%runscript
+    exec /opt/venv/bin/python "$@"
+
+%help
+    ESMFold2. The runner scripts and the weights are bind-mounted:
+
+        apptainer run --nv -B /path/to/esm:/opt/esm -B /data/esmfold2_hf:/hf \
+            residudes-ef2.sif /opt/esm/inferences/esmfold2/run_inference.py input.json out/ \
+            --seeds 1 --layout flat
+
+    residudes-engine calls this through [site] esm / esm_python; see docs/esmfold2.md.

@@ -13,7 +13,6 @@ a predicted complex returning:
 Expected pattern: E_H3 should dominate in well-docked poses;
 E_FW should be small (framework shouldn't touch Ag).
 """
-import sys, json
 from pathlib import Path
 import numpy as np
 import torch
@@ -34,13 +33,18 @@ CDR_NAMES = ['H3', 'H12', 'L', 'FW']
 def cdr_type(chain_role, res_num):
     """Fallback (no ANARCI) — assumes PDB already uses Chothia numbering."""
     if chain_role == 'H':
-        h3 = CDR_H['H3']; h1 = CDR_H['H1']; h2 = CDR_H['H2']
-        if h3[0] <= res_num <= h3[1]: return 0
-        if h1[0] <= res_num <= h1[1] or h2[0] <= res_num <= h2[1]: return 1
+        h3 = CDR_H['H3']
+        h1 = CDR_H['H1']
+        h2 = CDR_H['H2']
+        if h3[0] <= res_num <= h3[1]:
+            return 0
+        if h1[0] <= res_num <= h1[1] or h2[0] <= res_num <= h2[1]:
+            return 1
         return 3
     if chain_role == 'L':
         for lo, hi in CDR_L.values():
-            if lo <= res_num <= hi: return 2
+            if lo <= res_num <= hi:
+                return 2
         return 3
     return None
 
@@ -60,15 +64,20 @@ def anarci_cdr_types_for_chain(seq, chain_type):
     types = [3] * n
     try:
         res, det, _ = run_anarci([("chain", seq)], scheme='chothia', output=False)
-        if res[0] is None: return types
+        if res[0] is None:
+            return types
         numbered, seq_start, _ = res[0][0]
         idx = seq_start
         for (cn, ins), aa in numbered:
-            if aa == '-': continue
-            if idx >= n: break
+            if aa == '-':
+                continue
+            if idx >= n:
+                break
             if chain_type == 'H':
-                if 95 <= cn <= 102: types[idx] = 0
-                elif (26 <= cn <= 32) or (52 <= cn <= 56): types[idx] = 1
+                if 95 <= cn <= 102:
+                    types[idx] = 0
+                elif (26 <= cn <= 32) or (52 <= cn <= 56):
+                    types[idx] = 1
             elif chain_type == 'L':
                 if (24 <= cn <= 34) or (50 <= cn <= 56) or (89 <= cn <= 97):
                     types[idx] = 2
@@ -121,20 +130,23 @@ class AADARSScorer:
         ab_atoms = []  # (cb_pos, cdr_type)
         ag_atoms = []
         # Collect per-chain residue sequences for ANARCI
-        chain_residues = {}  # chain_id -> list of (res, aa_1letter)
         for model in st:
             for chain in model:
                 is_h = chain.name == heavy
                 is_l = light and chain.name == light
                 is_ag = chain.name in ag_chains
-                if not (is_h or is_l or is_ag): continue
+                if not (is_h or is_l or is_ag):
+                    continue
                 residues = []
                 for res in chain:
-                    if res.name not in AA2I: continue
+                    if res.name not in AA2I:
+                        continue
                     cb = get_cb(res)
-                    if cb is None: continue
+                    if cb is None:
+                        continue
                     residues.append(res)
-                if not residues: continue
+                if not residues:
+                    continue
                 if is_ag:
                     for res in residues:
                         cb = get_cb(res)
@@ -148,7 +160,8 @@ class AADARSScorer:
                     else:
                         types_list = [cdr_type(role, r.seqid.num) for r in residues]
                     for res, t in zip(residues, types_list):
-                        if t is None: t = 3
+                        if t is None:
+                            t = 3
                         cb = get_cb(res)
                         pos = np.array([cb.pos.x, cb.pos.y, cb.pos.z])
                         ab_atoms.append((pos, t))

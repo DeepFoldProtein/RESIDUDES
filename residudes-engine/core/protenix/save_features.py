@@ -72,7 +72,7 @@ os.chdir(_PROTENIX_ROOT)
 # Monkey-patch Protenix's scipy-based weight init (~267s) with torch native (~2s).
 import importlib.util as _importlib_util
 _fi_spec = _importlib_util.spec_from_file_location(
-    "biotrt_fast_init", os.path.join(_SCRIPT_DIR, "_fast_init.py"))
+    "residudes_fast_init", os.path.join(_SCRIPT_DIR, "_fast_init.py"))
 _fi_mod = _importlib_util.module_from_spec(_fi_spec)
 _fi_spec.loader.exec_module(_fi_mod)
 _fi_mod.patch_protenix_trunc_normal()
@@ -104,7 +104,7 @@ def _resolve_json_paths(json_path):
                         changed = True
     if changed:
         tmp = tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", prefix="biotrt_savefeat_", delete=False)
+            mode="w", suffix=".json", prefix="residudes_savefeat_", delete=False)
         _json.dump(data, tmp, indent=2)
         tmp.close()
         return tmp.name

@@ -4,7 +4,11 @@ residudes-engine has two halves. `core/` is the runtime: the model code (Proteni
 OpenFold 3, and Boltz-2 through its PyPI package), the TensorRT and JAX
 acceleration backends, the AF3-dialect input adapter and the unified output
 writers, plus a `pyproject.toml` + `uv.lock` that pin the whole Python
-stack. `src/residudes_engine/` is the CLI around it, and it owns four things:
+stack. ESMFold2 is the exception: its runner calls a checkout of the esm
+package (`[site] esm`), because the model's code imports `esm.*` and pins a
+python the main venv does not have — the engine supplies its input and reads
+its output, and vendors nothing ([`esmfold2.md`](esmfold2.md)).
+`src/residudes_engine/` is the CLI around it, and it owns four things:
 
 | concern | where | why it is separate |
 |---|---|---|
