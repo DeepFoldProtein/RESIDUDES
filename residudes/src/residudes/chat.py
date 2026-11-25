@@ -20,8 +20,9 @@ from residudes.config import Config
 from residudes.dossier import Dossier
 from residudes.setup import available_harness, bold, dim, green, yellow
 
-PREFIX = "residudes-"
+SESSION = "residudes"          # one tmux session, one window per target: `tmux ls` stays one line
 LEAVE = "ctrl-b d"             # tmux's own detach key, not one we invented
+SWITCH = "ctrl-b w"            # and its own window chooser, which is the list of targets
 
 
 def have_tmux() -> bool:
@@ -43,22 +44,24 @@ def _tmux(*args: str, capture: bool = True) -> subprocess.CompletedProcess:
 
 
 def sessions(cfg=None, prefer: str | None = None) -> list[dict]:
-    """The target conversations tmux is holding."""
+    """The target conversations: one window each, inside the single residudes session."""
     if not have_tmux():
         return []
-    r = _tmux("list-sessions", "-F", "#{session_name}\t#{session_created}\t#{session_attached}\t#{session_windows}")
+    r = _tmux("list-windows", "-t", SESSION, "-F",
+              "#{window_name}\t#{window_activity}\t#{window_active}")
     if r.returncode != 0:
-        return []                                  # no server running: no sessions, not an error
+        return []                                  # no session yet: no conversations, not an error
     out = []
     for line in r.stdout.splitlines():
-        name, created, attached, windows = (line.split("\t") + ["", "", "", ""])[:4]
-        if name.startswith(PREFIX):
-            try:                                   # tmux gives the epoch; show it as a local time
-                when = dt.datetime.fromtimestamp(int(created)).strftime("%Y-%m-%d %H:%M")
-            except ValueError:
-                when = created
-            out.append({"target": name[len(PREFIX):], "name": name, "created": when,
-                        "attached": attached not in ("", "0"), "windows": windows})
+        name, activity, active = (line.split("\t") + ["", "", ""])[:3]
+        if not name:
+            continue
+        try:                                       # tmux gives the epoch; show it as a local time
+            when = dt.datetime.fromtimestamp(int(activity)).strftime("%Y-%m-%d %H:%M")
+        except ValueError:
+            when = ""
+        out.append({"target": name, "name": name, "created": when,
+                    "attached": active not in ("", "0")})
     return out
 
 
@@ -181,35 +184,71 @@ def _banner(cfg: Config, target: str, new: bool) -> None:
     print(dim("─" * width))
 
 
+def ensure(cfg: Config, target: str, harness: str | None = None) -> bool:
+    """The target's window, opened if it is not there. One window per target: the agent that works
+    on it and the conversation a person joins are the same agent, with the same context."""
+    if not have_tmux():
+        return False
+    if any(s["target"] == target for s in sessions()):
+        return True
+    ddir = Path(cfg.targets_dir) / target
+    found = available_harness(harness)
+    if not ddir.is_dir() or not found:
+        return False
+    _cmd, _name, argv = found
+    cmdline = argv(BRIEF.format(target=target, ddir=ddir))
+    if _tmux("has-session", "-t", SESSION).returncode != 0:
+        return _tmux("new-session", "-d", "-s", SESSION, "-n", target, "-c", str(ddir),
+                     *cmdline, capture=False).returncode == 0
+    return _tmux("new-window", "-d", "-t", SESSION, "-n", target, "-c", str(ddir),
+                 *cmdline, capture=False).returncode == 0
+
+
+def _dress_session() -> None:
+    """A status line that is the target list: the window you are in, and the others to page to."""
+    for option, value in (("status-left", " #[bold]RESIDUDES#[default] "),
+                          ("status-left-length", "16"),
+                          ("status-right", f" {SWITCH} targets · {LEAVE} leave "),
+                          ("status-right-length", "40"),
+                          ("window-status-format", " #W "),
+                          ("window-status-current-format", "#[reverse] #W #[default]"),
+                          ("status-style", "bg=colour236 fg=colour250"),
+                          ("base-index", "1")):
+        _tmux("set-option", "-t", SESSION, option, value)
+
+
 def chat_cmd(cfg: Config, target: str | None, harness: str | None, prefer: str | None = None,
              stop: bool = False) -> int:
     if target is None:
         return list_cmd(cfg)
     if not have_tmux():
         return _no_tmux()
-    name = PREFIX + target
+    where = f"{SESSION}:{target}"
     ddir = Path(cfg.targets_dir) / target
     if stop:
-        ended = _tmux("kill-session", "-t", name).returncode == 0
+        ended = _tmux("kill-window", "-t", where).returncode == 0
         print(f"{target}: conversation ended" if ended else f"{target}: no conversation to end")
         return 0 if ended else 1
     if not ddir.is_dir():
         print(f"no dossier for {target} at {ddir} (create it with `residudes target add {target}`)")
         return 1
 
-    exists = any(s["name"] == name for s in sessions())
+    exists = any(s["target"] == target for s in sessions())
     _banner(cfg, target, new=not exists)
     if not exists:
         found = available_harness(harness)
         if not found:
             print("no agent CLI on PATH (claude, codex, ag, gemini); `residudes chat` needs one")
             return 1
-        _cmd, agent_name, argv = found
+        _cmd, agent_name, _argv = found
         print(f"starting {green(agent_name)} in {dim(str(ddir))}")
-        _tmux("new-session", "-d", "-s", name, "-c", str(ddir),
-              *argv(BRIEF.format(target=target, ddir=ddir)), capture=False)
+        if not ensure(cfg, target, harness):
+            print("could not open the window")
+            return 1
+    _dress_session()
+    _tmux("select-window", "-t", where)            # arrive in this target, not wherever you left
     inside = bool(os.environ.get("TMUX"))          # switch-client inside tmux, attach outside it
-    rc = _tmux("switch-client" if inside else "attach-session", "-t", name, capture=False).returncode
+    rc = _tmux("switch-client" if inside else "attach-session", "-t", where, capture=False).returncode
     try:                                           # on leaving, say where the target stands now
         d = Dossier.load(cfg.targets_dir, target)
         c = d.open_checkpoint()
@@ -218,3 +257,23 @@ def chat_cmd(cfg: Config, target: str | None, harness: str | None, prefer: str |
     except Exception:
         pass
     return rc
+
+
+def send(target: str, text: str) -> bool:
+    """Put a line into the target's conversation, as if a person had typed it.
+
+    This is how the daemon works through a session that is already open: one agent, one context,
+    and whoever is attached watches it happen. What it cannot do is report back - tmux has no
+    completion signal and no exit code - so the caller decides the step is over by watching the
+    dossier, which is where the work is recorded anyway.
+    """
+    if not have_tmux():
+        return False
+    where = f"{SESSION}:{target}"
+    if not any(s["target"] == target for s in sessions()):
+        return False
+    # -l sends the text literally, then Enter separately, so a prompt with punctuation or a
+    # leading slash is not read as a tmux key name
+    if _tmux("send-keys", "-t", where, "-l", text).returncode != 0:
+        return False
+    return _tmux("send-keys", "-t", where, "Enter").returncode == 0

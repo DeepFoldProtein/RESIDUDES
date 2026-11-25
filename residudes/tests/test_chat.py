@@ -9,10 +9,11 @@ def test_the_brief_names_the_target_and_the_dossier():
     assert "never approve" in text                      # the rules hold inside a conversation too
 
 
-def test_sessions_are_named_for_their_target():
-    """`residudes chat T` and `tmux attach -t residudes-T` have to mean the same session."""
-    assert chat.PREFIX + "T1234" == "residudes-T1234"
-    assert chat.LEAVE == "ctrl-b d"                     # tmux's own key, not one we invented
+def test_one_session_holds_a_window_per_target():
+    """`residudes chat T` and `tmux select-window -t residudes:T` have to mean the same window."""
+    assert chat.SESSION == "residudes"                  # one session, so `tmux ls` stays one line
+    assert chat.LEAVE == "ctrl-b d"                     # tmux's own keys, not ones we invented
+    assert chat.SWITCH == "ctrl-b w"
 
 
 def test_ago_reads_a_session_timestamp():
@@ -20,9 +21,15 @@ def test_ago_reads_a_session_timestamp():
     assert chat._ago("2020-01-01 00:00").endswith("d")
 
 
-def test_the_daemon_steps_aside_for_a_conversation(monkeypatch):
-    """Two agents on one dossier duplicate work; a chat session means a person is on it."""
+def test_the_daemon_works_through_the_target_window(monkeypatch):
+    """One agent per target: the daemon asks that window rather than starting a second agent."""
     from residudes import daemon
-    monkeypatch.setattr(chat, "sessions", lambda *a, **k: [{"target": "T1234"}])
-    assert daemon._in_conversation("T1234") is True
-    assert daemon._in_conversation("T9999") is False
+    from residudes.dossier import Dossier
+    sent = {}
+    monkeypatch.setattr(chat, "ensure", lambda cfg, t, h=None: True)
+    monkeypatch.setattr(chat, "send", lambda t, text: sent.update(target=t, text=text) or True)
+    d = Dossier(target="T1234", stage="NEW")
+    out = daemon._step_through_conversation(None, d)
+    assert sent["target"] == "T1234"
+    assert "T1234" in sent["text"] and "dossier" in sent["text"]
+    assert "asked" in out

@@ -57,16 +57,28 @@ def api_error(res: dict) -> str | None:
     return None                     # error_max_turns / error_max_budget_usd are limits, not errors: an idle step
 
 
-def _in_conversation(target: str) -> bool:
-    """Is someone talking to this target right now? A chat session is a person at the keyboard,
-    and two agents working one dossier at once duplicate work and argue with each other."""
+def _step_through_conversation(cfg: Config, d: Dossier) -> str:
+    """Ask the target's session to take the next step.
+
+    One session per target: the agent that works on it and the conversation a person joins are
+    the same agent, so there is one context and a person can watch or interrupt. The cost is the
+    accounting - a step asked this way has no turn count, no price and no structured result,
+    because tmux reports none of that. The dossier is the record, which is where the work belongs.
+    """
     from residudes import chat
-    return any(s["target"] == target for s in chat.sessions())
+    if not chat.ensure(cfg, d.target):
+        return f"{d.target}: no session and none could be started (tmux? an agent CLI?)"
+    goal, skill = d.next_step()
+    ask = (f"Next step for {d.target} ({d.stage}): {goal}"
+           + (f" Follow the {skill} skill." if skill else "")
+           + " Record what you find and decide in the dossier as usual.")
+    if chat.send(d.target, ask):
+        return f"{d.target}: asked the open conversation to take the next step"
+    return f"{d.target}: in conversation, but it did not accept the step"
 
 
-def _round_target(cfg: Config, d: Dossier, budget: float | None, max_idle_steps: int, idle: dict) -> str:
-    if _in_conversation(d.target):
-        return f"{d.target}: in conversation (`residudes chat {d.target}`)"
+def _round_target(cfg: Config, d: Dossier, budget: float | None, max_idle_steps: int, idle: dict,
+                  ) -> str:
     if d.stage in HUMAN_STAGES or d.stage == "RETROSPECTIVE":
         return f"{d.target}: {d.stage} (waiting for a person)"
     c = d.open_checkpoint()
@@ -97,7 +109,8 @@ def _round_target(cfg: Config, d: Dossier, budget: float | None, max_idle_steps:
     return line
 
 
-def round_once(cfg: Config, targets: list[str] | None, budget: float | None, max_idle_steps: int, idle: dict) -> list[str]:
+def round_once(cfg: Config, targets: list[str] | None, budget: float | None, max_idle_steps: int,
+               idle: dict) -> list[str]:
     report = []
     for d in list_targets(cfg.targets_dir):
         if targets and d.target not in targets:

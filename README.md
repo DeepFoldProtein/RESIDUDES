@@ -46,10 +46,12 @@ bin/residudes chat T1234                     # talk to the agent about it; the s
 bin/residudes agent step T1234               # or one step per stage; `daemon --target T1234` keeps going
 ```
 
-`chat` is a conversation in that target's dossier directory: ask what it is doing, steer it,
-leave with `ctrl-b d`, come back to the same thread. The session is a tmux session, so a closed
-terminal does not end it and it can be re-attached over ssh from another machine. `residudes` on
-its own lists every target, which ones are in conversation, and which are waiting on a person.
+`chat` opens that target's conversation: ask what it is doing, steer it, leave with `ctrl-b d`,
+come back to the same thread. There is **one agent per target** — the daemon works through the
+same conversation rather than starting a second agent beside it, so there is one context and you
+can watch or interrupt. All of them live as windows of a single tmux session, so `tmux ls` stays
+one line, you arrive in the target you asked for, and `ctrl-b w` pages to the others. `residudes`
+on its own lists every target, which are in conversation and which are waiting on a person.
 
 [`docs/setup.md`](docs/setup.md) documents the installation in full: container images or virtual
 environments, the MSA databases, and the three components that must be obtained by the user
