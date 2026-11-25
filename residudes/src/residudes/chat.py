@@ -136,6 +136,28 @@ Dossier directory (your working directory): {ddir}
 """
 
 
+def _banner(cfg: Config, target: str, new: bool) -> None:
+    """What someone needs on arriving: which target, where it stands, what it is waiting for."""
+    try:
+        d = Dossier.load(cfg.targets_dir, target)
+    except Exception:
+        return
+    nxt, skill = d.next_step()
+    c = d.open_checkpoint()
+    width = 78
+    print(dim("─" * width))
+    head = f" {bold(target)}  {d.stage}"
+    if c:
+        head += "  " + (yellow(f"{c['id']} waiting on you") if not d.agents_turn(c)
+                        else dim(f"{c['id']} with the agent"))
+    print(head + ("   " + dim("new conversation") if new else ""))
+    if nxt:
+        first = nxt.split(":")[0] if ":" in nxt[:60] else nxt
+        print(dim(f" next: {first[:width - 8]}"))
+    print(dim(f" {LEAVE} leaves it running · `residudes chat {target} --stop` ends it"))
+    print(dim("─" * width))
+
+
 def chat_cmd(cfg: Config, target: str | None, harness: str | None, prefer: str | None = None,
              stop: bool = False) -> int:
     if target is None:
@@ -154,6 +176,7 @@ def chat_cmd(cfg: Config, target: str | None, harness: str | None, prefer: str |
         return 1
 
     if mux == "builtin":
+        _banner(cfg, target, new=session.running(ddir) is None)
         if session.running(ddir) is None:
             found = available_harness(harness)
             if not found:
@@ -164,7 +187,14 @@ def chat_cmd(cfg: Config, target: str | None, harness: str | None, prefer: str |
             session.start(ddir, argv(BRIEF.format(target=target, ddir=ddir)))
         else:
             print(f"joining {bold(target)}  {dim('(' + LEAVE + ' leaves it running)')}")
-        return session.attach(ddir)
+        rc = session.attach(ddir)
+        try:                                   # on leaving, say where the target stands now
+            d = Dossier.load(cfg.targets_dir, target)
+            print(f"{bold(target)} is at {d.stage}" +
+                  (f", {yellow(d.open_checkpoint()['id'] + ' open')}" if d.open_checkpoint() else ""))
+        except Exception:
+            pass
+        return rc
 
     name = PREFIX + target
     exists = any(s["name"] == name for s in sessions(cfg, prefer))
