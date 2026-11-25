@@ -71,18 +71,23 @@ apptainer build residudes.sif containers/residudes/residudes.def
 docker build -t residudes:dev containers/residudes
 ```
 
-A push to `main` builds the three small images and, where the repository variable
-`PUBLISH_IMAGES` is set, publishes them to `ghcr.io/deepfoldprotein/<name>:latest` together with
-`:sha-…` tags and `:vX.Y` for release tags, via
-[`.github/workflows/containers.yml`](../.github/workflows/containers.yml). **Every image is verified
-before publication**: the agent image regenerates the analysis of the H1388 example, the QA image
-runs its 92 tests, and the MSA image executes each binary it provides. An image that fails its
-check is not published.
+**Publishing happens from a machine with Docker**, not from CI
+([`publish.sh`](publish.sh)). A GHCR package belongs to the repository that first pushed it, and
+giving another repository's Actions write access to that package is a web-UI setting with no REST
+or GraphQL equivalent — both are 404 while a plain read of the same package returns 200. Package
+visibility is the same: public is a one-time setting someone makes by hand, whatever the
+repository's visibility.
 
-A GHCR package belongs to the repository that first pushed it; a second repository's
-`GITHUB_TOKEN` is refused with `denied: permission_denied: read_package`. Publishing is therefore
-opt-in per repository, and package visibility is a separate, one-time setting: a package stays
-private until someone makes it public, whatever the repository's visibility.
+```sh
+echo "$GHCR_TOKEN" | docker login ghcr.io -u <you> --password-stdin   # PAT with write:packages
+containers/publish.sh                              # the five large images
+containers/publish.sh residudes residudes-qa residudes-msa           # and the small ones
+```
+
+A push to `main` **builds and checks** every image it can through
+[`.github/workflows/containers.yml`](../.github/workflows/containers.yml): the agent image
+regenerates the analysis of the H1388 example, the QA image runs its 92 tests, and the MSA image
+executes each binary it provides. CI's job is to catch a broken image, not to ship it.
 
 ### The five large images
 
@@ -90,13 +95,6 @@ They are not built in CI. A hosted runner has too little disk: with the preinsta
 deleted (41 GB free), with docker and buildkit moved to `/mnt` (41 GB), and with the wheel cache
 disabled, the TensorRT and JAX builds still ended in `no space left on device`. They are built and
 pushed with Docker from a machine that has the disk:
-
-```sh
-echo "$GHCR_TOKEN" | docker login ghcr.io -u <you> --password-stdin   # PAT with write:packages
-containers/publish-large.sh                        # all five: build, check, push
-containers/publish-large.sh residudes-ef2          # or one
-PUSH=0 containers/publish-large.sh                 # build and check only
-```
 
 The script applies each recipe's build context (the engine images copy the vendored model
 sources; the GPU QA image needs `residudes-qa`'s lockfile), runs the same check CI runs for the

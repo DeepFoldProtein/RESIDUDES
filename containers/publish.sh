@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# Build and push the five large images with Docker, from a machine that has a daemon and the disk.
+# Build and push the images with Docker, from a machine that has a daemon and the disk.
 #
-# GitHub's hosted runners cannot do this: with the preinstalled toolchains deleted (41 GB free),
-# with docker and buildkit moved to /mnt (41 GB), and with the wheel cache disabled, the TensorRT
-# and JAX builds still ended in "no space left on device". CI therefore builds the three small
-# images and this script publishes the rest.
+# This is how RESIDUDES publishes. A GHCR package belongs to the repository that first pushed it,
+# and granting a second repository's Actions write access to a package is a web-UI setting with no
+# REST or GraphQL equivalent, so the published images come from here rather than from CI. The two
+# engine images could not be built on a hosted runner anyway: with the preinstalled toolchains
+# deleted (41 GB free), docker and buildkit moved to /mnt, and the wheel cache disabled, they
+# still ended in "no space left on device". CI builds and checks every image; this publishes.
 #
-#   containers/publish-large.sh                       # build and push all five
-#   containers/publish-large.sh residudes-ef2         # or name the ones you want
-#   containers/publish-large.sh residudes residudes-qa residudes-msa   # the small ones too,
-#       which is how a package built by CI is re-pushed with its own labels
-#   PUSH=0 containers/publish-large.sh                # build only, push nothing
+#   containers/publish.sh                             # build and push the five large images
+#   containers/publish.sh residudes-ef2               # or name the ones you want
+#   containers/publish.sh residudes residudes-qa residudes-msa        # the small ones too
+#   PUSH=0 containers/publish.sh                      # build only, push nothing
 #
 # Requirements: docker, ~60 GB free on the docker data root, and a login that may write packages:
 #   echo "$GHCR_TOKEN" | docker login ghcr.io -u <you> --password-stdin

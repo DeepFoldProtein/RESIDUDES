@@ -1,4 +1,7 @@
-# Build the images and publish them, so a cluster can pull instead of build.
+# Build the images and check them. Publishing is done from a machine with Docker and a
+# registry login - see containers/publish.sh - because a GHCR package belongs to the repository
+# that first pushed it and granting another repository's Actions write access to it is a web-UI
+# setting with no API. CI's job is to catch a broken image, not to ship it.
 #
 # Each one is checked before it is pushed: the agent regenerates the H1388 example's analysis
 # inside the image, the QA image runs its own 92 tests, the MSA image runs every binary it ships.
@@ -8,15 +11,9 @@
 # not fit: with the preinstalled toolchains deleted (41 GB free), with docker and buildkit moved
 # to /mnt (41 GB), and with the wheel cache disabled, the TensorRT and JAX builds still ended in
 # "no space left on device". They are built and pushed from a machine with the disk for them -
-# see containers/publish-large.sh - and containers/verify.sh builds them locally when they are
+# see containers/publish.sh - and containers/verify.sh builds them locally when they are
 # not in the registry.
-#   - publishing needs main or a tag AND the repository variable PUBLISH_IMAGES=true. A package
-#     on GHCR belongs to whichever repository first pushed it, and a second repository's
-#     GITHUB_TOKEN is refused with "denied: permission_denied: read_package", which is what
-#     happened when this file was mirrored to the public repository. So a repository publishes
-#     only when someone has set that variable there and given it access to the packages;
-#     everywhere else the images are built and checked, which is the part CI is for anyway.
-#     A manual run on a branch likewise builds and checks without pushing
+
 name: containers
 
 on:
@@ -34,7 +31,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   image:
@@ -99,22 +95,3 @@ jobs:
         run: |
           docker run --rm --entrypoint sh residudes-msa:ci -c \
               'for b in jackhmmer nhmmer hmmsearch hmmbuild hmmalign hmmscan kalign mmseqs; do "$b" -h >/dev/null 2>&1 || "$b" --help >/dev/null 2>&1 || exit 1; done'
-
-      - name: log in to ghcr
-        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && vars.PUBLISH_IMAGES == 'true'
-        uses: docker/login-action@v3.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: publish
-        if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && vars.PUBLISH_IMAGES == 'true'
-        uses: docker/build-push-action@v6.18.0
-        with:
-          context: ${{ env.CTX }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          # no labels: input - each Dockerfile carries its own OCI labels, and metadata-action's
-          # repository-level ones would overwrite them, leaving every package page identical
-          cache-from: type=gha,scope=${{ matrix.name }}
