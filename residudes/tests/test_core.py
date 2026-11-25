@@ -563,3 +563,33 @@ def test_the_first_stage_names_the_command_that_finds_public_structures():
     from residudes.dossier import PLAYBOOK
     goal, skill = PLAYBOOK["NEW"]
     assert "residudes structures T" in goal and "--hhsearch" in goal and skill == "residudes-intake"
+
+
+def test_render_mt_distrusts_a_script_that_had_a_failed_command(tmp_path, monkeypatch):
+    """The published image taught this one. molterm 0.50 exits 0 where 0.53 exits 1, and either way it carries
+    on after a failure: with USalign absent every superposition failed and the overlay was written from
+    unaligned models, which looks exactly like an aligned one. So the renderer reads the output, not $?."""
+    import subprocess as sp
+
+    from residudes import slides
+    from residudes.dossier import Dossier
+
+    ddir = tmp_path / "targets" / "T1"
+    (ddir / "report" / "figs").mkdir(parents=True)
+    d = Dossier(target="T1")
+    scene = ddir / "report" / "scenes.mt"
+    scene.write_text("load /x/a.cif\n")
+
+    class Cfg:
+        extra = {"tools": {"molterm": "/usr/bin/true"}}
+        targets_dir = tmp_path / "targets"
+
+    out = ("scenes.mt:18: `align b to a automap`: Align failed: USalign failed (exit 32512): "
+           "sh: 1: USalign: not found\nSaved 1800x1350 to figs/a_chains.png\nScript: 1 command(s) failed\n")
+    monkeypatch.setattr(sp, "run", lambda *a, **k: sp.CompletedProcess(a[0], 0, out, ""))   # exit 0, as 0.50 does
+    said = slides.render_mt(Cfg(), d, scene, "t")
+    assert "not trustworthy" in said and "USalign" in said
+    assert any("failed" in x["note"] for x in d.log)
+
+    monkeypatch.setattr(sp, "run", lambda *a, **k: sp.CompletedProcess(a[0], 0, "Saved 1800x1350 to figs/a.png\n", ""))
+    assert "not trustworthy" not in slides.render_mt(Cfg(), d, scene, "t")
