@@ -1,0 +1,9 @@
+▶ MSA search: colabfold
+  colabfold: 2 unique sequence(s), mode env
+  colabfold A: 0 homologues, 0 template hits
+  colabfold B: 10377 homologues, 300 template hits
+  colabfold: pairing (pairgreedy)
+  colabfold: paired rows 1
+  A H1388,subunit1|: 0 sequences + paired
+  B H1388,subunit2|: 10377 sequences + paired + template hits
+✓ MSAs in <WORK>/targets/H1388/msas/colabfold/msa

@@ -1,41 +1,52 @@
-# Findings of the four agent steps
+# What the steps found and decided
 
-The run itself is described in [`../README.md`](../README.md); this document records its results.
+Each line below is in [`dossier.json`](../dossier.json) with its evidence; this page puts them in order.
 
-## Results of the four steps
+## Analysis (NEW → HYPOTHESES, three steps, $1.57)
 
-[`analysis.md`](../analysis.md) is the document; these are the parts worth looking at.
+- **Both chains identified**: 14-3-3 gamma (UniProt P61981, chain B, 233 residues) and an 11-residue peptide of
+  LARP1 (Q6PKG0) around S548 (chain A). The construct mapping and identity are evidence `construct`, `identity`.
+- **23 public structures of the receptor at 100% identity**, the best peptide-bound ones 6S9K (1.60 Å, a caspase-2
+  phosphopeptide), 6ZBT (1.80 Å) and 6A5S (2.10 Å); none of the complex. Evidence `public_structures`, `templates`.
+- **The literature put the phosphate first.** 14-3-3 binds phosphoserine motifs; the peptide carries the mode-I
+  motif with S548 at the phosphoacceptor position. Evidence `literature`, `motif`, `binding_site`, `chemistry`.
+- **MSA depth**: 10,377 sequences for the receptor, the peptide alone. Evidence `msa_depth`.
 
-**It identified both chains from the sequence alone.** Chain B is 14-3-3 gamma (YWHAG, UniProt P61981, *Homo
-sapiens*), Pfam PF00244, InterPro IPR000308 and three more, "all-alpha, 9 antiparallel helices; amphipathic groove
-binds phospho-Ser/Thr peptides; obligate dimer via helices A–D". Target residues 2–232 are native 3–233, so
-`input = native − 1`, and the acidic C-terminal tail 234–247 is not in the construct. Chain A is LARP1 542–552
-(Q6PKG0).
+## The plan and its checkpoint (PLAN_REVIEW)
 
-**The chemistry the FASTA does not carry is the whole target.** The peptide has two serines, S5 and S7 (LARP1 S546
-and S548). 14-3-3 binds only phosphorylated motifs, so one of them should be phosphoserine. The agent chose S7:
-it sits in a pS-X-P motif (S7-L8-P9) and UniProt annotates S548 as a phosphosite, while S5 is S-A-S with no proline
-at +2 and no annotation. That became `residudes decide --type variant`: SEP at chain A position 7, run beside the
-unmodified input.
+Seven decisions, D1–D7. The plan: phosphoserine at peptide position 7 (D1, D5), A1B1 as declared (D2), the
+ColabFold MSA on the receptor and none on the peptide (D3), 6S9K pinned as the first template (D4), and 60 GPU
+jobs - AF3 with the phosphate for 20 seeds, AF3 without it for 10 as a control, Protenix, Boltz-2 and OpenFold3
+with it for 10 each, five samples per seed (D6).
 
-**MSA depth per chain, measured not assumed.** B is deep (uniprot 16,347, uniref90 6,536, mgnify 4,332, bfd 1,607;
-no thin regions). A is an 11-residue peptide whose a3m files are query-only, so it runs single-sequence — which is
-expected, not a failure, and the note says so.
+[`checkpoints/C1_plan.md`](../checkpoints/C1_plan.md) asked four questions. The agent answered each, and named two
+inconsistencies in its own decisions before resolving: one decision put the phosphate on AF3 only while a later
+one put it on Protenix as well, and the gate text required all three pocket residues while its answer passed
+models at two of three. It resolved C1 with `proceed`.
 
-**The structures that exist.** 23 exact-sequence human 14-3-3 gamma entries in the PDB, the best peptide-bound one
-6A5S at 2.10 Å — rendered in [`report/figs/template_6a5s.jpg`](../report/figs/template_6a5s.jpg).
+## The pool (RUNNING → POOL_READY)
 
-## Figures generated from the dossier
+All 60 jobs finished; 300 models imported. The pocket gate (phosphate contact with B49, B56, B131, B132)
+passed 235 of 300: AF3 106 of 150 (the unmodified control carries no phosphate to place), Protenix 50 of 50,
+Boltz-2 46 of 50, OpenFold3 33 of 50.
 
-One per kind of evidence, drawn from the dossier by `residudes report` with no job to run, and each its own page in
-[`report/report.pdf`](../report/report.pdf). They are separate on purpose: the species, the site and the motif are
-different questions, and one picture of all three answers none of them.
+## The results checkpoint (RESULTS_REVIEW)
 
-| figure | what it says here |
-|---|---|
-| [`chain_map.svg`](../report/figs/chain_map.svg) | both chains to scale with the residues a gate would use: S7 on the peptide, K49/R56/R131/Y132 in the phosphate pocket |
-| [`literature.svg`](../report/figs/literature.svg) | the five claims, their sources, and which priors and decisions share an identifier with each — plus the line that nothing read settles the 14-3-3:LARP1 complex itself |
-| [`sites.svg`](../report/figs/sites.svg) | the pocket and the motif residue by residue in their own sequences, with the ✱ where the phosphoserine goes, and the native numbering quoted beside the input numbering |
-| [`motif.svg`](../report/figs/motif.svg) | the arithmetic behind the target's whole decision: pS-X-P fits the peptide **only** at S7, S-A-S fits at S5, and the paper's full mode-I consensus (R-S-X-pS-X-P) fits nowhere — the peptide is a partial match |
-| [`msa_coverage.svg`](../report/figs/msa_coverage.svg) | coverage per residue for every MSA |
-| [`clusters.svg`](../report/figs/clusters.svg) | the existing pool four ways — clusters, predicted DockQ, confidence, and where each predictor sits (below) |
+The standard review raised one trigger, and the agent added three of its own:
+
+- **missing models** - a false positive, and said so: the check expected every runner in a variant to match AF3's
+  20 seeds, while the plan gave the others 10.
+- **a peptide-register split.** Superposed on the receptor, AF3 with the phosphate and Protenix put the peptide
+  core (A4–A10) in one register, a median 0.56 Å from the top AF3 model; Boltz-2 sat 3.05 Å away, OpenFold3 6.8 Å,
+  unmodified AF3 7.9 Å. Whole-complex TM clustering does not separate them (evidence `peptide_agreement`).
+- **the phosphate was carried by AF3 alone.** Protenix, Boltz-2 and OpenFold3 wrote SER at A7 in their models; the
+  modification did not reach those runners. Protenix still found AF3's register without it.
+
+C2 was resolved with `proceed`.
+
+## The slate
+
+[`slate_v2.md`](../slate_v2.md): three AF3 models with the phosphate (seeds 20, 9, 7) and two Protenix models
+(seeds 5, 10), all in the agreed register, all passing every gate. The agent read it against the gates once more,
+approved it under the mandate, and packaged it: [`package/checks.md`](../package/checks.md) - both chains, lengths
+right, no breaks, no non-proline cis peptides, no clashing pairs, nothing to relax.

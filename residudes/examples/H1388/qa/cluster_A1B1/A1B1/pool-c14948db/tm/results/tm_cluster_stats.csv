@@ -1,0 +1,13 @@
+cluster,size,medoid_idx,medoid_name,intra_dist_mean
+0,21,235,of3_seed8_sample0__sep.pdb,0.023604084
+1,30,47,af3_seed10_sample2__base.pdb,0.021196742
+2,34,67,af3_seed4_sample2__sep.pdb,0.0066411947
+3,10,193,bt2_seed9_sample3__sep.pdb,0.008621162
+4,27,27,af3_seed6_sample2__base.pdb,0.01597872
+5,16,155,bt2_seed2_sample0__sep.pdb,0.012620456
+6,39,260,pt2_seed3_sample0__sep.pdb,0.00962033
+7,31,229,of3_seed6_sample4__sep.pdb,0.018721335
+8,13,73,af3_seed5_sample3__sep.pdb,0.007239778
+9,20,254,pt2_seed1_sample4__sep.pdb,0.01009339
+10,46,144,af3_seed19_sample4__sep.pdb,0.008600293
+11,13,183,bt2_seed7_sample3__sep.pdb,0.0096990345

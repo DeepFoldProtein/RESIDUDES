@@ -1,0 +1,84 @@
+{
+ "sto": "A1B1",
+ "n": 300,
+ "n_pass": 235,
+ "errors": 0,
+ "gates": {
+  "complete": 300,
+  "phospho_pocket": 235,
+  "motif": 300,
+  "assembled": 300
+ },
+ "per_runner": {
+  "af3": {
+   "n": 150,
+   "pass": 106,
+   "best_pass": [
+    "A1B1__sep__af3__s20_0",
+    0.963
+   ]
+  },
+  "bt2": {
+   "n": 50,
+   "pass": 46,
+   "best_pass": [
+    "A1B1__sep__bt2__s10_0",
+    0.923
+   ]
+  },
+  "of3": {
+   "n": 50,
+   "pass": 33,
+   "best_pass": [
+    "A1B1__sep__of3__s7_0",
+    0.657
+   ]
+  },
+  "pt2": {
+   "n": 50,
+   "pass": 50,
+   "best_pass": [
+    "A1B1__sep__pt2__s5_0",
+    0.93
+   ]
+  }
+ },
+ "census": {},
+ "incomplete": {},
+ "expected_chains": 2,
+ "spec": {
+  "gates": [
+   {
+    "name": "phospho_pocket",
+    "type": "contact",
+    "site": "B:49,56,131,132",
+    "partner": "A:7",
+    "within": 6.0,
+    "min_residues": 2,
+    "note": "pS7 (LARP1 S548) in the 14-3-3 gamma phosphate pocket (native K50,R57,R132,Y133 = input B49,56,131,132); evidence binding_site, chemistry, peptide_analog (6S9K SEP139 phosphate contacts all four). Partner narrowed from all of chain A to A:7 so the gate checks the register, not just peptide presence; >=2 of 4 so unmodified (no phosphate) models are not failed on side-chain length alone"
+   },
+   {
+    "name": "motif",
+    "type": "contact",
+    "site": "A:7,8,9",
+    "partner": "B",
+    "within": 6.0,
+    "min_residues": 3,
+    "note": "pS-L-P core (A7-A9) all in contact with 14-3-3 gamma; evidence motif (Yaffe 1997, PMID 9428519), peptide_analog (6S9K pS-L-P bound in groove)"
+   },
+   {
+    "name": "assembled",
+    "type": "interface",
+    "a": "A",
+    "b": "B",
+    "min_contacts": 10,
+    "note": "sanity: peptide docked on the receptor"
+   }
+  ],
+  "notes": [
+   "no clash gate (relaxation at packaging)",
+   "no rmsd gate: no public LARP1:14-3-3 complex; 6S9K is a different peptide, used as the register prior in phospho_pocket"
+  ]
+ },
+ "csv": "<WORK>/targets/H1388/gates/pocket_A1B1.csv"
+}

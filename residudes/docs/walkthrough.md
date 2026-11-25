@@ -135,35 +135,36 @@ bin/residudes export T1234 examples/T1234      # dossier, analysis.md, checkpoin
 ## The worked example
 
 [`examples/H1388`](../examples/H1388/) is one live run on a CASP17 target: human 14-3-3 gamma with an 11-residue LARP1
-peptide, declared A1B1, from `target add` to the question a person has to answer. Four agent steps, $2.15, NEW →
-IDENTIFIED → HYPOTHESES → PLAN_REVIEW, where it stops, because only a person resolves a checkpoint.
+peptide, declared A1B1, from `target add` to a packaged slate under the default mandate. Fifteen agent steps, $6.81,
+45 minutes, with nobody answering anything: NEW → IDENTIFIED → HYPOTHESES → PLAN_REVIEW → INPUTS_READY → RUNNING →
+POOL_READY → RESULTS_REVIEW → SLATE_PROPOSED → APPROVED → PACKAGED, where it stops, because submission is a person's.
 
-It identifies both chains (14-3-3 gamma P61981, Pfam PF00244; LARP1 542–552, Q6PKG0), picks the phosphosite out of
-two serines by motif and annotation, measures MSA depth per chain, finds 23 exact-sequence PDB entries, writes a
-375-line target note and asks four questions — then measures the reference structure and corrects its own gate
-recommendation in the open checkpoint thread.
+It identifies both chains (14-3-3 gamma P61981; LARP1 542–552, Q6PKG0), picks the phosphosite out of two serines by
+motif and annotation, finds 23 exact-sequence PDB entries and pins the best peptide-bound one (6S9K, 1.60 Å), builds
+two inputs - the peptide with phosphoserine and without - and submits 60 prediction jobs across AF3, Protenix,
+Boltz-2 and OpenFold3. Both checkpoints are written as for a person and answered by the agent: at C1 it closes two
+inconsistencies in its own plan; at C2 it finds that the predictors split on the peptide's register and that only
+AF3 carried the phosphate, and builds the slate from the two that agree.
 
 The folder holds:
 - the analysis (`analysis.md`: priors, decisions and the prior → decision map);
 - the write-up the agent wrote from the dossier, with the figures it cites (`notes/target.md`, `report/figs/`);
-- the plan checkpoint, open, with that correction posted in its thread (`checkpoints/C1_plan.md`);
+- both checkpoints with the agent's answers (`checkpoints/`), the slate (`slate_v2.md`) and the packaged files
+  with their geometry checks (`package/`);
 - every step's transcript and cost (`agent_logs/`, `steps.json`).
 
-It does not ship the campaign files those rest on — the MSAs, the template mmCIFs and the pool's models run to
-gigabytes — so a note that says "counted here" over `msas/af3/uniref90.a3m` can be read and traced, but not
-recomputed from this repository alone. The write-up gives the absolute path of every file it read, so the counts are
-checkable wherever the campaign lives.
+It does not ship the 300 models or the MSAs (1.2 GB); `pool.csv` lists every model with its scores. Paths are
+written as placeholders (`<WORK>`, `<AF3_DB>`, ...), listed in
+[`docs/provenance.md`](../examples/H1388/docs/provenance.md), which also records the one fix made mid-run.
 
-The cost is the agent's own, summed from [`steps.json`](../examples/H1388/steps.json), which records the USD and turns
-of every step. It is a replay: the predictions existed, and new runs were not allowed. The team's own submission and
-every native structure were barred until RETROSPECTIVE, so what is written down is what the agent found from the
-target files and the literature. The retrospectives against the CASP17 assessment natives are kept with the
-dossiers until the natives are public.
+Against the native, released after CASP17, all five packaged models are high-quality by DockQ, model 1 at 0.870
+([`docs/retrospective.md`](../examples/H1388/docs/retrospective.md)). That page also says why this is not a blind
+result: the intake skill was written after CASP17 and quotes this target's lesson, and the agent said so itself.
 
-**The reading.** The run records five sourced claims under `literature` — the mode I and II 14-3-3 consensus motifs
-and the groove that holds them (Yaffe 1997, PMID 9428519), the conserved basic phosphate pocket carried from 14-3-3
-zeta into this construct's own numbering, UniProt's annotation of LARP1 S548 — beside a `not_known` field saying
-that no paper or structure on the 14-3-3:LARP1 complex itself was found, after 50 Europe PMC hits. That is what the
-source requirement in [docs/literature.md](literature.md) asks for; the earlier replays (T1416, T1331)
-recorded no `literature` key at all and their site priors carry no source field, which, with the H2319 case, is why
-it was written down.
+**The reading.** The run records sourced claims under `literature` - the two 14-3-3 consensus motifs and the groove
+that holds them (Yaffe 1997, PMID 9428519), the arginines that grip the phosphate in this construct's own numbering
+(UniProt P61981), UniProt's annotation of LARP1 S548, and why only S7 of the peptide fits the pS-X-P core - beside a
+`not_known` field saying that no paper on the 14-3-3:LARP1 complex itself was found, with the three Europe PMC
+queries it tried. That is what the source requirement in [docs/literature.md](literature.md) asks for; the earlier
+replays (T1416, T1331) recorded no `literature` key at all and their site priors carry no source field, which, with
+the H2319 case, is why it was written down.

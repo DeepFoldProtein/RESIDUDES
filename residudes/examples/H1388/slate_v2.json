@@ -1,0 +1,96 @@
+{
+ "sto": "A1B1",
+ "parts": [
+  {
+   "sto": "A1B1",
+   "n": 5
+  }
+ ],
+ "chosen": true,
+ "n_candidates": {
+  "A1B1": 300
+ },
+ "used_interface": {
+  "A1B1": true
+ },
+ "used_clusters": {
+  "A1B1": false
+ },
+ "models": [
+  {
+   "slot": 1,
+   "model": "A1B1__sep__af3__s20_0",
+   "sto": "A1B1",
+   "runner": "af3",
+   "variant": "sep",
+   "ranking_score": 0.963,
+   "iptm": 0.939,
+   "rs_z_runner": 1.1,
+   "xgb_pred": 0.768,
+   "cluster": null,
+   "score": 1.038,
+   "path": "<WORK>/targets/H1388/results/A1B1/sep/af3/seed_20/sample_0/model.cif",
+   "gate_fail": []
+  },
+  {
+   "slot": 2,
+   "model": "A1B1__sep__pt2__s5_0",
+   "sto": "A1B1",
+   "runner": "pt2",
+   "variant": "sep",
+   "ranking_score": 0.93,
+   "iptm": 0.92,
+   "rs_z_runner": 0.6,
+   "xgb_pred": 0.7037,
+   "cluster": null,
+   "score": 0.544,
+   "path": "<WORK>/targets/H1388/results/A1B1/sep/pt2/seed_5/sample_0/model.cif",
+   "gate_fail": []
+  },
+  {
+   "slot": 3,
+   "model": "A1B1__sep__af3__s9_0",
+   "sto": "A1B1",
+   "runner": "af3",
+   "variant": "sep",
+   "ranking_score": 0.958,
+   "iptm": 0.933,
+   "rs_z_runner": 0.85,
+   "xgb_pred": 0.7617,
+   "cluster": null,
+   "score": 0.889,
+   "path": "<WORK>/targets/H1388/results/A1B1/sep/af3/seed_9/sample_0/model.cif",
+   "gate_fail": []
+  },
+  {
+   "slot": 4,
+   "model": "A1B1__sep__pt2__s10_0",
+   "sto": "A1B1",
+   "runner": "pt2",
+   "variant": "sep",
+   "ranking_score": 0.924,
+   "iptm": 0.912,
+   "rs_z_runner": 0.3,
+   "xgb_pred": 0.6947,
+   "cluster": null,
+   "score": 0.36,
+   "path": "<WORK>/targets/H1388/results/A1B1/sep/pt2/seed_10/sample_0/model.cif",
+   "gate_fail": []
+  },
+  {
+   "slot": 5,
+   "model": "A1B1__sep__af3__s7_0",
+   "sto": "A1B1",
+   "runner": "af3",
+   "variant": "sep",
+   "ranking_score": 0.956,
+   "iptm": 0.931,
+   "rs_z_runner": 0.75,
+   "xgb_pred": 0.6996,
+   "cluster": null,
+   "score": 0.603,
+   "path": "<WORK>/targets/H1388/results/A1B1/sep/af3/seed_7/sample_0/model.cif",
+   "gate_fail": []
+  }
+ ]
+}

@@ -1,0 +1,100 @@
+{
+ "sto": "A1B1",
+ "parts": [
+  {
+   "sto": "A1B1",
+   "n": 5
+  }
+ ],
+ "n_candidates": {
+  "A1B1": 235
+ },
+ "short": 0,
+ "used_interface": {
+  "A1B1": true
+ },
+ "used_clusters": {
+  "A1B1": true
+ },
+ "cap": 2,
+ "models": [
+  {
+   "slot": 1,
+   "model": "A1B1__sep__af3__s20_0",
+   "sto": "A1B1",
+   "runner": "af3",
+   "variant": "sep",
+   "ranking_score": 0.963,
+   "iptm": 0.939,
+   "rs_z_runner": 1.1,
+   "xgb_pred": 0.768,
+   "cluster": null,
+   "score": 1.038,
+   "path": "<WORK>/targets/H1388/results/A1B1/sep/af3/seed_20/sample_0/model.cif"
+  },
+  {
+   "slot": 2,
+   "model": "A1B1__sep__bt2__s7_0",
+   "sto": "A1B1",
+   "runner": "bt2",
+   "variant": "sep",
+   "ranking_score": 0.919,
+   "iptm": 0.905,
+   "rs_z_runner": 0.35,
+   "xgb_pred": 0.7414,
+   "cluster": null,
+   "score": 0.562,
+   "path": "<WORK>/targets/H1388/results/A1B1/sep/bt2/seed_7/sample_0/model.cif"
+  },
+  {
+   "slot": 3,
+   "model": "A1B1__sep__pt2__s5_4",
+   "sto": "A1B1",
+   "runner": "pt2",
+   "variant": "sep",
+   "ranking_score": 0.928,
+   "iptm": 0.918,
+   "rs_z_runner": 0.5,
+   "xgb_pred": 0.7526,
+   "cluster": null,
+   "score": 0.679,
+   "path": "<WORK>/targets/H1388/results/A1B1/sep/pt2/seed_5/sample_4/model.cif"
+  },
+  {
+   "slot": 4,
+   "model": "A1B1__sep__of3__s3_0",
+   "sto": "A1B1",
+   "runner": "of3",
+   "variant": "sep",
+   "ranking_score": 0.653,
+   "iptm": 0.559,
+   "rs_z_runner": 1.301,
+   "xgb_pred": 0.5645,
+   "cluster": null,
+   "score": 0.366,
+   "path": "<WORK>/targets/H1388/results/A1B1/sep/of3/seed_3/sample_0/model.cif"
+  },
+  {
+   "slot": 5,
+   "model": "A1B1__sep__af3__s9_0",
+   "sto": "A1B1",
+   "runner": "af3",
+   "variant": "sep",
+   "ranking_score": 0.958,
+   "iptm": 0.933,
+   "rs_z_runner": 0.85,
+   "xgb_pred": 0.7617,
+   "cluster": null,
+   "score": 0.889,
+   "path": "<WORK>/targets/H1388/results/A1B1/sep/af3/seed_9/sample_0/model.cif"
+  }
+ ],
+ "gated": {
+  "A1B1": {
+   "gates": "pocket",
+   "site": null,
+   "pass": 235,
+   "of": 300
+  }
+ }
+}

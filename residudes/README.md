@@ -55,7 +55,7 @@ writing CASP files, and `target_notes`, a directory of per-target reading used o
 |---|---|
 | Stage-by-stage description, with the measured effect of each stage on a CASP17 target | [`docs/how-it-works.md`](docs/how-it-works.md) |
 | Worked example from the first command to the retrospective | [`docs/walkthrough.md`](docs/walkthrough.md) |
-| Complete recorded run | [`examples/H1388`](examples/H1388/): four steps, $2.15, dossier, write-up, figures and transcripts |
+| Complete recorded run | [`examples/H1388`](examples/H1388/): from `target add` to a packaged slate under full automation - 15 steps, $6.81, 45 minutes; dossier, write-up, figures and transcripts |
 | Installation and terminology | [`docs/setup-and-words.md`](docs/setup-and-words.md) |
 | Supported agent harnesses | [`docs/harnesses.md`](docs/harnesses.md) · [`docs/harness_check.md`](docs/harness_check.md) |
 | Per-target effect of model selection | [`docs/casp17_cases.md`](docs/casp17_cases.md) |

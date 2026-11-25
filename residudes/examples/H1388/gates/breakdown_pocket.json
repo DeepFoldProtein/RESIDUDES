@@ -1,0 +1,6 @@
+{"spec": "<WORK>/targets/H1388/gates/H1388_A1B1.json", "csv": "<WORK>/targets/H1388/gates/pocket_A1B1.csv", "job": 348951,
+ "pass_all": "235/300",
+ "phospho_pocket_pass": {"sep/af3": "100/100 (all 4/4 pocket residues; median min distance 2.53 A)", "sep/pt2": "50/50 (all 4/4; 4.31 A)", "sep/bt2": "46/50 (4/4 in 23; 4.13 A)", "sep/of3": "33/50 (4/4 in 15; 3.14 A)", "base/af3": "6/50 (0-1 of 4 in 44; 4.61 A)"},
+ "motif_pass": "300/300", "assembled_pass": "300/300",
+ "best_passing": {"af3": "A1B1__sep__af3__s20_0 (0.963)", "pt2": "A1B1__sep__pt2__s5_0 (0.930)", "bt2": "A1B1__sep__bt2__s10_0 (0.923)", "of3": "A1B1__sep__of3__s7_0 (0.657)"},
+ "reading": "every arm docks the peptide (motif/assembled 300/300), but only with the phosphate does af3 put residue 7 into the K49/R56/R131/Y132 pocket: the unmodified control mostly shifts the register. Supports D1/D5 (SEP lead arm); the base/af3 arm should not lead the slate."}

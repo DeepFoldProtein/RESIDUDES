@@ -1,0 +1,8 @@
+{"given": "A1B1",
+ "given_source": "organisers' declared stoichiometry (dossier stoichiometry.given)",
+ "family": "14-3-3 is a constitutive homodimer (PMID 9428519); each protomer has its own amphipathic groove that binds one phosphopeptide, so the biological unit with saturating peptide is A2B2",
+ "homolog_assemblies": "the 23 exact-sequence 14-3-3 gamma entries (residudes structures H1388, e.g. 2B05, 6A5S, 6S9K, 6ZBT) are crystal structures of the dimer or of a protomer related to its partner by crystal symmetry, with one peptide per groove; the peptide contacts a single protomer, so an A1B1 model contains the whole peptide interface",
+ "n_sweep": "not run: the copy numbers are declared (rule 5, stage-2 style override); a peptide:14-3-3 sweep beyond 1:1 and 2:2 has no biological basis",
+ "seq2symm": "not run (declared count; B is a known C2 dimer)",
+ "reading": "A1B1 is what is scored; A2B2 is the biological assembly and is kept as an auxiliary run only to check that the peptide pose in one groove is the same with the dimer partner present",
+ "source": "PMID 9428519; PMID 17085597; residudes structures H1388 (2026-11-26)"}

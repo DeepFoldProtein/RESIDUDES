@@ -41,7 +41,7 @@ def test_the_example_draws_every_figure_it_links(regenerated):
         assert f"figs/{name}.svg" in shipped, f"the analysis no longer links {name}.svg"
         assert (ddir / "report" / "figs" / f"{name}.svg").is_file(), f"{name}.svg was not drawn"
     # the pool and its clustering come from the two tables the example ships
-    assert "875 A1B1 models" in (ddir / "report" / "figs" / "clusters.svg").read_text()
+    assert "300 A1B1 models" in (ddir / "report" / "figs" / "clusters.svg").read_text()
 
 
 def test_setup_reports_the_picture_tools(monkeypatch):

@@ -1,38 +1,137 @@
 [
  {
   "step": 1,
-  "time": "2026-11-23T08:24:02+09:00",
+  "time": "2026-11-26T01:53:24+09:00",
   "stage": "NEW",
   "subtype": "success",
-  "cost_usd": 0.8867,
-  "turns": 24,
-  "log": "20261123-082033_NEW.log"
+  "cost_usd": 0.9613,
+  "turns": 22,
+  "log": "20261126-014815_NEW.log"
  },
  {
   "step": 2,
-  "time": "2026-11-23T08:25:38+09:00",
+  "time": "2026-11-26T01:54:55+09:00",
   "stage": "IDENTIFIED",
   "subtype": "success",
-  "cost_usd": 0.2899,
-  "turns": 11,
-  "log": "20261123-082445_IDENTIFIED.log"
+  "cost_usd": 0.2609,
+  "turns": 6,
+  "log": "20261126-015424_IDENTIFIED.log"
  },
  {
   "step": 3,
-  "time": "2026-11-23T08:29:33+09:00",
+  "time": "2026-11-26T01:57:10+09:00",
   "stage": "HYPOTHESES",
   "subtype": "success",
-  "cost_usd": 0.3479,
-  "turns": 12,
-  "log": "20261123-082834_HYPOTHESES.log"
+  "cost_usd": 0.3477,
+  "turns": 11,
+  "log": "20261126-015555_HYPOTHESES.log"
  },
  {
   "step": 4,
-  "time": "2026-11-23T08:32:40+09:00",
+  "time": "2026-11-26T01:59:56+09:00",
   "stage": "PLAN_REVIEW",
   "subtype": "success",
-  "cost_usd": 0.6296,
-  "turns": 24,
-  "log": "20261123-082951_PLAN_REVIEW.log"
+  "cost_usd": 0.6351,
+  "turns": 21,
+  "log": "20261126-015810_PLAN_REVIEW.log"
+ },
+ {
+  "step": 5,
+  "time": "2026-11-26T02:01:50+09:00",
+  "stage": "PLAN_REVIEW",
+  "subtype": "success",
+  "cost_usd": 0.3354,
+  "turns": 9,
+  "log": "20261126-020056_PLAN_REVIEW.log"
+ },
+ {
+  "step": 6,
+  "time": "2026-11-26T02:03:16+09:00",
+  "stage": "PLAN_REVIEW",
+  "subtype": "success",
+  "cost_usd": 0.1871,
+  "turns": 7,
+  "log": "20261126-020250_PLAN_REVIEW.log"
+ },
+ {
+  "step": 7,
+  "time": "2026-11-26T02:04:54+09:00",
+  "stage": "PLAN_REVIEW",
+  "subtype": "success",
+  "cost_usd": 0.2133,
+  "turns": 10,
+  "log": "20261126-020416_PLAN_REVIEW.log"
+ },
+ {
+  "step": 8,
+  "time": "2026-11-26T02:07:32+09:00",
+  "stage": "PLAN_REVIEW",
+  "subtype": "success",
+  "cost_usd": 0.1615,
+  "turns": 7,
+  "log": "20261126-020704_PLAN_REVIEW.log"
+ },
+ {
+  "step": 9,
+  "time": "2026-11-26T02:12:09+09:00",
+  "stage": "INPUTS_READY",
+  "subtype": "success",
+  "cost_usd": 0.5379,
+  "turns": 19,
+  "log": "20261126-020832_INPUTS_READY.log"
+ },
+ {
+  "step": 10,
+  "time": "2026-11-26T02:19:42+09:00",
+  "stage": "RUNNING",
+  "subtype": "success",
+  "cost_usd": 0.4909,
+  "turns": 19,
+  "log": "20261126-021811_RUNNING.log"
+ },
+ {
+  "step": 11,
+  "time": "2026-11-26T02:23:30+09:00",
+  "stage": "POOL_READY",
+  "subtype": "success",
+  "cost_usd": 0.6248,
+  "turns": 2,
+  "log": "20261126-022042_POOL_READY.log"
+ },
+ {
+  "step": 12,
+  "time": "2026-11-26T02:25:13+09:00",
+  "stage": "POOL_READY",
+  "subtype": "success",
+  "cost_usd": 0.2461,
+  "turns": 8,
+  "log": "20261126-022430_POOL_READY.log"
+ },
+ {
+  "step": 13,
+  "time": "2026-11-26T02:29:06+09:00",
+  "stage": "RESULTS_REVIEW",
+  "subtype": "success",
+  "cost_usd": 0.9468,
+  "turns": 29,
+  "log": "20261126-022613_RESULTS_REVIEW.log"
+ },
+ {
+  "step": 14,
+  "time": "2026-11-26T02:31:24+09:00",
+  "stage": "SLATE_PROPOSED",
+  "subtype": "success",
+  "cost_usd": 0.4712,
+  "turns": 14,
+  "log": "20261126-023006_SLATE_PROPOSED.log"
+ },
+ {
+  "step": 15,
+  "time": "2026-11-26T02:33:29+09:00",
+  "stage": "APPROVED",
+  "subtype": "success",
+  "cost_usd": 0.3864,
+  "turns": 13,
+  "log": "20261126-023224_APPROVED.log"
  }
 ]

@@ -1,0 +1,19 @@
+# Target: H1388_A1B1_tm
+# Reference Type: Native Structure
+# Clustering Metric: tm
+# Metrics: TM
+# Total Structures: 300
+# Clusters: 12
+Cluster,Size,%,Intra-TM,Native-Score,Medoid
+C0,21,7.0%,0.976,N/A,of3_seed8_sample0__sep.pdb
+C1,30,10.0%,0.979,N/A,af3_seed10_sample2__base.pdb
+C2,34,11.3%,0.993,N/A,af3_seed4_sample2__sep.pdb
+C3,10,3.3%,0.991,N/A,bt2_seed9_sample3__sep.pdb
+C4,27,9.0%,0.984,N/A,af3_seed6_sample2__base.pdb
+C5,16,5.3%,0.987,N/A,bt2_seed2_sample0__sep.pdb
+C6,39,13.0%,0.990,N/A,pt2_seed3_sample0__sep.pdb
+C7,31,10.3%,0.981,N/A,of3_seed6_sample4__sep.pdb
+C8,13,4.3%,0.993,N/A,af3_seed5_sample3__sep.pdb
+C9,20,6.7%,0.990,N/A,pt2_seed1_sample4__sep.pdb
+C10,46,15.3%,0.991,N/A,af3_seed19_sample4__sep.pdb
+C11,13,4.3%,0.990,N/A,bt2_seed7_sample3__sep.pdb

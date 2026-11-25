@@ -1,399 +1,120 @@
 # H1388: target analysis
 
-Stage **PLAN_REVIEW**. 13 kinds of evidence and 6 decisions, recorded by agent, deepfold.
+Stage **PACKAGED**. 24 kinds of evidence and 7 decisions, recorded by agent.
 
 Sequence: 244 residues in 2 chains (11, 233). Given stoichiometry: A1B1.
 
 ## In one page
 
-- **What it is.** **A** (11 aa) subunit1 — Q6PKG0; La-related protein 1 (LARP1), Homo sapiens, residues 542-552 · **B** (233 aa) subunit2 — P61981; 14-3-3 protein gamma (YWHAG), Homo sapiens; 14-3-3 protein family; Pfam PF00244; InterPro IPR000308, IPR023409, IPR023410, IPR036815. Given stoichiometry **A1B1**.
+- **What it is.** **A** (11 aa) subunit1 — Homo sapiens (Eukaryota; Metazoa; Chordata; Mammalia; Primates); Q6PKG0 (LARP1_HUMAN), residues 542-552; La-related protein 1 (LARP1); the peptide is an intrinsically disordered linker segment, n · **B** (233 aa) subunit2 — Homo sapiens (Eukaryota; Metazoa; Chordata; Mammalia; Primates); P61981 (1433G_HUMAN, YWHAG), residues 3-234 plus an N-terminal S in place of native V2; 14-3-3 protein family. Given stoichiometry **A1B1**.
 - **The chemistry the FASTA does not carry.** **A7** phosphoserine (CCD SEP) — S7 chosen; S5 rejected
-- **MSA depth.** deepest `af3/uniprot.a3m` **16,347** sequences, thinnest `af3/bfd.a3m` 1,607, over 4 measured alignments
-- **Structures that exist.** **33** PDB entries named in the record: `11hg`, `11jj`, `2b05`, `2br9`, `3iqu`, `3uzd`, `4e2e`, `4j6s` …
-- **The pool.** **875** models in **9** clusters. cluster 1 is af3_msa_pS548 and nothing else (125 of the 125 models that variant has): that input reaches a shape the others do not
-  - 2 clusters hold models from three or more predictors; the largest is 7 (bt2_jax 59, of3 39, af3 24)
-  - one predictor only: cluster 0 (bt2_jax, 133), cluster 1 (af3, 125), cluster 6 (of3, 58), cluster 4 (of3, 31) — a shape no other predictor found
-- **What nobody knows.** No paper or structure found on the 14-3-3:LARP1 complex itself (Europe PMC 'LARP1 14-3-3' 50 hits, none on the complex; one web search). The FASTA names no modification; the CASP description text was not available to this step - if it says phosphopeptide, the pSer is S7. Whether one or two peptides bind the 14-3-3 dimer in the experiment is not known; given stoichiometry A1B1.
-- **Open, and waiting on a person (C1).** (1) Phosphorylation; (2) Stoichiometry; (3) GPU; (4) Selection gate
+- **MSA depth.** deepest `B` **10,377** sequences, thinnest `A` 0, over 2 measured alignments
+- **Structures that exist.** **24** PDB entries named in the record: `2b05`, `3uzd`, `4e2e`, `4j6s`, `4o46`, `5d3e`, `6a5s`, `6byj` …
+- **The pool.** **300** models in **12** clusters. cluster 6 is sep and nothing else (39 of the 250 models that variant has): that input reaches a shape the others do not
+  - cluster 2 is sep and nothing else (34 of the 250 models that variant has): that input reaches a shape the others do not
+  - cluster 7 is sep and nothing else (31 of the 250 models that variant has): that input reaches a shape the others do not
+- **What nobody knows.** ["No paper on the 14-3-3:LARP1 pS548 interaction or its structure was found (Europe PMC: '\"LARP1\" AND \"14-3-3\"', 'LARP1 AND Ser548', 'LARP1 AND (14-3-3 OR YWHA*)'); the organisers' description is not in the dossier, so whether the peptide was phosphorylated in the experiment is not confirmed here.", "Which kinase phosphorylates LARP1 S548 was not read.", "No team PDFs: /data/casp17/target_notes/H1388/papers/ doe…
 
 ## The target, written up
 
 
 <!-- target.md -->
 
-Written 2026-11-23 at stage PLAN_REVIEW, from the dossier (`dossier.json`) and
-the files under `/gpfs/deepfold/casp/casp17/targets/H1388/`. Not read: `submit/` and any native structure.
-
-How to check a sentence: a number in square brackets is a reference in §8. A name in backticks such as
-`binding_site` is a dossier evidence key, and D1–D6 are dossier decisions. "Measured here" or "counted here" means I
-recomputed the value from the cited file while writing this note.
-
-**Numbering.** Every residue is given in **input** numbering first, meaning its position in its chain in the CASP FASTA
-[1]. It was converted from the **native** numbering of each protein's canonical UniProt sequence:
-- chain A: input *j* = LARP1 (Q6PKG0) *j* + 541;
-- chain B: input *i* = 14-3-3 gamma (P61981) *i* + 1 for *i* ≥ 2. Input 1 has no native counterpart.
-
-I checked one residue of each chain against the FASTA (§2). PDB 6A5S numbers its 14-3-3 chains the native way: auth
-50/57/132/133 are K/R/R/Y in all four chains [4, checked here].
-
 ### 1. Identification
 
-| | |
+| field | value |
 |---|---|
-| CASP id | H1388 [1] |
-| Organisers' description | Not available. The target folder holds `target.fasta` and the team's run folders only, and the FASTA headers (`H1388,subunit1\|`, `H1388,subunit2\|`) name nothing [1]. The dossier records the text as not seen (`literature.not_known`). The lantern-intake skill quotes a CASP17 target H2388, "14-3-3 gamma bound to LARP1 derived phosphopeptide", with this peptide's sequence [26]. On a replay that line is hindsight and is not used as evidence here (dossier log, 2026-11-23 08:21). |
-| Stoichiometry | Given: A1B1 (dossier `stoichiometry.given`). Expected in solution: 2:2, a 14-3-3 homodimer with a peptide on each subunit. UniProt says "Homodimer" [2]. The 6A5S asymmetric unit holds two dimers, each subunit with its own phosphopeptide [4, measured here]. The six gamma–peptide assemblies the dossier checked are all 2:2 (`stoichiometry_evidence`). |
-| Chain A (subunit1) | 11 aa, PKGLSASLPDL: human LARP1 (UniProt Q6PKG0), residues 542–552 [1, 3] |
-| Chain B (subunit2) | 233 aa: human 14-3-3 gamma (YWHAG, UniProt P61981), residues 3–234, after one serine [1, 2] |
-| Experimental method | Not known: there is no description. |
-| Dates | No CASP release date or deadline is recorded (the dossier's `deadlines` is empty). The team's copies of the FASTA and the inputs are dated 2026-06-16 (file times) [1, 11]. HHpred ran on 2026-07-13 (hhr header) [10]. The UniProt records are as of their 2026-11-04 annotation update [2, 3]. The PDB and literature searches ran on 2026-11-23 (`public_structures`, `literature`), and the dossier was opened the same day. |
+| CASP id | H1388 |
+| organisers' description | not in the dossier (only the FASTA was registered) |
+| declared stoichiometry | A1B1 (dossier `stoichiometry.given`) |
+| chain A | 11 aa, `PKGLSASLPDL`, human LARP1 (Q6PKG0) 542–552 |
+| chain B | 233 aa, human 14-3-3 gamma (P61981, YWHAG) 3–234 with an N-terminal S |
+| method | not known |
+| dossier created | 2026-11-26 |
 
 ### 2. The chains
 
-#### Chain A: LARP1 542–552, the peptide
+#### Chain A: LARP1 542–552
+- It is an exact, single-occurrence substring of Q6PKG0 at 542–552, as counted here from the UniProt FASTA. `input = native − 541`.
+- It has two serines. S5 is native S546. S7 is native S548, which UniProt Q6PKG0 records as a phosphoserine.
+- It is a linker segment with no Pfam domain. There is no public structure of it (`residudes structures`, 0 entities at ≥ 90 % identity).
 
-- **Mapping.** PKGLSASLPDL is an exact substring of the canonical LARP1 sequence (isoform 1, the one UniProt displays),
-  at 542–552 [3, checked here]: `input j = native j + 541`. Checked: input S5 = S546 and S7 = S548. UniProt's isoform 2
-  (Q6PKG0-3) differs at 1–77 and 78–144 [3], so it would number this segment differently. Everything here uses
-  isoform 1.
-- **Construct.** The FASTA carries no tag, no extension and no modification [1].
-- **Landmarks.** UniProt lists S548 (input 7) as a modified residue, "Phosphoserine", with evidence code ECO:0007744
-  from three large-scale phosphoproteomics studies [3, 18–20]. S546 (input 5) has no modification feature [3]. The
-  residues around S548 are K543 (−5), G544 (−4), L545 (−3), S546 (−2), A547 (−1), **S548**, L549 (+1) and P550 (+2)
-  [counted here from 1, 3].
-  - *Correction to the record:* `literature` gives "G545 at −3, L544 at −4". The sequence puts L545 at −3 and G544 at −4.
-- **Where it sits in LARP1.** 542–552 lies inside two UniProt regions: 511–598, "Disordered" (a MobiDB-lite
-  prediction), and 77–573, "Required for interaction with PABPC1" [3, citing 21]. It lies outside the La-type HTH domain
-  (397–487) and outside 574–1096, "Required for interaction with RPTOR" [3, citing 21].
-- **Structures.** No structure has this segment with a 14-3-3 [5, 6]. Seven PDB entities contain the motif GLSASLPD
-  (§6, table 6b) [6]. I did not check whether 542–552 is modelled in any of them.
-- **MSA.** It holds the query only, as expected for 11 residues (`existing_pool.msa_A`, `msa_depth`).
-
-#### Chain B: 14-3-3 gamma 3–234
-
-- **Mapping.** Input 2–233 is identical to P61981 3–234 [1, 2, checked here]: `input i = native i + 1` for *i* ≥ 2.
-  Checked: input K49, R56, R131 and Y132 are native K50, R57, R132 and Y133. Input S1 stands where the native has M1–V2
-  (native MVD…, input SD…). Native 235–247 (SDQQDDDGGEGNN) is absent.
-  - *Correction to the record:* `construct` says "232 aa", "target residues 2–232 = native 3–233" and a truncated tail
-    of "234–247". Counting the FASTA gives 233 aa, 2–233 = 3–234, and a missing tail of 235–247. The same entry's rule,
-    `input i = native i + 1`, is right, and the sites below use it.
-  - That S1 is a cloning or protease remnant is the dossier's guess (`construct.differences`); no source says what it is.
-- **Family.** UniProt: "Belongs to the 14-3-3 family"; Pfam PF00244; InterPro IPR000308, IPR023409, IPR023410 and
-  IPR036815; SMART SM00101 [2]. HHpred aligns the whole query (input 1–233 or 2–233) to ten 14-3-3 structures at
-  probability 100, and the next hit is at 95.2 % with 9 % identity [10]. So the construct is one 14-3-3 domain from
-  end to end, and no other domain is present.
-- **Helices.** UniProt's nine helices of 12 or more residues, taken from PDB entries, are native 4–16, 20–31, 39–69,
-  77–103, 117–137, 140–164, 170–181, 190–206 and 216–233 [2]. Subtract 1 for input numbering.
-- **Landmarks.** Input numbering, with native in brackets:
-  - **The phosphate pocket:** K49 (K50), R56 (R57), R131 (R132) and Y132 (Y133). UniProt marks R57 and R132 as
-    "Interaction with phosphoserine on interacting protein" [2, citing 17]. In all four 6A5S subunits the
-    phosphoserine's phosphate oxygens are 2.4–2.8 Å from K50 NZ, from the NE/NH atoms of R57 and R132, and from Y133 OH
-    [4, measured here].
-  - **Other UniProt modifications** inside the construct (native numbering) are pS71, pY133 (by similarity), pT145,
-    pS215 and pT234 [2]. pY133 is a pocket residue. Nothing in the record says the experiment's protein carried any of
-    them.
-- **The dimer.** UniProt says "Homodimer" [2, citing 17]. In 6A5S, subunits A–B and D–G pair through their N-terminal
-  residues: 48 and 46 Cα pairs lie within 8 Å, and 11–12 of those are between residues numbered below 60
-  [4, measured here]. The construct keeps the N-terminus from native 3 onward.
-- **The C-terminus in structures.** No 6A5S chain is modelled past native 235 [4]. UniProt takes a short helix at
-  237–240 from 6BYL [2]. Either way, the construct ends at 234.
-- **Structures.** There are 23 exact-sequence PDB entries (§6, table 6a) [5, 7]. UniProt cross-references 22 of them,
-  all except 8XI3 [2].
-- **MSA.** Deep, with no thin region (`msa_depth`; MSA files [12]):
-
-  | MSA | sequences | ≥ 50 % coverage | median coverage | min coverage |
-  |---|---|---|---|---|
-  | uniref90 | 6,536 | 4,692 | 4,982 | 456 |
-  | uniprot | 16,347 | 13,544 | 13,908 | 1,454 |
-  | mgnify | 4,332 | 1,860 | 2,374 | 74 |
-  | bfd | 1,607 | 957 | 993 | 34 |
-
-  In uniref90, coverage is lowest at input 1 (456, the serine with no native counterpart) and at input 113–115 (2,451
-  at 114) [counted here from 12]. Input 113–115 is native 114–116, which lies between UniProt's helices 104–108 and
-  117–137 [2].
+#### Chain B: 14-3-3 gamma
+- Input 2–233 is identical to P61981 3–234, so `input = native − 1`.
+- Input S1 stands in for native M1–V2. I infer it is a cleavage or cloning remnant; that is not sourced.
+- The C-terminal tail, native 235–247 (`SDQQDDDGGEGNN`), is absent.
+- The whole construct is the 14-3-3 domain: Pfam PF00244; InterPro IPR000308, IPR023410, IPR036815 and IPR023409 (UniProt cross-references).
+- The phosphoserine-contact residues, in input numbering, are K49, R56, R131 and Y132 (native K50, R57, R132, Y133). I checked each identity against the FASTA.
 
 ### 3. The biology that bears on the structure
 
-UniProt describes 14-3-3 gamma as an adapter that "binds to a large number of partners, usually by recognition of a
-phosphoserine or phosphothreonine motif", and as a homodimer [2]. In the gamma crystal structures the dossier lists,
-each subunit of the dimer carries its own phosphopeptide. 6A5S has four 14-3-3 chains and four TFEB pS211 peptides
-(LVGVTSS(pS)CPADLTQ), and each phosphate is held by K50, R57, R132 and Y133 of its own subunit [4, measured here].
-2B05, 6FEL, 7A6R, 6GKG and 6BYL are 2:2 assemblies (`stoichiometry_evidence`). The dossier also states two consensus
-motifs, mode I R-S-X-pS-X-P and mode II R-X-[Y/F]-X-pS-X-P, and attributes them to Yaffe et al. 1997 [15], a paper that
-was not read. I use them only where the LARP1 sequence shows the pattern directly: S548 is followed by X-Pro
-(L549-P550), and S546 is not (A547-S548).
+14-3-3 proteins bind phosphoserine or phosphothreonine motifs. Peptide libraries gave two consensuses, RSXpSXP (mode 1) and RXY/FXpSXP (mode 2). The bound peptide lies extended in the amphipathic groove, with a turn at the pS+2 proline [1]. 14-3-3 is a dimer, with one groove per protomer, and the dimer can bind two motifs at once [1]. Structures exist for all seven human isoforms bound to ligands [2].
 
-UniProt describes LARP1 as an RNA-binding protein that regulates translation downstream of mTORC1. It is "phosphorylated
-on multiple Ser and Thr residues in response to active mTORC1", and phosphorylation promotes its dissociation from
-mRNAs that carry a 5′TOP motif [3, PTM comment citing 22]. UniProt lists IntAct binary interactions between LARP1 and
-three 14-3-3 genes: SFN (4 experiments), YWHAE (6) and YWHAZ (4). YWHAG is not among them [3, INTERACTION]. No source
-found says which LARP1 residues a 14-3-3 binds: the Europe PMC search "LARP1 14-3-3" returned 50 hits, none of them
-on the complex (`literature.not_known`) [24]. The strongest pointer to 542–552 as the binding segment is that the
-organisers cut it out, and that is an inference, not a source.
+In this peptide only S7 is followed by X-Pro (S7-L8-P9), which is the pS-X-P core of both motifs. There is no Arg at −3 or −4 (L4, G3), so the peptide fits neither full consensus; there is a Lys at −5 (as counted here). UniProt records Ser548 (= S7) as phosphorylated [3].
 
-So the state to model rests on two facts and one inference. S548 is phosphorylated in cells [3, 18–20], and 14-3-3
-binds phosphorylated motifs [2]. The inference is that the peptide is pS548, with its phosphate in the pocket of one
-subunit (`chemistry`, `motif`, D1). The FASTA does not say so [1], and the description that might is not on disk
-[25]. CASP scores one subunit and one peptide (A1B1). In solution that subunit would be half of a dimer, probably with
-a second peptide on the other half (D2, from [2] and [4]).
+I found no paper on the 14-3-3–LARP1 pS548 interaction itself.
 
-### 4. Sites and chemistry, in input numbering
+### 4. Sites and chemistry (input numbering)
 
-**Chain ids.** In A1B1 the peptide is chain A and the 14-3-3 is chain B. In the A2B2 inputs the peptides are A and B
-and the 14-3-3 copies are C and D [11]. A site written on chain B has to be mapped to C and D for A2B2 models.
+| what | where | becomes | source |
+|---|---|---|---|
+| phosphoserine, CCD SEP | A7 (LARP1 S548); S5 rejected, as it has no +2 Pro | an af3 input **variant**, next to the unmodified input | [1], [3] |
+| motif pS-X-P | A7–A9 | motif figure | [1] |
+| phosphate pocket | B49, B56, B131, B132 | **contact gate**: A7 to B56/B131/B132 | UniProt P61981 sites; 6S9K check below |
 
-| site | input | native | source | becomes |
-|---|---|---|---|---|
-| phosphate pocket | B: K49, R56, R131, Y132 | P61981 K50, R57, R132, Y133 | UniProt sites at 57 and 132 [2, 17]; in 6A5S, 2.4–2.8 Å from the phosphate oxygens in all four subunits [4, measured here]; `binding_site` | **gate**: `lantern gate --init` reads `binding_site`. C1 question 4 proposes a cut-off of A7 within 4 Å of these side chains; see below. |
-| phosphosite | A: S7 | LARP1 S548 | UniProt phosphoserine [3, 18–20]; followed by L-P [1]; `motif` | the peptide end of the pocket **gate** (`motif`), and the residue of the variant below |
-| phosphoserine | A: S7 → SEP | pS548 | `chemistry`; D1 | **variant**: the `af3_msa_pS548` inputs (A1B1 and A2B2) put `{"ptmType": "SEP", "ptmPosition": 7}` on the peptide and are otherwise the same as `af3_msa` [11]; af3 only |
-| rejected | A: S5 | LARP1 S546 | no Pro at +2 (A547, S548 follow it) [1]; no UniProt modification [3] | nothing |
-| ligands, metals | — | — | D5: none | nothing |
-
-**Which atom the 4 Å gate is measured from matters.** In 6A5S I measured the nearest side-chain atom of each pocket
-residue: K CD/CE/NZ, R CD/NE/CZ/NH1/NH2 and Y CZ/OH [4, measured here]. The distances depend on the peptide atom:
-- from the phosphate oxygens: 2.4–2.8 Å;
-- from the phosphorus: 3.6–3.9 Å;
-- from the serine OG: 4.2–5.1 Å.
-
-So the reference structure passes a 4 Å cut-off only when it is measured from the phosphate oxygens or the phosphorus.
-Measured from OG, which is the only option for the unmodified runs, the reference itself would fail. The gate spec
-should either name the atom or use about 5.5 Å for OG.
-
-**Not recorded as residues:** the rest of the peptide-binding surface beyond the four pocket residues. A census of the
-B residues the peptide touches would need that list.
+The pocket check, as counted here in 6S9K (14-3-3 gamma with the caspase-2 phosphopeptide, 1.60 Å): the SEP139 phosphate oxygens lie within 3.5 Å of R57, R132 and Y133 (native numbering). K50 is not within 3.5 Å in that entry.
 
 ### 5. What is uncertain
-
-1. **Is the experiment's peptide phosphorylated at S548?**
-   - For: UniProt's pS548 [3]; the X-Pro after S548 [1]; 14-3-3 binds phosphorylated motifs [2].
-   - Against: the FASTA carries no modification [1], and the description is not on disk [25].
-   - *What answers it:* D1 runs the SEP input next to the unmodified one, and C1 question 1 asks the person which
-     leads.
-2. **Which way does the 11-mer lie on the subunit, and in which register?**
-   - No structure of this peptide bound to a 14-3-3 exists [5, 6]. The four pocket residues define the phosphate
-     position [4].
-   - The paper behind 6A5S is titled as describing a "noncanonical mode" of TFEB binding [4; the paper, 14, not read].
-     So 6A5S's peptide backbone is not a safe reference for LARP1's register.
-   - *What answers it:* the gate checks only the phosphate against the pocket, not the backbone (C1 question 4). D4
-     keeps a custom 6A5S/2B05 template as a fallback if the pool splits on register. The brief also suggests checking
-     models against the 6A5S/2B05 peptide backbone; that should wait until someone reads [14].
-3. **Do the af3 runs see a gamma template?**
-   - In the AF3 default inputs (`af3_msa`, `af3_msa_pS548`), chain B's four templates are 3UAL (epsilon), 8HEW, 7EXE
-     (zeta/delta) and 6NYB (zeta), 63–79 % identical to chain B. None is gamma, although all 23 gamma entries are
-     among the 1,578 hmmsearch hits at 99.6–100 % identity [7, 11, computed here].
-   - D4 rests on "91 of 1578 hits are 14-3-3 gamma, so close templates are present" (`existing_pool.templates_B`).
-     That is true of the hit list, not of what the inputs carry. The lantern-intake skill notes that AF3's template
-     filter hides near-100 % matches [26]; the files themselves do not say why the gamma entries were dropped.
-   - Only the `mmseqs2_gpu` inputs carry gamma templates (6BYJ and 6Y6B, fident 1.000) [9, 11]. The SEP variant exists
-     only on `af3_msa`, so the runs the plan would lead with never had a gamma template.
-   - *What answers it:* nothing in the plan yet. D4's custom-template fallback is the natural place; the person should
-     see this at C1.
-4. **One subunit or the dimer?**
-   - CASP gives A1B1; the dimer is the solution state [2, 4].
-   - *What answers it:* D2 runs both A1B1 and A2B2, and cuts each A2B2 model to one B:A pair.
+- **Is the peptide phosphorylated in the experiment?** The FASTA carries no modification, and I do not have the organisers' description. The plan answers this by running both the SEP-A7 and the unmodified input and gating on the pocket contact.
+- **Copy number.** 14-3-3 is a dimer in the family [1], but A1B1 is declared. Plan: model A1B1 as declared, and possibly A2B2 as a check of the groove geometry. That is a decision for the plan checkpoint.
+- **Peptide register and direction in the groove.** The pose is set by pS7 and the +2 Pro turn. Without a basic −3/−4 residue the register is less constrained than for a canonical mode-1 peptide.
 
 ### 6. The structures that exist
 
-The best peptide-bound gamma structure with a recorded resolution is 6A5S at 2.10 Å [4]. No structure of 14-3-3 with
-LARP1 exists [5, 6]. Foldseek was not run: with 23 exact-sequence structures the dossier judged it unnecessary
-(`public_structures.foldseek`).
+Chain B has 23 PDB entities at 100 % identity and 100 % coverage (`residudes structures H1388`, 2026-11-26). Chain A has none. The local PDB mmCIF mirror is from 2026-04-25 (215 days old).
 
-#### 6a. Chain B: the 23 exact-sequence human 14-3-3 gamma entries
-
-**The searches behind this table:**
-- **The RCSB sequence search** (chain B, identity ≥ 95 %, E < 1e-10, 2026-11-23) returned these 23 entities. The
-  saved result holds identifiers and a relevance score only, with no identity per hit [5].
-- **The per-hit numbers** come from two searches run for the team's inputs:
-  - the AF3 hmmsearch over PDB seqres [7]. I counted identity and coverage from its alignment, over the 233 query
-    columns;
-  - the mmseqs2 template search [9]. `fident` and the query range are as its m8 file reports them.
-- **Why some `fident` values are below 1.000** while the hmmsearch identity is 100 %: the difference comes mostly from
-  gaps where the template lacks residues (6A5S: CIGAR `68M4I160M`).
-- **"Absent"** means the entry is not among the 300 mmseqs2 hits; the weakest of those has `fident` 0.630.
-- **"State"** is what the dossier recorded (`public_structures.exact_sequence_sweep.note`,
-  `stoichiometry_evidence.homolog_assemblies`), unless a reference is given.
-- **"Fold"** means the entry is usable as a template for the 14-3-3 fold, and its contents were not recorded.
-
-| PDB | AF3 hmmsearch: identity, coverage [7] | mmseqs2: fident, query [9] | state | use as a template |
+| PDB | method | res. (Å) | state | template use |
 |---|---|---|---|---|
-| 6A5S | 100 %, 232/233 | 0.982, 2–233 | TFEB pS211 peptide on each of four subunits; X-ray, 2.10 Å; phosphate on K50/R57/R132/Y133 [4] | the reference for the pocket gate; a custom-template candidate (D4); its peptide backbone is not a register reference (§5.2) |
-| 2B05 | 100 %, 232/233 | absent | phosphoserine peptide, 2.55 Å; 2:2 C2 assembly | peptide-bound; D4's other custom-template candidate |
-| 6FEL | 100 %, 232/233 | 0.982, 2–233 | CaMKK2-motif peptide; 2:2 C2 | peptide-bound |
-| 6Y4K | 100 %, 232/233 | 0.926, 2–233 | CaMKK2-motif peptide | peptide-bound |
-| 6GKG | 100 %, 232/233 | 0.965, 2–233 | caspase-2 peptide; a dimer with two peptides | peptide-bound |
-| 7A6R | 100 %, 232/233 | 0.982, 3–233 | DAPK2 peptide; 2:2 C2 | peptide-bound |
-| 6BYL | 100 %, 232/233 | absent | O-GlcNAc-Thr peptide; a dimer with two peptides | its peptide carries a GlcNAc, not a phosphate, so it is not a pocket reference |
-| 6BZD | 99.6 %, 232/233; input 56 is E, not R (native R57E) [7, counted here] | 0.995, 2–233 | a pocket mutant | the fold only, not the pocket. RCSB scored it 0.0, against 1.0 for the other 22 [5] |
-| 6BYJ | 100 %, 232/233 | 1.000, 2–233 | 14-3-3 gamma; X-ray, 2.90 Å; the template file keeps chain F only [11] | used in the `mmseqs2_gpu` inputs |
-| 6Y6B | 100 %, 232/233 | 1.000, 2–233 | 14-3-3 gamma with a glycoside small molecule (entity 3 in the template file); X-ray, 3.08 Å [11] | used in the `mmseqs2_gpu` inputs |
-| 3UZD | 100 %, 232/233 | 0.969, 2–233 | not recorded | fold |
-| 4E2E | 100 %, 232/233 | absent | not recorded | fold |
-| 4J6S | 100 %, 232/233 | absent | not recorded | fold |
-| 4O46 | 100 %, 232/233 | absent | not recorded | fold |
-| 5D3E | 100 %, 232/233 | 0.965, 2–233 | not recorded | fold |
-| 6GKF | 100 %, 232/233 | 0.974, 2–233 | not recorded | fold |
-| 6S9K | 100 %, 232/233 | 0.974, 2–233 | not recorded; UniProt takes most of its helix boundaries from it [2] | fold |
-| 6SAD | 100 %, 232/233 | absent | not recorded | fold |
-| 6ZBT | 100 %, 232/233 | 0.982, 2–233 | not recorded | fold |
-| 6ZC9 | 100 %, 232/233 | 0.991, 2–233 | not recorded | fold |
-| 7A6Y | 100 %, 232/233 | 0.991, 3–233 | not recorded | fold |
-| 8XI3 | 100 %, 232/233 | absent | not recorded; not among UniProt's cross-references [2] | fold |
-| 9CI3 | 100 %, 232/233 | absent | not recorded | fold |
+| 6S9K | X-ray | 1.60 | caspase-2 phosphopeptide | yes, best peptide-bound; pocket checked |
+| 6ZBT / 6ZC9 | X-ray | 1.80 / 1.90 | Nedd4-2 peptide | yes |
+| 3UZD | X-ray | 1.86 | 14-3-3 gamma | yes (receptor) |
+| 6A5S | X-ray | 2.10 | TFEB peptide | yes |
+| 4E2E | X-ray | 2.25 | TH/TPH-activator complex | receptor |
+| 7A6Y / 7A6R | X-ray | 2.50 / 2.70 | DAPK2 peptide | yes |
+| 2B05 | X-ray | 2.55 | phosphopeptide | yes |
+| 6GKF / 6GKG | X-ray | 2.60 / 2.85 | caspase-2 | yes |
+| 6BZD | X-ray | 2.67 | R57E mutant, GlcNAc peptide | no: the pocket is mutated |
+| 5D3E | X-ray | 2.75 | CFTR peptide | yes |
+| 6SAD | X-ray | 2.75 | doubly phosphorylated peptide | yes |
+| 6FEL | X-ray | 2.84 | CaMKK2 peptide | yes |
+| 4O46 | X-ray | 2.90 | influenza NS1 tail | yes |
+| 6BYJ / 6BYL | X-ray | 2.90 / 3.35 | O-GlcNAc peptides | a different chemistry |
+| 6Y4K / 6Y6B | X-ray | 3.00 / 3.08 | CaMKK2 | yes |
+| 8XI3 | EM | 3.00 | mouse SCMC complex | no |
+| 4J6S | X-ray | 3.08 | TH N-terminal peptide | yes |
+| 9CI3 | EM | 3.96 | LRRK2 complex | no |
 
-#### 6b. Chain A: entries that contain the LARP1 segment
+The ColabFold template hits for chain B agree with this (6byj_A 100 %, qcov 2–233, E 1.5e-116; `msas/colabfold/msa/templates_B.m8`). AF3's own search hides these near-identical entries, so a peptide-bound entry has to be passed in explicitly. I did not run HHsearch: chain B already has exact-sequence structures, and an 11-mer cannot be placed by a profile search.
 
-The search was an RCSB sequence-motif search for GLSASLPD (2026-11-23), which reports presence only [6]. AF3's
-hmmsearch for chain A also matched three of these entries over LARP1 542–552 [8]. The states in this table are as the
-dossier records them (`public_structures.peptide`, `literature`; for 9T76/9T77, see [23]).
+### 7. MSA depth and figures
 
-| PDB entity | found by | state | use |
-|---|---|---|---|
-| 9T76_2 | motif | LARP1 with mTORC1; cryo-EM; released 2026-11-18 | no 14-3-3; whether 542–552 is modelled was not checked |
-| 9T77_4 | motif | LARP1 with mTORC1; cryo-EM; released 2026-11-18 | as above |
-| 8XP2_36 | motif; hmmsearch 8xp2_JD, 542–552 | "large assembly" | as above |
-| 8XP3_36 | motif; hmmsearch 8xp3_JD, 542–552 | "large assembly" | as above |
-| 9ED0_35 | motif; hmmsearch 9ed0_h, 542–552 | "large assembly" | as above |
-| 11HG_81 | motif | "large assembly" | as above |
-| 11JJ_82 | motif | "large assembly" | as above |
+These come from `residudes-engine msa --source colabfold`, then `residudes msa H1388 --depth`:
 
-#### 6c. The templates the inputs actually carry
-
-| input [11] | chain | template | what it is (entity description) | identity, coverage |
+| chain | N | N cov ≥ 50 % | median coverage | thin regions |
 |---|---|---|---|---|
-| `af3_msa`, `af3_msa_pS548` | B (C, D in A2B2) | 3UAL | 14-3-3 protein epsilon | 65.2 %, 230/233 (computed here from `templates.json` [7]) |
-| | | 8HEW | "14-3-3 protein" | 63.0 %, 230/233 |
-| | | 7EXE | 14-3-3 protein zeta/delta | 77.2 %, 228/233 |
-| | | 6NYB | 14-3-3 protein zeta | 78.5 %, 228/233 |
-| | A (A, B in A2B2) | 4PSJ (two alignments) | OR464 | 6 of 11 and 5 of 10 residues identical [8] |
-| | | 3AQY, 3AQX | beta-1,3-glucan-binding protein | 7 of 10 identical, each [8] |
-| `mmseqs2_gpu` | B (C, D in A2B2) | 7V9B_A | YWHAE/FAM22B fusion protein; X-ray, 1.85 Å | fident 0.643, query 1–233 [9] |
-| | | 6BYJ_F, 6Y6B_B, 6BYJ_A | 14-3-3 protein gamma | fident 1.000, query 2–233 [9] |
-| | A | none | | |
+| A | 0 | 0 | 0 | the whole peptide (expected for an 11-mer) |
+| B | 10,377 | 8,105 | 7,660 | none |
 
-The peptide's AF3 templates are short segments of unrelated proteins: none of them involves a 14-3-3 [8].
+There is 1 paired row. No deepening is needed.
 
-#### 6d. Chain B: other 14-3-3 isoforms (HHpred)
-
-HHpred searched the clustered PDB database `mmcif70/pdb70` [10]. No gamma entry is among the hits;
-`public_structures.hhpred_caveat` puts that down to the clustering. The identities are as HHpred reports them [10].
-
-| hit | entry (HHpred's description) | probability | identity | query columns |
-|---|---|---|---|---|
-| 1 | 4ZQ0_C, 14-3-3 protein | 100 | 57 % | 2–233 |
-| 2 | 3IQU_A, 14-3-3 protein sigma | 100 | 67 % | 1–233 |
-| 3 | 2NPM_B, 14-3-3 domain containing protein | 100 | 59 % | 2–233 |
-| 4 | 7NFW_A, 14-3-3 protein sigma | 100 | 67 % | 1–233 |
-| 5 | 8QTF_A, 14-3-3-like protein GF14 omega | 100 | 62 % | 1–233 |
-| 6 | 2BR9_A, 14-3-3 protein epsilon | 100 | 65 % | 1–233 |
-| 7 | 7V9B_A, YWHAE/FAM22B fusion protein | 100 | 65 % | 1–233 |
-| 8 | 8EQ8_B, 14-3-3 protein beta/alpha | 100 | 77 % | 1–233 |
-| 9 | 2O8P_A, 14-3-3 domain containing protein | 100 | 23 % | 1–231 |
-| 10 | 3EFZ_B, 14-3-3 protein | 100 | 24 % | 1–233 |
-| 11 | 7WKK_L, IL4I1 protein | 95.2 | 9 % | 2–170 |
-
-### 7. Figures
-
-![Chain map](report/figs/chain_map.svg)
-
-**Chain map.** Both chains drawn to scale, in input numbering:
-- chain A, 1–11, with S7 (the `motif`) in orange;
-- chain B, 1–233, with K49, R56, R131 and Y132 (the `binding_site`) in blue.
-
-lantern drew it from those two evidence entries. It has no domain blocks because no domain was recorded with a
-residue range; chain B is one 14-3-3 domain from end to end (§2).
-
-![MSA coverage per residue, chain B](report/figs/msa_coverage.svg)
-
-**MSA coverage, chain B.** The number of sequences covering each input position, with one line per AF3 MSA
-(uniref90, uniprot, mgnify, bfd). `lantern msa --depth` drew it from `B/msas/af3/*.a3m` [12], and its numbers are the
-ones in the table in §2. Chain A has no plot, because its MSAs hold only the query.
-
-![6A5S phosphate pocket](report/figs/template_6a5s.jpg)
-
-**6A5S: the pocket the gate uses.**
-- **Grey:** one 14-3-3 gamma dimer from 6A5S, chain A in light grey and chain B in dark grey.
-- **Orange sticks:** the TFEB pS211 peptide residues within 5 Å of the dimer. The phosphoserine's carbons are red.
-- **Blue sticks:** K50, R57, R132 and Y133. In native numbering these are input chain B residues 49, 56, 131 and 132.
-  They are labelled on chain A, and the labels overlap in this view.
-
-It was rendered from `dl/pdb/6A5S.cif` [4] by `report/pml/template_6a5s.pml`, in slurm render jobs 328984 and 328985
-(dossier `runs`). The distances in §4 were measured from the same file.
+Figure: `report/figs/msa_coverage.svg`, the per-residue coverage drawn by `residudes msa --depth` from `msas/colabfold/msa/unpaired_{A,B}.a3m`.
 
 ### 8. References
-
-**Read.** These are local files.
-1. The CASP17 H1388 sequences: `/gpfs/deepfold/casp/casp17/targets/H1388/target.fasta`.
-2. UniProt P61981 (14-3-3 protein gamma, YWHAG, human), REST JSON saved on 2026-11-23:
-   `dl/P61981.json` (entry version 207, sequence version 2). Fields used: the
-   sequence, Site, Modified residue, Helix, the SUBUNIT, FUNCTION and SIMILARITY comments, and the cross-references.
-3. UniProt Q6PKG0 (La-related protein 1, LARP1, human): `dl/Q6PKG0.json` (entry
-   version 195, sequence version 2). Fields used: the sequence, Modified residue, Region, Domain, the isoforms, and
-   the FUNCTION, PTM and INTERACTION comments.
-4. PDB 6A5S, mmCIF: `dl/pdb/6A5S.cif` (928 kB). Used: the title, method,
-   resolution, entities, citation and coordinates; the distances and contacts were measured here.
-5. The RCSB sequence search for chain B: `dl/pdb_gamma.json` (23 entities), with
-   dossier `public_structures.exact_sequence_sweep`.
-6. The RCSB sequence-motif search for GLSASLPD: `dl/pdb_pep.json` (7 entities),
-   with dossier `public_structures.peptide`.
-7. The AF3 template search for chain B: `/gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/templates_hmmsearch.a3m`
-   (1,578 hits) and `templates.json` (the 4 kept).
-8. The AF3 template search for chain A: `/gpfs/deepfold/casp/casp17/targets/H1388/A/msas/af3/templates_hmmsearch.a3m`
-   (17 hits) and `templates.json` (the 4 kept).
-9. The mmseqs2 template search for chain B:
-   `/gpfs/deepfold/casp/casp17/targets/H1388/B/msas/mmseqs2_gpu/templates.m8` (300 hits).
-10. HHpred for chain B: `/gpfs/deepfold/casp/casp17/targets/H1388/B/hhpred.hhr` (hhsearch against `mmcif70/pdb70`,
-    2026-07-13).
-11. The prediction inputs: `/gpfs/deepfold/casp/casp17/targets/H1388/inputs/{A1B1,A2B2}/{af3_msa,af3_msa_pS548,mmseqs2_gpu}/input.json`,
-    and the template mmCIFs beside them.
-12. The chain B MSAs: `/gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/{uniref90,uniprot,mgnify,bfd}.a3m`. Their
-    depths are in dossier `msa_depth`.
-13. The dossier itself, `dossier.json`: the evidence, decisions D1–D6 and
-    checkpoint C1. The C1 brief is `checkpoints/C1_plan.md`.
-
-**Cited but not read.** For each, what it would have told us.
-14. Xu Y., Ren J., He X., Chen H., Wei T., Feng W. "YWHA/14-3-3 proteins recognize phosphorylated TFEB by a
-    noncanonical mode for controlling TFEB cytoplasmic localization." *Autophagy* 2019. PMID 30653408, DOI
-    10.1080/15548627.2019.1569928. The citation comes from [4]. This is the paper behind 6A5S. It would say in what way
-    the TFEB peptide binds noncanonically, and so whether 6A5S's peptide backbone can stand in for LARP1's.
-15. Yaffe M.B. et al. 1997, *Cell*, PMID 9428519. The dossier cites it (`literature`, `binding_site`, `motif`,
-    `chemistry`) for the mode I/II motifs and for the zeta pocket residues K49/R56/R127/Y128. It was not read: the
-    NEW-stage log shows only a Europe PMC lookup of the PMID. The pocket residues here rest on [2] and [4] instead, and
-    the zeta-to-gamma conversion in `literature` was not re-checked.
-16. Liu D. et al. 1995, *Nature*, PMID 7603574. The dossier cites it for the dimer and its N-terminal interface. Not
-    read; the dimer here rests on [2] and [4].
-17. Yang X. et al. 2006, "Structural basis for protein-protein interactions in the 14-3-3 protein family", *PNAS*.
-    PMID 17085597, DOI 10.1073/pnas.0605779103. It is UniProt's source for "Homodimer" and for the Site features at
-    57 and 132 [2]. Not read.
-18. Olsen J.V. et al. 2010, *Sci. Signal.* PMID 20068231, DOI 10.1126/scisignal.2000475. A large-scale
-    phosphoproteomics study; UniProt cites it for LARP1 pS548 [3].
-19. Rigbolt K.T. et al. 2011, *Sci. Signal.* PMID 21406692, DOI 10.1126/scisignal.2001570. Same use as [18].
-20. Zhou H. et al. 2013, *J. Proteome Res.* PMID 23186163, DOI 10.1021/pr300630k. Same use as [18]. None of [18–20]
-    was read. They would say in which cells and conditions S548 was found phosphorylated. Their UniProt scope lines
-    say nothing about 14-3-3 [3].
-21. Philippe L. et al. 2018, *Nucleic Acids Res.* PMID 29244122, DOI 10.1093/nar/gkx1237. It is UniProt's source for
-    LARP1 regions 77–573 (PABPC1) and 574–1096 (RPTOR) [3]. Not read.
-22. Hong S. et al. 2017, *eLife.* PMID 28650797, DOI 10.7554/elife.25237. It is UniProt's source for the LARP1 PTM
-    comment [3]. Not read.
-
-**Could not get.**
-23. The paper behind 9T76–9T7B, "mTORC1 recruits substrates via an expanded TOS (XTOS) motif" (2026). The title comes
-    from RCSB and is recorded in `literature`; the paper was not read. It would say which LARP1 residues those
-    structures model.
-24. Any paper or structure on 14-3-3 with LARP1. The search was Europe PMC "LARP1 14-3-3" (50 hits, none on the
-    complex) plus one web search (`literature.not_known`, `literature.searched`). There are no team PDFs:
-    `/gpfs/deepfold/casp/casp17/target_notes/H1388/papers` does not exist (`literature.searched`). Such a paper would
-    tell us whether S548 is the 14-3-3 site, the phosphorylation state, one or two peptides per dimer, and the peptide's
-    register.
-25. The organisers' description of H1388. It is not on disk. It would say whether the peptide is phosphorylated, the
-    experimental method and perhaps the stoichiometry.
-
-**Other.**
-26. The lantern-intake skill, `<RESIDUDES>/lantern/skills/lantern-intake/SKILL.md`. Step 4
-    covers AF3's near-identity template filter. Step 6 has the CASP17 H2388 line, which is hindsight on a replay and is
-    not used.
-27. Found by the NEW-stage web search and not used: PMC9458460, on LARP1's poly(A) RNA recognition. It covers LARP1's
-    RNA binding and has nothing on 14-3-3 (NEW-stage log).
+1. Yaffe MB et al. (1997) The structural basis for 14-3-3:phosphopeptide binding specificity. *Cell*. PMID 9428519. I read the abstract only, through the Europe PMC REST API; the full text would give the zeta pocket residues explicitly.
+2. Yang X et al. (2006) Structural basis for protein-protein interactions in the 14-3-3 protein family. *PNAS*. PMID 17085597, PMC1859916. I read the abstract only.
+3. UniProt P61981 (1433G_HUMAN) and Q6PKG0 (LARP1_HUMAN), rest.uniprot.org JSON and FASTA, read 2026-11-26. The local copies are `<WORK>/targets/H1388/dl/P61981.fasta` and `dl/Q6PKG0.fasta`.
+4. PDB 6S9K, `<WORK>/targets/H1388/dl/pdb/6S9K.pdb`, for the pocket contacts counted here.
+5. I found nothing on the 14-3-3–LARP1 pS548 interaction in Europe PMC. The team folder `/data/casp17/target_notes/H1388/papers/` does not exist.
 
 ## What the target is
 
@@ -401,21 +122,29 @@ It was rendered from `dl/pdb/6A5S.cif` [4] by `report/pml/template_6a5s.pml`, in
 |---|---|
 | chains | H1388,subunit1 — 11 aa, H1388,subunit2 — 233 aa |
 | stoichiometry given by CASP | A1B1 |
-| `identity.B.family` | 14-3-3 protein family; Pfam PF00244; InterPro IPR000308, IPR023409, IPR023410, IPR036815 |
-| `identity.B.fold` | all-alpha, 9 antiparallel helices; amphipathic groove binds phospho-Ser/Thr peptides; obligate dimer via helices A-D |
-| `identity.B.uniprot` | P61981 |
-| `identity.A.uniprot` | Q6PKG0 |
-| `identity.B.name` | 14-3-3 protein gamma (YWHAG), Homo sapiens |
-| `identity.B.hhpred_top` | 4ZQ0_C 14-3-3 Prob 100, 3IQU 14-3-3 sigma, 2BR9 14-3-3 epsilon ... (B/hhpred.hhr) |
-| `identity.A.name` | La-related protein 1 (LARP1), Homo sapiens, residues 542-552 |
-| `identity.A.context` | LARP1 is an mTORC1 substrate regulating TOP mRNA translation; S548 annotated phosphoserine in UniProt |
-| `construct.chains.A (subunit1, 11 aa).note` | No modification in FASTA. Two serines: S5 = LARP1 S546, S7 = LARP1 S548. UniProt annotates S548 as Phosphoserine (modified-residue feature). |
-| `construct.chains.B (subunit2, 232 aa).numbering` | input residue i (i>=2) = native i+1 |
-| `construct.chains.A (subunit1, 11 aa).seq` | PKGLSASLPDL |
-| `construct.chains.A (subunit1, 11 aa).maps_to` | human LARP1 (UniProt Q6PKG0) residues 542-552, exact match |
-| `construct.chains.B (subunit2, 232 aa).maps_to` | human 14-3-3 gamma (YWHAG, UniProt P61981, 247 aa); target residues 2-232 = native 3-233 identical |
-| `construct.chains.B (subunit2, 232 aa).differences` | target S1 replaces native M1-V2 (likely cloning/protease scar, e.g. remnant of a tag); native C-terminal tail 234-247 (SDQQDDDGGEGNN, acidic, disordered in 14-3-3 crystals) is truncated |
-| `construct.given_stoichiometry` | A1B1 |
+| `identity.A.organism` | Homo sapiens (Eukaryota; Metazoa; Chordata; Mammalia; Primates) |
+| `identity.B.organism` | Homo sapiens (Eukaryota; Metazoa; Chordata; Mammalia; Primates) |
+| `identity.A.family` | La-related protein 1 (LARP1); the peptide is an intrinsically disordered linker segment, no domain |
+| `identity.B.family` | 14-3-3 protein family |
+| `identity.B.domains` | **name**: 14-3-3 domain; **pfam**: PF00244; **interpro**: IPR000308, IPR023410, IPR036815, IPR023409; **range_input**: 1-233 (whole construct); **range_native**: 2-234 |
+| `identity.A.uniprot` | Q6PKG0 (LARP1_HUMAN), residues 542-552 |
+| `identity.A.basis` | exact substring of Q6PKG0 at 542-552 (single occurrence), as counted here from the UniProt FASTA |
+| `identity.B.uniprot` | P61981 (1433G_HUMAN, YWHAG), residues 3-234 plus an N-terminal S in place of native V2 |
+| `identity.B.basis` | input 2-233 identical to P61981 3-234 (as counted here); P61981 Pfam/InterPro cross-references from rest.uniprot.org/uniprotkb/P61981.json |
+| `identity.description` | not given in the dossier; the pair is human 14-3-3 gamma with a LARP1-derived peptide (the CASP H1388 description is not in the dossier) |
+| `construct.A.length` | 11 |
+| `construct.A.native_region` | LARP1 Q6PKG0 542-552 |
+| `construct.A.numbering` | input = native - 541; input S7 = LARP1 Ser548 (UniProt: Phosphoserine at 548) |
+| `construct.A.mutations` | none |
+| `construct.A.tag` | none |
+| `construct.A.notes` | two serines, S5 (native S546) and S7 (native S548); FASTA carries no modification |
+| `construct.B.length` | 233 |
+| `construct.B.native_region` | P61981 3-234 (native length 247; C-terminal 235-247 SDQQDDDGGEGNN absent) |
+| `construct.B.numbering` | input = native - 1 for input 2-233 |
+| `construct.B.n_term` | input S1 replaces native M1-V2: likely a protease-cleavage/cloning remnant (inferred, not sourced) |
+| `construct.B.mutations` | none beyond S1 |
+| `construct.B.tag` | none visible |
+| `construct.B.notes` | C-terminal tail truncated at T234 |
 
 ![Each chain to scale, with the domains that were recorded and the residues a gate would use](report/figs/chain_map.svg)
 
@@ -434,15 +163,17 @@ Each claim as it was recorded, with its source. The last column is drawn, not as
 
 | # | claim | source | shares an identifier with |
 |---|---|---|---|
-| 1 | 14-3-3 proteins bind phosphoserine motifs; mode I consensus R-S-X-pS-X-P, mode II R-X-[Y/F]-X-pS-X-P; the phosphopeptide lies in the amphipathic groove of each monomer in extended conformation | Yaffe et al. 1997 Cell, PMID 9428519 | `binding_site`, `motif`, `chemistry`, `stoichiometry_evidence` |
-| 2 | 14-3-3 is a cup-shaped dimer; each monomer has its own peptide-binding groove; dimer interface formed by N-terminal helices | Liu et al. 1995 Nature, PMID 7603574 (14-3-3 zeta crystal structure) | `stoichiometry_evidence` |
-| 3 | The phosphate is coordinated by a conserved basic pocket: zeta K49, R56, R127, Y128 -> in 14-3-3 gamma native K50, R57, R132, Y133 = input chain B K49, R56, R131, Y132 (residue identities checked against FASTA) | Yaffe 1997 PMID 9428519; many 14-3-3 gamma:phosphopeptide structures e.g. 2B05, 6A5S, 6GKG | `public_structures`, `binding_site`, `motif`, `chemistry`, `stoichiometry_evidence`, `templates`, D4, D6 |
-| 4 | LARP1 S548 is an annotated phosphoserine (large-scale phosphoproteomics); peptide PKGLSApSLPDL fits pS-X-P (S548-L549-P550) with R/K upstream at -5 not -3 (G545 at -3, L544 at -4); S546 (S-A-S) does not fit pS-X-P | UniProt Q6PKG0 modified-residue feature; motif from PMID 9428519 | `construct`, `identity`, `binding_site`, `motif`, `chemistry`, `stoichiometry_evidence` |
-| 5 | LARP1 is an mTORC1 substrate controlling 5'TOP mRNA translation; recent cryo-EM 9T76/9T77/9T7A/9T7B show LARP1 TOS/XTOS motif bound to mTORC1 (RAPTOR), a different region from 542-552 | RCSB 9T76-9T7B titles, 'mTORC1 recruits substrates via an expanded TOS (XTOS) motif' (2026) | `public_structures` |
+| 1 | 14-3-3 proteins bind phosphoserine-containing proteins through two motifs, RSXpSXP (mode 1) and RXY/FXpSXP (mode 2); the bound peptide is extended, with a tight turn at the pS+2 Pro (cis). | Yaffe et al. 1997 Cell, PMID 9428519 (abstract read via Europe PMC) | `binding_site`, `chemistry`, `motif`, `stoichiometry_evidence`, `gates`, D1 |
+| 2 | 14-3-3 acts as a dimer; the dimer binds tandem phosphoserine motifs bidentately. | PMID 9428519 (abstract) | `binding_site`, `chemistry`, `motif`, `stoichiometry_evidence`, `gates`, D1 |
+| 3 | Structures of all seven human 14-3-3 isoforms bound to ligands; specificity determinants for phosphopeptide orientation in the amphipathic groove; domain flexibility. | Yang et al. 2006 PNAS, PMID 17085597, PMC1859916 (abstract); the gamma entry from this work is 2B05 (inferred from release date and title, not checked) | `public_structures`, `stoichiometry_evidence` |
+| 4 | 14-3-3 gamma residues R57 and R132 (native numbering) interact with the phosphoserine of the bound protein (input R56, R131). | UniProt P61981 Site features | `identity`, `construct`, `binding_site`, `gates`, `gates_breakdown`, D5, D6 |
+| 5 | LARP1 Ser548 is a recorded phosphosite; it is residue 7 (S7) of chain A (LARP1 542-552). | UniProt Q6PKG0 Modified residue 548 | `identity`, `construct`, `chemistry`, `motif` |
+| 6 | In the peptide PKGLSASLPDL only S7 is followed by X-Pro (S7-L8-P9), the pS-X-P core of both 14-3-3 motifs; S5 (S5-A6-S7) is not. No Arg at -3/-4 of S7 (L4, G3), so the peptide fits neither full consensus; K2 at -5. | motif reading of PMID 9428519 against the FASTA, as counted here | `construct`, `binding_site`, `chemistry`, `motif`, `stoichiometry_evidence`, `msa_depth`, `peptide_analog`, `gates`, D1 |
+| 7 | 23 crystal/EM structures of human 14-3-3 gamma exist at 100% identity, most with bound phosphopeptides in the groove (e.g. 6S9K 1.60 A, 6ZBT 1.80 A, 6A5S 2.10 A). | residudes structures H1388 (RCSB sequence search, 2026-11-26) | `public_structures`, `binding_site`, `stoichiometry_evidence`, `templates`, `peptide_analog`, `gates`, D4 |
 
-**Not settled by anything read:** No paper or structure found on the 14-3-3:LARP1 complex itself (Europe PMC 'LARP1 14-3-3' 50 hits, none on the complex; one web search). The FASTA names no modification; the CASP description text was not available to this step - if it says phosphopeptide, the pSer is S7. Whether one or two peptides bind the 14-3-3 dimer in the experiment is not known; given stoichiometry A1B1.
+**Not settled by anything read:** ["No paper on the 14-3-3:LARP1 pS548 interaction or its structure was found (Europe PMC: '\"LARP1\" AND \"14-3-3\"', 'LARP1 AND Ser548', 'LARP1 AND (14-3-3 OR YWHA*)'); the organisers' description is not in the dossier, so whether the peptide was phosphorylated in the experiment is not confirmed here.", "Which kinase phosphorylates LARP1 S548 was not read.", "No team PDFs: /data/casp17/target_notes/H1388/papers/ does not exist."]
 
-**Searched:** Europe PMC REST 2026-11-23; WebSearch; target_notes/H1388/papers does not exist
+**Searched:** ["Europe PMC REST 2026-11-26: queries above + '14-3-3 AND phosphoserine AND motif AND RSXpSXP'", "UniProt P61981, Q6PKG0 JSON", "RCSB via residudes structures"]
 
 ![Every claim, its source, and the priors and decisions that share it](report/figs/literature.svg)
 
@@ -453,10 +184,12 @@ The residues are the ones a gate would use: read by the same function as `residu
 
 | evidence | chain | residues | read as | what it is | source |
 |---|---|---|---|---|---|
-| `binding_site` | B | K49, R56, R131, Y132 | residues as recorded | phosphate pocket of 14-3-3 gamma (input numbering; native K50 R57 R132 Y133); peptide chain A pS7 expected here, peptide in amphipathic groove | Yaffe et al. 1997 PMID 9428519; conserved in 14-3-3 gamma:phosphopeptide crystals 2B05, 6A5S |
-| `motif` | A | S7 | residues as recorded | LARP1 S548 = peptide S7, 14-3-3 mode-I-like pS-X-P (S7-L8-P9); S5 rejected (S-A-S, no Pro at +2) | UniProt Q6PKG0 (S548 phosphoserine); PMID 9428519 |
+| `binding_site` | B | K49, R56, R131, Y132 | residues as recorded | 14-3-3 gamma phosphate pocket in the amphipathic groove (native K50, R57, R132, Y133): the pS7 phosphate of chain A should sit here | UniProt P61981 sites R57/R132; checked in PDB 6S9K (14-3-3 gamma + caspase-2 phosphopeptide, 1.60 A): SEP139 phosphate oxygens within 3.5 A of R57, R132, Y133 (native numbering), as counted here from… |
+| `motif` | A | S7, L8, P9 | residues as recorded | 14-3-3 binding core on the LARP1 peptide (S7-L8-P9) | Yaffe et al. 1997, PMID 9428519 |
 
 Chemistry the FASTA does not carry, placed on a residue: **A7** phosphoserine (CCD SEP).
+
+Not placed: `chemistry.caveat` names chemistry but no residue: the FASTA carries no modification and the organisers' description was 
 
 ![Each recorded site in its own sequence, with what the record says it does](report/figs/sites.svg)
 
@@ -467,39 +200,58 @@ Each pattern the analysis wrote down, matched against the chain it was written a
 
 | pattern | chain | places it fits | at | recorded site | the record's residue is one of them | from |
 |---|---|---|---|---|---|---|
-| `pS-X-P` | A | 1 | S7 | S7 | yes | `motif` |
-| `S-A-S` | A | 1 | S5 | S7 | no | `motif` |
+| `pS-X-P` | A | 1 | S7 | S7, L8, P9 | yes | `motif` |
 
-Candidates the analysis weighed: **S7** chosen: pS-X-P motif, UniProt-annotated phosphosite; **S5** rejected: S-A-S has no Pro at +2; not annotated.
+Candidates the analysis weighed: **S7** chosen: only serine followed by X-Pro (S7-L8-P9, pS-X-P), and UniProt Q6PKG0 records Ser548 phosphorylation; **S5** rejected: S5-A6-S7 has no +2 Pro; no recorded phosphosite at LARP1 546.
 
 ![Every place the recorded motifs can sit in the sequence](report/figs/motif.svg)
 
 
 ## How much the MSAs cover
 
-| MSA | sequences | ≥50% coverage | columns | median coverage | min coverage | median identity |
-|---|---|---|---|---|---|---|
-| `af3/uniref90.a3m` | 6,536 | 4,692 | 233 | 4,982 | 456 | 0.627 |
-| `af3/uniprot.a3m` | 16,347 | 13,544 | 233 | 13,908 | 1,454 | 0.643 |
-| `af3/mgnify.a3m` | 4,332 | 1,860 | 233 | 2,374 | 74 | 0.547 |
-| `af3/bfd.a3m` | 1,607 | 957 | 233 | 993 | 34 | 0.305 |
+| MSA | sequences | ≥50% coverage | median coverage | median identity |
+|---|---|---|---|---|
+| `A` | 0 | 0 | 0 | – |
+| `B` | 10,377 | 8,105 | 7,660 | 0.529 |
 
+- **`msa_depth.A.assessment`:** empty, expected for an 11-residue peptide; not a lever - the pose comes from the receptor groove and the pS-X-P chemistry
+- **`msa_depth.B.thin_regions`:** none
+- **`msa_depth.effective`:** B deep, A none
+- **`msa_depth.assessment`:** no deepening needed for B; deepening A is not meaningful
 
 ![Coverage per residue, one line per MSA](report/figs/msa_coverage.svg)
 
 ## Templates and public structures
 
-Identity and coverage are quoted as the search reported them, not recomputed; a dash means that search did not give one.
+What each search reported, not recomputed. `sequence X` is the PDB search of chain X, `foldseek` a structural search of a model, `hhsearch` a profile against a profile.
 
-| entry | identity | coverage | search | what it reported |
-|---|---|---|---|---|
-| `6a5s` | – | – | `templates.B` | 23 exact human 14-3-3 gamma PDB structures (see public_structures); best peptide-bound: 6A5S 2.10 A, 2B05 2.55 A, 6GKG, 6FEL. AF3 default template search (A/B msas/af3/templates_hmmsearch.a3m) - check the B one contains gamma entries; the near-identity filter may hide 100% matches, so a custom template of 6A5S/2B05 with peptide pocket is an option |
-| – | – | – | `templates.A` | no template; peptide placement comes from the 14-3-3 groove (binding_site/motif gates) |
-| – | – | – | `templates.source` | RCSB search 2026-11-23 |
-| `2b05` | – | – | `public_structures.exact_sequence_sweep` | **method**: RCSB sequence search, chain B, identity>=95%, e<1e-10, 2026-11-23; **n_entities**: 23; **ids**: 2B05 3UZD 4E2E 4J6S 4O46 5D3E 6A5S 6BYJ 6BYL 6BZD 6FEL 6GKF 6GKG 6S9K 6SAD 6Y4K 6Y6B 6ZBT 6ZC9 7A6R 7A6Y 8XI3 9CI3; **note**: human 14-3-3 gamma, many as dimer with a bound phosphopeptide in the amphipathic groove: 2B05 (pSer peptide, 2.55 A), 6A5S (TFEB motif, 2.10 A), 6FEL/6Y4K (CaM…; **source**: RCSB search API; entry titles from data.rcsb.org |
-| `9t76` | – | – | `public_structures.peptide` | **method**: RCSB seqmotif GLSASLPD + full-text 'LARP1 14-3-3'; **hits**: LARP1 present in 9T76/9T77 (LARP1 bound to mTORC1, cryo-EM, released 2026-11-18) and 11HG/11JJ/8XP2/8XP3/9ED0 (large assemblies); none is a 14-3-3:LARP1 comple…; **source**: RCSB search API 2026-11-23 |
-| `4zq0` | – | – | `public_structures.foldseek` | not run: chain B has 23 exact-sequence (100% coverage of 3-233) structures; family fold unambiguous (hhpred top hits 4ZQ0, 3IQU, 2BR9 all Prob 100). |
-| – | – | – | `public_structures.hhpred_caveat` | B/hhpred.hhr top hits are 14-3-3 of other isoforms/species; no gamma entries listed (clustered DB), so templates must be added explicitly if wanted. |
+| entry | found by | match | coverage | method | released | title |
+|---|---|---|---|---|---|---|
+| `2b05` | sequence B | 100% | 100% | X-ray 2.55 Å | 2005-10-11 | Crystal Structure of 14-3-3 gamma in complex with a phosphoserine pept |
+| `3uzd` | sequence B | 100% | 100% | X-ray 1.86 Å | 2012-03-21 | Crystal structure of 14-3-3 GAMMA |
+| `4e2e` | sequence B | 100% | 100% | X-ray 2.25 Å | 2012-03-21 | Crystal structure of a tyrosine 3-monooxygenase/tryptophan 5-monooxyge |
+| `4j6s` | sequence B | 100% | 100% | X-ray 3.08 Å | 2013-10-02 | 14-3-3gamma complexed with the N-terminal sequence of tyrosine hydroxy |
+| `4o46` | sequence B | 100% | 100% | X-ray 2.90 Å | 2014-04-30 | 14-3-3-gamma in complex with influenza NS1 C-terminal tail phosphoryla |
+| `5d3e` | sequence B | 100% | 100% | X-ray 2.75 Å | 2016-03-16 | Crystal structure of human 14-3-3 gamma in complex with CFTR R-domain  |
+| `6a5s` | sequence B | 100% | 100% | X-ray 2.10 Å | 2019-02-13 | Structure of 14-3-3 gamma in complex with TFEB 14-3-3 binding motif |
+| `6byj` | sequence B | 100% | 100% | X-ray 2.90 Å | 2018-05-09 | Structure of human 14-3-3 gamma bound to O-GlcNAc peptide |
+| `6byl` | sequence B | 100% | 100% | X-ray 3.35 Å | 2018-05-09 | Structure of 14-3-3 gamma bound to O-GlcNAcylated thr peptide |
+| `6fel` | sequence B | 100% | 100% | X-ray 2.84 Å | 2018-01-10 | Structure of 14-3-3 gamma in complex with CaMKK2 14-3-3 binding motif  |
+| `6gkf` | sequence B | 100% | 100% | X-ray 2.60 Å | 2018-10-17 | Structure of 14-3-3 gamma in complex with caspase-2 14-3-3 binding mot |
+| `6gkg` | sequence B | 100% | 100% | X-ray 2.85 Å | 2018-10-17 | Structure of 14-3-3 gamma in complex with caspase-2 14-3-3 binding mot |
+| `6s9k` | sequence B | 100% | 100% | X-ray 1.60 Å | 2020-01-22 | Structure of 14-3-3 gamma in complex with caspase-2 peptide containing |
+| `6sad` | sequence B | 100% | 100% | X-ray 2.75 Å | 2020-01-22 | Structure of 14-3-3 gamma in complex with double phosphorylated caspas |
+| `6y4k` | sequence B | 100% | 100% | X-ray 3.00 Å | 2021-01-27 | Crystal structure of human 14-3-3 gamma in complex with CaMKK2 14-3-3  |
+| `6y6b` | sequence B | 100% | 100% | X-ray 3.08 Å | 2021-02-03 | Crystal structure of human 14-3-3 gamma in complex with CaMKK2 14-3-3  |
+| `6zbt` | sequence B | 100% | 100% | X-ray 1.80 Å | 2021-07-21 | Structure of 14-3-3 gamma in complex with Nedd4-2 14-3-3 binding motif |
+| `6zc9` | sequence B | 100% | 100% | X-ray 1.90 Å | 2021-07-21 | Structure of 14-3-3 gamma in complex with Nedd4-2 14-3-3 binding motif |
+| `7a6r` | sequence B | 100% | 100% | X-ray 2.70 Å | 2021-08-25 | Structure of 14-3-3 gamma in complex with DAPK2 peptide containing the |
+| `7a6y` | sequence B | 100% | 100% | X-ray 2.50 Å | 2021-08-25 | Structure of 14-3-3 gamma in complex with DAPK2 peptide stabilized by  |
+| `8xi3` | sequence B | 100% | 100% | EM 3.00 Å | 2024-10-02 | Structure of mouse SCMC-14-3-3gama complex |
+| `9ci3` | sequence B | 100% | 100% | EM 3.96 Å | 2025-09-03 | Structure of the LRRK2/14-3-3 complex |
+| `6bzd` | sequence B | 100% | 100% | X-ray 2.67 Å | 2018-05-09 | Structure of 14-3-3 gamma R57E mutant bound to GlcNAcylated peptide |
+
+Chain B has a near-identical public structure (`2b05`, `3uzd`, `4e2e`, `4j6s`, `4o46`, `5d3e` …). AlphaFold 3 filters those out of its own template search, so they only reach a prediction if they are passed in.
 
 ## The pool, clustered
 
@@ -507,22 +259,32 @@ residudes-qa clusters the pool by TM-score. One run covers one input variant or 
 
 | stoichiometry | cluster | models | variants in it | best confidence | its model | best predicted DockQ |
 |---|---|---|---|---|---|---|
-| A1B1 | 0 | 133 | mmseqs2_gpu 99, af3_msa 34 | 0.931 | `af3_msa__bt2_jax__s22_0` | 0.712 |
-| A1B1 | 1 | 125 | af3_msa_pS548 125 | 0.960 | `af3_msa_pS548__af3__s1_0` | 0.717 |
-| A1B1 | 8 | 123 | af3_msa 73, mmseqs2_gpu 50 | 0.918 | `af3_msa__bt2_jax__s8_1` | 0.568 |
-| A1B1 | 7 | 122 | af3_msa 75, mmseqs2_gpu 47 | 0.931 | `af3_msa__bt2_jax__s3_0` | 0.616 |
-| A1B1 | 5 | 101 | mmseqs2_gpu 56, af3_msa 45 | 0.921 | `af3_msa__bt2_jax__s12_1` | 0.568 |
-| A1B1 | 3 | 95 | mmseqs2_gpu 63, af3_msa 32 | 0.730 | `mmseqs2_gpu__af3__s5_1` | 0.531 |
-| A1B1 | 2 | 87 | mmseqs2_gpu 55, af3_msa 32 | 0.931 | `af3_msa__bt2_jax__s12_0` | 0.628 |
-| A1B1 | 6 | 58 | af3_msa 57, mmseqs2_gpu 1 | 0.767 | `mmseqs2_gpu__of3__s23_0` | 0.549 |
-| A1B1 | 4 | 31 | af3_msa 27, mmseqs2_gpu 4 | 0.585 | `mmseqs2_gpu__of3__s18_2` | 0.455 |
+| A1B1 | 10 | 46 | sep 45, base 1 | 0.949 | `sep__af3__s2_2` | 0.811 |
+| A1B1 | 6 | 39 | sep 39 | 0.952 | `sep__af3__s2_1` | 0.811 |
+| A1B1 | 2 | 34 | sep 34 | 0.956 | `sep__af3__s7_0` (M5) | 0.789 |
+| A1B1 | 7 | 31 | sep 31 | 0.908 | `sep__bt2__s4_3` | 0.630 |
+| A1B1 | 1 | 30 | base 25, sep 5 | 0.923 | `sep__bt2__s1_0` | 0.611 |
+| A1B1 | 4 | 27 | base 24, sep 3 | 0.675 | `base__af3__s1_1` | 0.547 |
+| A1B1 | 0 | 21 | sep 21 | 0.921 | `sep__bt2__s6_0` | 0.610 |
+| A1B1 | 9 | 20 | sep 20 | 0.963 | `sep__af3__s20_0` (M1) | 0.804 |
+| A1B1 | 5 | 16 | sep 16 | 0.918 | `sep__bt2__s3_1` | 0.767 |
+| A1B1 | 8 | 13 | sep 13 | 0.953 | `sep__af3__s2_0` | 0.765 |
+| A1B1 | 11 | 13 | sep 13 | 0.923 | `sep__bt2__s10_0` | 0.760 |
+| A1B1 | 3 | 10 | sep 10 | 0.920 | `sep__bt2__s3_0` | 0.741 |
 
 What the clustering says, from these numbers alone:
 
-- cluster 1 is af3_msa_pS548 and nothing else (125 of the 125 models that variant has): that input reaches a shape the others do not
-- 2 clusters hold models from three or more predictors; the largest is 7 (bt2_jax 59, of3 39, af3 24)
-- one predictor only: cluster 0 (bt2_jax, 133), cluster 1 (af3, 125), cluster 6 (of3, 58), cluster 4 (of3, 31) — a shape no other predictor found
-- the best cluster by predicted DockQ (1, mean 0.66) is not the biggest one (0, 133 models): size is not quality
+- cluster 6 is sep and nothing else (39 of the 250 models that variant has): that input reaches a shape the others do not
+- cluster 2 is sep and nothing else (34 of the 250 models that variant has): that input reaches a shape the others do not
+- cluster 7 is sep and nothing else (31 of the 250 models that variant has): that input reaches a shape the others do not
+- cluster 0 is sep and nothing else (21 of the 250 models that variant has): that input reaches a shape the others do not
+- cluster 9 is sep and nothing else (20 of the 250 models that variant has): that input reaches a shape the others do not
+- cluster 5 is sep and nothing else (16 of the 250 models that variant has): that input reaches a shape the others do not
+- cluster 11 is sep and nothing else (13 of the 250 models that variant has): that input reaches a shape the others do not
+- cluster 8 is sep and nothing else (13 of the 250 models that variant has): that input reaches a shape the others do not
+- cluster 3 is sep and nothing else (10 of the 250 models that variant has): that input reaches a shape the others do not
+- one predictor only: cluster 2 (af3, 34), cluster 5 (bt2, 16), cluster 11 (bt2, 13), cluster 8 (af3, 13) — a shape no other predictor found
+- the best cluster by predicted DockQ (2, mean 0.75) is not the biggest one (10, 46 models): size is not quality
 
 ![The same models four ways: clusters, predicted DockQ, confidence, and which predictor sits where](report/figs/clusters.svg)
 
@@ -531,53 +293,56 @@ What the clustering says, from these numbers alone:
 
 The sections above are read out of these entries. This is the whole record, including the fields they leave out, each at the stage it was found.
 
-### construct
-*NEW, by agent*
+### public_structures
+*NEW, by agent, 2 entries (latest shown)*
 
-- **chains**:
-  - **A (subunit1, 11 aa)**:
-    - **seq**: PKGLSASLPDL
-    - **maps to**: human LARP1 (UniProt Q6PKG0) residues 542-552, exact match
-    - **note**: No modification in FASTA. Two serines: S5 = LARP1 S546, S7 = LARP1 S548. UniProt annotates S548 as Phosphoserine (modified-residue feature).
-    - **source**: UniProt Q6PKG0 REST json, /store/deepfold/lantern/targets/H1388/dl/Q6PKG0.json
-  - **B (subunit2, 232 aa)**:
-    - **maps to**: human 14-3-3 gamma (YWHAG, UniProt P61981, 247 aa); target residues 2-232 = native 3-233 identical
-    - **differences**: target S1 replaces native M1-V2 (likely cloning/protease scar, e.g. remnant of a tag); native C-terminal tail 234-247 (SDQQDDDGGEGNN, acidic, disordered in 14-3-3 crystals) is truncated
-    - **numbering**: input residue i (i>=2) = native i+1
-    - **source**: UniProt P61981 REST json, /store/deepfold/lantern/targets/H1388/dl/P61981.json
-- **given stoichiometry**: A1B1
+- **A**: no PDB entity >=90% identity (11-residue peptide; residudes structures H1388)
+- **B**: 23 PDB entities at 100% identity, 100% coverage (residudes structures H1388, run 2026-11-26): 2B05 2.55 A phosphopeptide; 3UZD 1.86 A; 4E2E 2.25; 4J6S 3.08 TH N-term; 4O46 2.90 NS1 tail; 5D3E 2.75 CFTR; 6A5S 2.10 TFEB peptide; 6BYJ 2.90; 6BYL 3.35; 6BZD 2.67 R57E; 6FEL 2.84 CaMKK2; 6GKF 2.60, 6GKG 2.85 caspase-2; 6S9K 1.60 caspase-2 peptide; 6SAD 2.75; 6Y4K 3.00; 6Y6B 3.08; 6ZBT 1.80, 6ZC9 1.90 Nedd4-2; 7A6R 2.70, 7A6Y 2.50 DAPK2; 8XI3 3.00 EM; 9CI3 3.96 EM LRRK2
+- **best peptide bound**: 6S9K 1.60 A (caspase-2 phosphopeptide); 6ZBT 1.80 A (Nedd4-2); 6A5S 2.10 A (TFEB)
+- **complex**: no public structure of 14-3-3 with the LARP1 peptide found by sequence search
+- **template db age**: PDB mmCIF mirror 2026-04-25 (215 days, stale); foldseek PDB 2026 copy 2026-08-02
+- **note**: all chain-B hits are near-identical and are filtered by AF3's own template search; must be passed explicitly
 
 ### identity
 *NEW, by agent*
 
-- **B**:
-  - **uniprot**: P61981
-  - **name**: 14-3-3 protein gamma (YWHAG), Homo sapiens
-  - **family**: 14-3-3 protein family; Pfam PF00244; InterPro IPR000308, IPR023409, IPR023410, IPR036815
-  - **fold**: all-alpha, 9 antiparallel helices; amphipathic groove binds phospho-Ser/Thr peptides; obligate dimer via helices A-D
-  - **hhpred top**: 4ZQ0_C 14-3-3 Prob 100, 3IQU 14-3-3 sigma, 2BR9 14-3-3 epsilon ... (B/hhpred.hhr)
-  - **source**: UniProt P61981; /gpfs/deepfold/casp/casp17/targets/H1388/B/hhpred.hhr
 - **A**:
-  - **uniprot**: Q6PKG0
-  - **name**: La-related protein 1 (LARP1), Homo sapiens, residues 542-552
-  - **context**: LARP1 is an mTORC1 substrate regulating TOP mRNA translation; S548 annotated phosphoserine in UniProt
-  - **source**: UniProt Q6PKG0
+  - **organism**: Homo sapiens (Eukaryota; Metazoa; Chordata; Mammalia; Primates)
+  - **uniprot**: Q6PKG0 (LARP1_HUMAN), residues 542-552
+  - **family**: La-related protein 1 (LARP1); the peptide is an intrinsically disordered linker segment, no domain
+  - **domains**: none
+  - **basis**: exact substring of Q6PKG0 at 542-552 (single occurrence), as counted here from the UniProt FASTA
+- **B**:
+  - **organism**: Homo sapiens (Eukaryota; Metazoa; Chordata; Mammalia; Primates)
+  - **uniprot**: P61981 (1433G_HUMAN, YWHAG), residues 3-234 plus an N-terminal S in place of native V2
+  - **family**: 14-3-3 protein family
+  - **domains**:
+      - **name**: 14-3-3 domain
+        - **pfam**: PF00244
+        - **interpro**: IPR000308, IPR023410, IPR036815, IPR023409
+        - **range input**: 1-233 (whole construct)
+        - **range native**: 2-234
+  - **basis**: input 2-233 identical to P61981 3-234 (as counted here); P61981 Pfam/InterPro cross-references from rest.uniprot.org/uniprotkb/P61981.json
+- **description**: not given in the dossier; the pair is human 14-3-3 gamma with a LARP1-derived peptide (the CASP H1388 description is not in the dossier)
 
-### public_structures
+### construct
 *NEW, by agent*
 
-- **exact sequence sweep**:
-  - **method**: RCSB sequence search, chain B, identity>=95%, e<1e-10, 2026-11-23
-  - **n entities**: 23
-  - **ids**: 2B05 3UZD 4E2E 4J6S 4O46 5D3E 6A5S 6BYJ 6BYL 6BZD 6FEL 6GKF 6GKG 6S9K 6SAD 6Y4K 6Y6B 6ZBT 6ZC9 7A6R 7A6Y 8XI3 9CI3
-  - **note**: human 14-3-3 gamma, many as dimer with a bound phosphopeptide in the amphipathic groove: 2B05 (pSer peptide, 2.55 A), 6A5S (TFEB motif, 2.10 A), 6FEL/6Y4K (CaMKK2 motifs), 6GKG (caspase-2), 7A6R (DAPK2), 6BYL (O-GlcNAc-Thr peptide)
-  - **source**: RCSB search API; entry titles from data.rcsb.org
-- **peptide**:
-  - **method**: RCSB seqmotif GLSASLPD + full-text 'LARP1 14-3-3'
-  - **hits**: LARP1 present in 9T76/9T77 (LARP1 bound to mTORC1, cryo-EM, released 2026-11-18) and 11HG/11JJ/8XP2/8XP3/9ED0 (large assemblies); none is a 14-3-3:LARP1 complex. No public structure of this complex found.
-  - **source**: RCSB search API 2026-11-23
-- **foldseek**: not run: chain B has 23 exact-sequence (100% coverage of 3-233) structures; family fold unambiguous (hhpred top hits 4ZQ0, 3IQU, 2BR9 all Prob 100).
-- **hhpred caveat**: B/hhpred.hhr top hits are 14-3-3 of other isoforms/species; no gamma entries listed (clustered DB), so templates must be added explicitly if wanted.
+- **A**:
+  - **length**: 11
+  - **native region**: LARP1 Q6PKG0 542-552
+  - **numbering**: input = native - 541; input S7 = LARP1 Ser548 (UniProt: Phosphoserine at 548)
+  - **mutations**: none
+  - **tag**: none
+  - **notes**: two serines, S5 (native S546) and S7 (native S548); FASTA carries no modification
+- **B**:
+  - **length**: 233
+  - **native region**: P61981 3-234 (native length 247; C-terminal 235-247 SDQQDDDGGEGNN absent)
+  - **numbering**: input = native - 1 for input 2-233
+  - **n term**: input S1 replaces native M1-V2: likely a protease-cleavage/cloning remnant (inferred, not sourced)
+  - **mutations**: none beyond S1
+  - **tag**: none visible
+  - **notes**: C-terminal tail truncated at T234
 
 ### literature
 *NEW, by agent*
@@ -586,304 +351,580 @@ The sections above are read out of these entries. This is the whole record, incl
 
 | claim | source |
 |---|---|
-| 14-3-3 proteins bind phosphoserine motifs; mode I consensus R-S-X-pS-X-P, mode II R-X-[Y/F]-X-pS-X-P; the phosphopeptide lies in the amphipathic groove of each monomer in extended conformation | Yaffe et al. 1997 Cell, PMID 9428519 |
-| 14-3-3 is a cup-shaped dimer; each monomer has its own peptide-binding groove; dimer interface formed by N-terminal helices | Liu et al. 1995 Nature, PMID 7603574 (14-3-3 zeta crystal structure) |
-| The phosphate is coordinated by a conserved basic pocket: zeta K49, R56, R127, Y128 -> in 14-3-3 gamma native K50, R57, R132, Y133 = input chain B K49, R56, R131, Y132 (residue identities checked against FASTA) | Yaffe 1997 PMID 9428519; many 14-3-3 gamma:phosphopeptide structures e.g. 2B05, 6A5S, 6GKG |
-| LARP1 S548 is an annotated phosphoserine (large-scale phosphoproteomics); peptide PKGLSApSLPDL fits pS-X-P (S548-L549-P550) with R/K upstream at -5 not -3 (G545 at -3, L544 at -4); S546 (S-A-S) does not fit pS-X-P | UniProt Q6PKG0 modified-residue feature; motif from PMID 9428519 |
-| LARP1 is an mTORC1 substrate controlling 5'TOP mRNA translation; recent cryo-EM 9T76/9T77/9T7A/9T7B show LARP1 TOS/XTOS motif bound to mTORC1 (RAPTOR), a different region from 542-552 | RCSB 9T76-9T7B titles, 'mTORC1 recruits substrates via an expanded TOS (XTOS) motif' (2026) |
+| 14-3-3 proteins bind phosphoserine-containing proteins through two motifs, RSXpSXP (mode 1) and RXY/FXpSXP (mode 2); the bound peptide is extended, with a tight turn at the pS+2 Pro (cis). | Yaffe et al. 1997 Cell, PMID 9428519 (abstract read via Europe PMC) |
+| 14-3-3 acts as a dimer; the dimer binds tandem phosphoserine motifs bidentately. | PMID 9428519 (abstract) |
+| Structures of all seven human 14-3-3 isoforms bound to ligands; specificity determinants for phosphopeptide orientation in the amphipathic groove; domain flexibility. | Yang et al. 2006 PNAS, PMID 17085597, PMC1859916 (abstract); the gamma entry from this work is 2B05 (inferred from release date and title, not checked) |
+| 14-3-3 gamma residues R57 and R132 (native numbering) interact with the phosphoserine of the bound protein (input R56, R131). | UniProt P61981 Site features |
+| LARP1 Ser548 is a recorded phosphosite; it is residue 7 (S7) of chain A (LARP1 542-552). | UniProt Q6PKG0 Modified residue 548 |
+| In the peptide PKGLSASLPDL only S7 is followed by X-Pro (S7-L8-P9), the pS-X-P core of both 14-3-3 motifs; S5 (S5-A6-S7) is not. No Arg at -3/-4 of S7 (L4, G3), so the peptide fits neither full consensus; K2 at -5. | motif reading of PMID 9428519 against the FASTA, as counted here |
+| 23 crystal/EM structures of human 14-3-3 gamma exist at 100% identity, most with bound phosphopeptides in the groove (e.g. 6S9K 1.60 A, 6ZBT 1.80 A, 6A5S 2.10 A). | residudes structures H1388 (RCSB sequence search, 2026-11-26) |
 
-- **not known**: No paper or structure found on the 14-3-3:LARP1 complex itself (Europe PMC 'LARP1 14-3-3' 50 hits, none on the complex; one web search). The FASTA names no modification; the CASP description text was not available to this step - if it says phosphopeptide, the pSer is S7. Whether one or two peptides bind the 14-3-3 dimer in the experiment is not known; given stoichiometry A1B1.
-- **searched**: Europe PMC REST 2026-11-23; WebSearch; target_notes/H1388/papers does not exist
+- **not known**: No paper on the 14-3-3:LARP1 pS548 interaction or its structure was found (Europe PMC: '"LARP1" AND "14-3-3"', 'LARP1 A…, Which kinase phosphorylates LARP1 S548 was not read., No team PDFs: /data/casp17/target_notes/H1388/papers/ does not exist.
+- **searched**: Europe PMC REST 2026-11-26: queries above + '14-3-3 AND phosphoserine AND motif AND RSXpSXP', UniProt P61981, Q6PKG0 JSON, RCSB via residudes structures
 
 ### binding_site
-*NEW, by agent*
+*NEW, by agent, 2 entries (latest shown)*
 
 - **chain**: B
 - **residues**: 49, 56, 131, 132
-- **what**: phosphate pocket of 14-3-3 gamma (input numbering; native K50 R57 R132 Y133); peptide chain A pS7 expected here, peptide in amphipathic groove
-- **source**: Yaffe et al. 1997 PMID 9428519; conserved in 14-3-3 gamma:phosphopeptide crystals 2B05, 6A5S
+- **what**: 14-3-3 gamma phosphate pocket in the amphipathic groove (native K50, R57, R132, Y133): the pS7 phosphate of chain A should sit here
+- **source**: UniProt P61981 sites R57/R132; checked in PDB 6S9K (14-3-3 gamma + caspase-2 phosphopeptide, 1.60 A): SEP139 phosphate oxygens within 3.5 A of R57, R132, Y133 (native numbering), as counted here from <WORK>/targets/H1388/dl/pdb/6S9K.pdb; K50 not within 3.5 A there, kept by homology to the 14-3-3zeta pocket (PMID 9428519)
+- **partner**:
+  - **chain**: A
+  - **residues**: 7
+- **numbering**: input = native - 1 (checked: input K49, R56, R131, Y132 in FASTA)
+- **use**: contact gate: chain A residue 7 within ~4 A of chain B 56/131/132
+
+### chemistry
+*NEW, by agent*
+
+- **modification**: phosphoserine (CCD SEP) on chain A residue 7 (LARP1 Ser548)
+- **chain**: A
+- **residues**: 7
+- **candidates**:
+  - **S7**: chosen: only serine followed by X-Pro (S7-L8-P9, pS-X-P), and UniProt Q6PKG0 records Ser548 phosphorylation
+  - **S5**: rejected: S5-A6-S7 has no +2 Pro; no recorded phosphosite at LARP1 546
+- **motif**: pS-X-P
+- **source**: PMID 9428519; UniProt Q6PKG0
+- **caveat**: the FASTA carries no modification and the organisers' description was not available in the dossier
 
 ### motif
 *NEW, by agent*
 
 - **chain**: A
-- **residues**: 7
-- **what**: LARP1 S548 = peptide S7, 14-3-3 mode-I-like pS-X-P (S7-L8-P9); S5 rejected (S-A-S, no Pro at +2)
-- **source**: UniProt Q6PKG0 (S548 phosphoserine); PMID 9428519
-
-### chemistry
-*NEW, by agent*
-
-- **modification**: phosphoserine (CCD SEP) on chain A residue 7 (LARP1 S548)
-- **candidates**:
-  - **S7**: chosen: pS-X-P motif, UniProt-annotated phosphosite
-  - **S5**: rejected: S-A-S has no Pro at +2; not annotated
-- **basis**: 14-3-3 binds phosphorylated motifs only (PMID 9428519); FASTA carries no PTM
-- **run as**: variant next to unmodified input
+- **residues**: 7, 8, 9
+- **pattern**: pS-X-P
+- **what**: 14-3-3 binding core on the LARP1 peptide (S7-L8-P9)
+- **source**: Yaffe et al. 1997, PMID 9428519
 
 ### stoichiometry_evidence
 *IDENTIFIED, by agent, 2 entries (latest shown)*
 
-- **given**: A1B1 (CASP; chain A = LARP1 peptide 11 aa, chain B = 14-3-3 gamma 3-233)
-- **homolog assemblies**:
-  - **method**: RCSB assembly 1 + rcsb_struct_symmetry, 2026-11-23
-  - **entries**:
-    - **2B05**: tetrameric, A2B2 C2 (PISA)
-    - **6A5S**: tetrameric, A2B2 C2 (PISA)
-    - **6FEL**: tetrameric, A2B2 C2 (PISA)
-    - **7A6R**: tetrameric, A2B2 C2 (PISA)
-    - **6GKG**: tetrameric, 14-3-3 A2 + 2 peptides
-    - **6BYL**: tetrameric, 14-3-3 A2 + 2 peptides
-  - **summary**: 6/6 human 14-3-3 gamma:phosphopeptide structures = 14-3-3 homodimer with one peptide per groove (2:2); no 1:1 assembly
-- **family prior**: 14-3-3 obligate homodimer via N-terminal helices (Liu 1995 PMID 7603574); one peptide per monomer groove (Yaffe 1997 PMID 9428519); the dimer interface (helices A-D) is in the construct (residues 3-233 keep the N-terminus)
-- **seq2symm**: not run: family assembly unambiguous from 6/6 PDB assemblies
-- **n sweep**: not run as a scan; the pertinent hypotheses are A1B1 (scored unit) and A2B2 (native context). A 14-3-3 dimer with a single peptide (A1B2) is a third option
-- **interpretation**: The CASP A1B1 is the scored unit (one groove + one peptide), almost certainly an ASU or interface chosen from a 2:2 crystal. Modelling A2B2 and extracting one 14-3-3:peptide pair is the biological environment; groove geometry of the monomer is the same either way, so A1B1 and A2B2 should agree on peptide placement. Use A2B2 as a cross-check / source for alternatives, not as the submitted stoichiometry.
-- **hindsight caveat**: results for A1B1 and A2B2 already exist on disk from the team run; not read for this decision
+- **given**: A1B1
+- **given source**: organisers' declared stoichiometry (dossier stoichiometry.given)
+- **family**: 14-3-3 is a constitutive homodimer (PMID 9428519); each protomer has its own amphipathic groove that binds one phosphopeptide, so the biological unit with saturating peptide is A2B2
+- **homolog assemblies**: the 23 exact-sequence 14-3-3 gamma entries (residudes structures H1388, e.g. 2B05, 6A5S, 6S9K, 6ZBT) are crystal structures of the dimer or of a protomer related to its partner by crystal symmetry, with one peptide per groove; the peptide contacts a single protomer, so an A1B1 model contains the whole peptide interface
+- **n sweep**: not run: the copy numbers are declared (rule 5, stage-2 style override); a peptide:14-3-3 sweep beyond 1:1 and 2:2 has no biological basis
+- **seq2symm**: not run (declared count; B is a known C2 dimer)
+- **reading**: A1B1 is what is scored; A2B2 is the biological assembly and is kept as an auxiliary run only to check that the peptide pose in one groove is the same with the dimer partner present
+- **source**: PMID 9428519; PMID 17085597; residudes structures H1388 (2026-11-26)
 
 ### msa_depth
-*PLAN_REVIEW, by agent, 3 entries (latest shown)*
+*NEW, by agent, 2 entries (latest shown)*
 
-- **af3/uniref90.a3m**:
-  - **path**: /gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/uniref90.a3m
-  - **length**: 233
-  - **n**: 6536
-  - **n cov50**: 4692
-  - **coverage min**: 456
-  - **coverage median**: 4982
-  - **median identity**: 0.627
+- **source**: colabfold API (residudes-engine msa --source colabfold, 2026-11-26), <WORK>/targets/H1388/msas/colabfold/msa
+- **A**:
+  - **file**: unpaired_A.a3m
+  - **n**: 0
+  - **n cov50**: 0
+  - **coverage median**: 0
+  - **assessment**: empty, expected for an 11-residue peptide; not a lever - the pose comes from the receptor groove and the pS-X-P chemistry
+- **B**:
+  - **file**: unpaired_B.a3m
+  - **n**: 10377
+  - **n cov50**: 8105
+  - **coverage median**: 7660
+  - **median identity**: 0.529
   - **thin regions**: none
-- **af3/uniprot.a3m**:
-  - **path**: /gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/uniprot.a3m
-  - **length**: 233
-  - **n**: 16347
-  - **n cov50**: 13544
-  - **coverage min**: 1454
-  - **coverage median**: 13908
-  - **median identity**: 0.643
-  - **thin regions**: none
-- **af3/mgnify.a3m**:
-  - **path**: /gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/mgnify.a3m
-  - **length**: 233
-  - **n**: 4332
-  - **n cov50**: 1860
-  - **coverage min**: 74
-  - **coverage median**: 2374
-  - **median identity**: 0.547
-  - **thin regions**: none
-- **af3/bfd.a3m**:
-  - **path**: /gpfs/deepfold/casp/casp17/targets/H1388/B/msas/af3/bfd.a3m
-  - **length**: 233
-  - **n**: 1607
-  - **n cov50**: 957
-  - **coverage min**: 34
-  - **coverage median**: 993
-  - **median identity**: 0.305
-  - **thin regions**: none
+- **paired rows**: 1
+- **effective**: B deep, A none
+- **assessment**: no deepening needed for B; deepening A is not meaningful
+- **plot**: report/figs/msa_coverage.svg
 
 ### templates
 *NEW, by agent*
 
-- **B**: 23 exact human 14-3-3 gamma PDB structures (see public_structures); best peptide-bound: 6A5S 2.10 A, 2B05 2.55 A, 6GKG, 6FEL. AF3 default template search (A/B msas/af3/templates_hmmsearch.a3m) - check the B one contains gamma entries; the near-identity filter may hide 100% matches, so a custom template of 6A5S/2B05 with peptide pocket is an option
-- **A**: no template; peptide placement comes from the 14-3-3 groove (binding_site/motif gates)
-- **source**: RCSB search 2026-11-23
-
-### existing_pool
-*HYPOTHESES, by agent*
-
-- **root**: /gpfs/deepfold/casp/casp17/targets/H1388/results
-- **found**: existing pool (CASP17 run, 2026-06) for A1B1 and A2B2; input variants af3_msa, af3_msa_pS548, mmseqs2_gpu
-- **per combo**: af3: 25 seeds x 5 samples per sto/variant (af3_msa, af3_msa_pS548, mmseqs2_gpu); bt2_jax and of3: af3_msa and mmseqs2_gpu (no pS548 variant); pt2: inference.log ends 'done' but no model files (only ERR/log) in every sto/variant
-- **templates B**: af3 default hmmsearch: 1578 hits, 91 are 14-3-3 gamma, so close templates are present without a custom template
-- **msa A**: peptide (11 aa): uniref90/uniprot/mgnify contain only the query (expected for a peptide); A templates_hmmsearch 34 lines, irrelevant
+- **B colabfold**: 6byj_A 100% id, qcov 2-233/233, E 1.5e-116; 6y6b_B 100%; 6bzd_B 99.5% (R57E); 6zc9_A 99.1%; 6fel_D 98.2%; 7v9b_A 64.6% (other isoform); file msas/colabfold/msa/templates_B.m8
+- **A**: none (peptide)
+- **hhsearch**: not run this step: chain B already has 23 exact-sequence structures and chain A is an 11-mer a profile search cannot place
+- **note**: AF3 hides >=95% templates in its own search; pass a peptide-bound gamma entry (e.g. 6S9K, 6ZBT, 6A5S) explicitly
 
 ### report
-*PLAN_REVIEW, by agent, 23 entries (latest shown)*
+*SLATE_PROPOSED, by agent, 4 entries (latest shown)*
 
-- **pdf**: /store/deepfold/lantern/targets/H1388/report/report.pdf
+- **pdf**: <WORK>/targets/H1388/report/report.pdf
 - **with retro**: False
-- **figures**: A1B1_chains.jpg, A1B1_plddt.jpg, A2B2_chains.jpg, A2B2_plddt.jpg, C0_chains.jpg, C0_plddt.jpg, C1_chains.jpg, C1_plddt.jpg, C2_chains.jpg, C2_plddt.jpg, C3_chains.jpg, C3_plddt.jpg, C5_chains.jpg, C5_plddt.jpg, C6_chains.jpg, C6_plddt.jpg, C7_chains.jpg, C7_plddt.jpg, C8_chains.jpg, C8_plddt.jpg, overlay.jpg, template_6a5s.jpg
+- **figures**: none
 
-### pool
+### peptide_analog
 *PLAN_REVIEW, by agent*
 
-- **dir**: /gpfs/deepfold/casp/casp17/targets/H1388
-- **n models**: 1750
-- **csv**: /store/deepfold/lantern/targets/H1388/pool.csv
-- **by sto variant runner**:
-  - **A1B1/af3 msa/af3**:
-    - **n**: 125
-    - **ranking score median**: 0.67
-    - **ranking score max**: 0.77
-    - **iptm median**: 0.58
-    - **iptm max**: 0.7
-    - **top**: seed 6 sample 0 rs 0.77 ipTM 0.7, seed 3 sample 0 rs 0.76 ipTM 0.68, seed 12 sample 0 rs 0.75 ipTM 0.68
-  - **A1B1/af3 msa/bt2 jax**:
-    - **n**: 125
-    - **ranking score median**: 0.915
-    - **ranking score max**: 0.931
-    - **iptm median**: 0.865
-    - **iptm max**: 0.914
-    - **top**: seed 12 sample 0 rs 0.931 ipTM 0.911, seed 22 sample 0 rs 0.931 ipTM 0.912, seed 3 sample 0 rs 0.931 ipTM 0.888
-  - **A1B1/af3 msa/of3**:
-    - **n**: 125
-    - **ranking score median**: 0.501
-    - **ranking score max**: 0.707
-    - **iptm median**: 0.37
-    - **iptm max**: 0.623
-    - **top**: seed 5 sample 0 rs 0.707 ipTM 0.623, seed 15 sample 0 rs 0.703 ipTM 0.619, seed 15 sample 1 rs 0.686 ipTM 0.598
-  - **A1B1/af3 msa pS548/af3**:
-    - **n**: 125
-    - **ranking score median**: 0.95
-    - **ranking score max**: 0.96
-    - **iptm median**: 0.92
-    - **iptm max**: 0.94
-    - **top**: seed 1 sample 0 rs 0.96 ipTM 0.94, seed 13 sample 0 rs 0.96 ipTM 0.93, seed 14 sample 0 rs 0.96 ipTM 0.94
-  - **A1B1/mmseqs2 gpu/af3**:
-    - **n**: 125
-    - **ranking score median**: 0.68
-    - **ranking score max**: 0.77
-    - **iptm median**: 0.59
-    - **iptm max**: 0.7
-    - **top**: seed 24 sample 0 rs 0.77 ipTM 0.7, seed 10 sample 0 rs 0.76 ipTM 0.69, seed 16 sample 0 rs 0.76 ipTM 0.68
-  - **A1B1/mmseqs2 gpu/bt2 jax**:
-    - **n**: 125
-    - **ranking score median**: 0.915
-    - **ranking score max**: 0.925
-    - **iptm median**: 0.887
-    - **iptm max**: 0.914
-    - **top**: seed 16 sample 0 rs 0.925 ipTM 0.908, seed 1 sample 0 rs 0.923 ipTM 0.86, seed 18 sample 0 rs 0.923 ipTM 0.852
-  - **A1B1/mmseqs2 gpu/of3**:
-    - **n**: 125
-    - **ranking score median**: 0.576
-    - **ranking score max**: 0.793
-    - **iptm median**: 0.463
-    - **iptm max**: 0.731
-    - **top**: seed 7 sample 0 rs 0.793 ipTM 0.731, seed 23 sample 0 rs 0.767 ipTM 0.695, seed 14 sample 0 rs 0.727 ipTM 0.649
-  - **A2B2/af3 msa/af3**:
-    - **n**: 125
-    - **ranking score median**: 0.88
-    - **ranking score max**: 0.9
-    - **iptm median**: 0.85
-    - **iptm max**: 0.88
-    - **top**: seed 11 sample 0 rs 0.9 ipTM 0.88, seed 12 sample 0 rs 0.89 ipTM 0.86, seed 13 sample 0 rs 0.89 ipTM 0.86
-  - **A2B2/af3 msa/bt2 jax**:
-    - **n**: 125
-    - **ranking score median**: 0.929
-    - **ranking score max**: 0.936
-    - **iptm median**: 0.928
-    - **iptm max**: 0.936
-    - **top**: seed 11 sample 0 rs 0.936 ipTM 0.929, seed 14 sample 0 rs 0.935 ipTM 0.932, seed 5 sample 0 rs 0.935 ipTM 0.933
-  - **A2B2/af3 msa/of3**:
-    - **n**: 125
-    - **ranking score median**: 0.918
-    - **ranking score max**: 0.922
-    - **iptm median**: 0.891
-    - **iptm max**: 0.895
-    - **top**: seed 10 sample 0 rs 0.922 ipTM 0.895, seed 18 sample 0 rs 0.922 ipTM 0.895, seed 1 sample 0 rs 0.921 ipTM 0.894
-  - **A2B2/af3 msa pS548/af3**:
-    - **n**: 125
-    - **ranking score median**: 0.94
-    - **ranking score max**: 0.95
-    - **iptm median**: 0.91
-    - **iptm max**: 0.93
-    - **top**: seed 1 sample 0 rs 0.95 ipTM 0.92, seed 10 sample 0 rs 0.95 ipTM 0.92, seed 15 sample 0 rs 0.95 ipTM 0.92
-  - **A2B2/mmseqs2 gpu/af3**:
-    - **n**: 125
-    - **ranking score median**: 0.88
-    - **ranking score max**: 0.89
-    - **iptm median**: 0.85
-    - **iptm max**: 0.86
-    - **top**: seed 1 sample 0 rs 0.89 ipTM 0.86, seed 1 sample 1 rs 0.89 ipTM 0.86, seed 11 sample 0 rs 0.89 ipTM 0.86
-  - **A2B2/mmseqs2 gpu/bt2 jax**:
-    - **n**: 125
-    - **ranking score median**: 0.931
-    - **ranking score max**: 0.938
-    - **iptm median**: 0.932
-    - **iptm max**: 0.942
-    - **top**: seed 7 sample 0 rs 0.938 ipTM 0.937, seed 18 sample 0 rs 0.937 ipTM 0.936, seed 9 sample 0 rs 0.937 ipTM 0.936
-  - **A2B2/mmseqs2 gpu/of3**:
-    - **n**: 125
-    - **ranking score median**: 0.903
-    - **ranking score max**: 0.924
-    - **iptm median**: 0.875
-    - **iptm max**: 0.898
-    - **top**: seed 13 sample 0 rs 0.924 ipTM 0.898, seed 13 sample 1 rs 0.923 ipTM 0.897, seed 13 sample 2 rs 0.92 ipTM 0.894
-- **empty models**:
-  - **n**: 0
-  - **first**: none
+- **entry**: 6S9K
+- **chain receptor**: A (14-3-3 gamma)
+- **chain peptide**: B (caspase-2)
+- **peptide seqres start**: DYDL(SEP)LPFPVCESCPLYKKLRLSTDT
+- **core match**: 6S9K caspase-2 pS139-L-P and LARP1 pS548-L-P (input A7-L8-P9) share pS, +1 Leu and +2 Pro; -1 is Leu in caspase-2 and Ala in LARP1
+- **use**: the closest public pS-L-P pose in 14-3-3 gamma; register prior for the gate and the pinned template (D4)
+- **source**: <WORK>/targets/H1388/dl/pdb/6S9K.pdb SEQRES, as counted here
+- **figure**: <WORK>/targets/H1388/report/figs/pocket_6s9k.png
+
+### inputs
+*INPUTS_READY, by agent*
+
+- **built**: 2026-11-26
+- **base**:
+  - **file**: <WORK>/targets/H1388/inputs/base/input.json
+  - **sto**: A1B1
+  - **msa**: <WORK>/targets/H1388/msas/colabfold/msa (A empty, B 10,377 seqs)
+  - **templates B**: pin_6s9k_A (rank 1, moved to first by hand; the CLI @1 placed it second), 7v9b_A 65%, 6byj_F 100%, 6y6b_B 100%
+  - **templates A**: none
+- **sep**:
+  - **file**: <WORK>/targets/H1388/inputs/sep/input.json
+  - **same as**: base
+  - **modification**:
+    - **chain**: A
+    - **residues**: 7
+    - **ptmType**: SEP
+    - **ptmPosition**: 7
+- **runs**:
+  - **af3 sep**: seeds 1-20 x5, slurm 348884-348903
+  - **af3 base**: seeds 1-10 x5, 348904-348913
+  - **pt2 sep**: seeds 1-10 x5, 348914-348923
+  - **bt2 sep**: seeds 1-10 x5, 348924-348933
+  - **of3 sep**: seeds 1-10 x5, 348934-348943
+- **gpu budget**: 60 jobs, 2 h wall limit each (120 GPU-h worst case of 400); expected ~5-10 GPU-h
+- **open check**: whether bt2/of3/pt2 runners carry the SEP modification: check the output CIFs for SEP at A7 on pull; label unmodified if not
+
+### pool
+*RUNNING, by agent, 2 entries (latest shown)*
+
+- **pool csv**: <WORK>/targets/H1388/pool.csv
+- **layout**: runs/<runner>_<variant> symlinked as results/A1B1/<variant>/<runner> (absolute links) for residudes pool --dir
+- **jobs**: 60/60 slurm jobs COMPLETED (348884-348943)
+- **total models**: 300
+- **empty models**: 0
+- **has clash**: 0
+- **per run**:
+    - **sto**: A1B1
+      - **variant**: sep
+      - **runner**: af3
+      - **n**: 100
+      - **expected**: 100
+      - **rs median**: 0.944
+      - **rs max**: 0.963
+      - **iptm max**: 0.939
+      - **sep in model**: 100/100 (P atom present, SEP chain A res 7)
+    - **sto**: A1B1
+      - **variant**: base
+      - **runner**: af3
+      - **n**: 50
+      - **expected**: 50
+      - **rs median**: 0.652
+      - **rs max**: 0.764
+      - **iptm max**: 0.693
+      - **sep in model**: 0/50 (unmodified control, as intended)
+    - **sto**: A1B1
+      - **variant**: sep
+      - **runner**: pt2
+      - **n**: 50
+      - **expected**: 50
+      - **rs median**: 0.918
+      - **rs max**: 0.93
+      - **iptm max**: 0.92
+      - **sep in model**: 0/50 (no P atom; res 7 written SER)
+    - **sto**: A1B1
+      - **variant**: sep
+      - **runner**: bt2
+      - **n**: 50
+      - **expected**: 50
+      - **rs median**: 0.912
+      - **rs max**: 0.923
+      - **iptm max**: 0.908
+      - **sep in model**: 0/50 (no P atom; res 7 written SER)
+    - **sto**: A1B1
+      - **variant**: sep
+      - **runner**: of3
+      - **n**: 50
+      - **expected**: 50
+      - **rs median**: 0.585
+      - **rs max**: 0.743
+      - **iptm max**: 0.669
+      - **sep in model**: 0/50 (no P atom; res 7 written SER)
+- **finding**: Only af3 carried the pS7 phosphate into its models. pt2/bt2/of3 'sep' runs output plain SER7 with no phosphorus, so their models are effectively unmodified-peptide predictions despite the variant label. pt2 and bt2 still score high (rs ~0.91-0.92) while af3 unmodified scores 0.65 and of3 0.59, so the pt2/bt2 confidence did not come from the phosphate (possibly template/predictor bias). Whether pt2/bt2 received the modification at featurization and dropped it on write, or never received it, is not established from the logs read.
+
+### gates_breakdown
+*POOL_READY, by agent*
+
+- **spec**: <WORK>/targets/H1388/gates/H1388_A1B1.json
+- **csv**: <WORK>/targets/H1388/gates/pocket_A1B1.csv
+- **job**: 348951
+- **pass all**: 235/300
+- **phospho pocket pass**:
+  - **sep/af3**: 100/100 (all 4/4 pocket residues; median min distance 2.53 A)
+  - **sep/pt2**: 50/50 (all 4/4; 4.31 A)
+  - **sep/bt2**: 46/50 (4/4 in 23; 4.13 A)
+  - **sep/of3**: 33/50 (4/4 in 15; 3.14 A)
+  - **base/af3**: 6/50 (0-1 of 4 in 44; 4.61 A)
+- **motif pass**: 300/300
+- **assembled pass**: 300/300
+- **best passing**:
+  - **af3**: A1B1__sep__af3__s20_0 (0.963)
+  - **pt2**: A1B1__sep__pt2__s5_0 (0.930)
+  - **bt2**: A1B1__sep__bt2__s10_0 (0.923)
+  - **of3**: A1B1__sep__of3__s7_0 (0.657)
+- **reading**: every arm docks the peptide (motif/assembled 300/300), but only with the phosphate does af3 put residue 7 into the K49/R56/R131/Y132 pocket: the unmodified control mostly shifts the register. Supports D1/D5 (SEP lead arm); the base/af3 arm should not lead the slate.
+
+### qa
+*POOL_READY, by agent*
+
+- **sto**: A1B1
+- **interface**:
+  - **job**: 348948
+  - **file**: <WORK>/targets/H1388/qa/interface_A1B1/xgb_dockq.csv
+  - **n**: 300
+  - **per arm xgb dockq median max iptm median**:
+    - **af3 sep**: 0.753, 0.811, 0.917
+    - **pt2 sep**: 0.728, 0.766, 0.905
+    - **bt2 sep**: 0.695, 0.767, 0.883
+    - **af3 base**: 0.475, 0.567, 0.552
+    - **of3 sep**: 0.45, 0.565, 0.473
+  - **reading**: SEP arms of af3/pt2/bt2 give confident interfaces (ipTM ~0.9, xgb-DockQ ~0.7-0.8); unmodified af3 control and of3 are weak (ipTM ~0.5): phosphate drives confidence, as D1 expected; of3 likely did not carry SEP or is weaker on peptides
+- **cluster**:
+  - **job**: 348952
+  - **dir**: <WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/results
+  - **metric**: TM (whole complex)
+  - **n clusters**: 12
+  - **largest**:
+      - C6
+      - 39
+      - pt2_seed3_sample0__sep
+      - C2
+      - 34
+      - af3_seed4_sample2__sep
+      - C7
+      - 31
+      - of3_seed6_sample4__sep
+      - C1
+      - 30
+      - af3_seed10_sample2__base
+  - **reading**: clusters split mostly by predictor/variant, intra-TM >=0.976; whole-complex TM is dominated by the 233-res receptor, so peptide register is judged by the gates, not the clusters
+
+### results_review
+*RESULTS_REVIEW, by agent, 2 entries (latest shown)*
+
+- **checks**:
+  - **best confidence**:
+    - **A1B1/af3**: 0.939
+    - **A1B1/bt2**: 0.908
+    - **A1B1/of3**: 0.669
+    - **A1B1/pt2**: 0.92
+  - **models per cell**:
+    - **A1B1/base**:
+      - **af3**: 50
+    - **A1B1/sep**:
+      - **af3**: 100
+      - **bt2**: 50
+      - **of3**: 50
+      - **pt2**: 50
+  - **chains per run**:
+    - **A1B1/base/af3**: 2
+    - **A1B1/sep/af3**: 2
+    - **A1B1/sep/bt2**: 2
+    - **A1B1/sep/of3**: 2
+    - **A1B1/sep/pt2**: 2
+  - **top cluster A1B1**: none
+  - **interface best A1B1**: 0.811
+- **triggers**: missing_models: A1B1/sep/bt2 50/100, A1B1/sep/of3 50/100, A1B1/sep/pt2 50/100, missing_models_false_positive: the trigger expects 100 per sep cell because sep/af3 ran 20 seeds; D6 planned 10 seeds x…, peptide_register_split: on receptor superposition, af3-SEP and pt2 put the peptide core A4-A10 in one register (median …, ptm_not_carried: only af3 wrote SEP at A7; pt2/bt2/of3 sep runs wrote SER7 (evidence pool). pt2 still reproduces the af…
+
+### peptide_agreement
+*RESULTS_REVIEW, by agent*
+
+- **method**: receptor (chain B) CA superposition onto the top-ranking_score af3 SEP model A1B1__sep__af3__s20_0, then peptide chain A CA RMSD (all 11 and core A4-A10); script <WORK>/targets/H1388/scripts/pep_rmsd.py
+- **reference**: A1B1__sep__af3__s20_0
+- **per arm**:
+  - **sep/af3**:
+    - **n**: 100
+    - **pep rmsd median**: 3.0
+    - **core rmsd median**: 0.56
+    - **frac core lt 2A**: 0.99
+  - **sep/pt2**:
+    - **n**: 50
+    - **pep rmsd median**: 2.85
+    - **core rmsd median**: 0.57
+    - **frac core lt 2A**: 1.0
+    - **top model**: A1B1__sep__pt2__s5_0 core 0.48 A
+    - **note**: pt2 wrote SER7 (no phosphate) yet places the core in the same register
+  - **sep/bt2**:
+    - **n**: 50
+    - **pep rmsd median**: 4.02
+    - **core rmsd median**: 3.05
+    - **frac core lt 2A**: 0.0
+    - **top model**: A1B1__sep__bt2__s1_0 core 10.5 A (different placement)
+  - **sep/of3**:
+    - **n**: 50
+    - **pep rmsd median**: 6.54
+    - **core rmsd median**: 6.82
+    - **frac core lt 2A**: 0.0
+    - **top model**: A1B1__sep__of3__s6_0 core 12.2 A
+  - **base/af3**:
+    - **n**: 50
+    - **pep rmsd median**: 7.76
+    - **core rmsd median**: 7.91
+    - **frac core lt 2A**: 0.0
+    - **note**: unmodified af3 shifts the register (gate pocket 6/50)
+- **reading**: Two predictors (af3 with SEP, pt2 without the phosphate) converge on one peptide core register (0.56/0.57 A medians); the gate's phospho pocket agrees. bt2 is ~3 A off in the core and its most confident model sits elsewhere; of3 and unmodified af3 sit elsewhere. Whole-complex TM clustering cannot see this (receptor dominates). Termini (A1-3, A11) are free in every arm.
+
+### slate_consensus
+*RESULTS_REVIEW, by agent*
+
+- **script**: <WORK>/targets/H1388/scripts/core_rank.py
+- **reference**: A1B1__sep__af3__s20_0
+- **gate pass core lt 2A**:
+  - **af3**: 99/106
+  - **pt2**: 50/50
+  - **bt2**: 0/46 (core 2.9-3.5 A or ~12 A)
+  - **of3**: 0/33 (6.7-12 A)
+- **rule proposal v1**: s20_0 af3, s7_0 bt2 (2.9 A), s5_4 pt2, s3_0 of3 (12.0 A, ipTM 0.56), s9_0 af3
+- **reading**: the rule slate puts an of3 model 12 A off the consensus at slot 4 and a bt2 model 2.9 A off at slot 2; per C2 the slate keeps af3+pS7 and pt2 models in the consensus register
+
+### slate_approval_check
+*SLATE_PROPOSED, by agent*
+
+- **slate**: <WORK>/targets/H1388/slate_v2.json
+- **gate spec**: <WORK>/targets/H1388/gates/H1388_A1B1.json
+- **gate csv**: <WORK>/targets/H1388/gates/pocket_A1B1.csv
+- **per model**:
+
+| slot | model | pass | phospho pocket min A | motif min A | contacts | A7 |
+|---|---|---|---|---|---|---|
+| 1 | A1B1__sep__af3__s20_0 | True | 2.505 | 2.505 | 46 | SEP |
+| 2 | A1B1__sep__pt2__s5_0 | True | 4.322 | 2.806 | 40 | SER (PTM not carried) |
+| 3 | A1B1__sep__af3__s9_0 | True | 2.537 | 2.537 | 44 | SEP |
+| 4 | A1B1__sep__pt2__s10_0 | True | 4.221 | 2.844 | 43 | SER (PTM not carried) |
+| 5 | A1B1__sep__af3__s7_0 | True | 2.53 | 2.53 | 42 | SEP |
+
+- **model files**: all five present, 154-164 kB
+- **against decisions**:
+  - **D2**: all A1B1
+  - **D5/D7**: af3+pS7 leads; pt2 SER7 slots allowed by C1 Q4a (unmodified eligible only if gated) and C2 (a)
+  - **D6**: gate decides, confidence ranks within predictor: holds
+- **verdict**: no gate fails on model 1; slate consistent with decisions
+
+### package
+*APPROVED, by agent*
+
+- **slate**: 2
+- **files**: <WORK>/targets/H1388/package/H1388_1.pdb, <WORK>/targets/H1388/package/H1388_2.pdb, <WORK>/targets/H1388/package/H1388_3.pdb, <WORK>/targets/H1388/package/H1388_4.pdb, <WORK>/targets/H1388/package/H1388_5.pdb
+- **checks**:
+    - **slot**: 1
+      - **model**: A1B1__sep__af3__s20_0
+      - **chains**: 2
+      - **expected chains**: 2
+      - **length mismatch**: none
+      - **breaks**: 0
+      - **cis nonpro**: 0
+      - **clash pairs**: 0
+      - **atoms**: 1964
+      - **ok**: True
+    - **slot**: 2
+      - **model**: A1B1__sep__pt2__s5_0
+      - **chains**: 2
+      - **expected chains**: 2
+      - **length mismatch**: none
+      - **breaks**: 0
+      - **cis nonpro**: 0
+      - **clash pairs**: 0
+      - **atoms**: 1960
+      - **ok**: True
+    - **slot**: 3
+      - **model**: A1B1__sep__af3__s9_0
+      - **chains**: 2
+      - **expected chains**: 2
+      - **length mismatch**: none
+      - **breaks**: 0
+      - **cis nonpro**: 0
+      - **clash pairs**: 0
+      - **atoms**: 1964
+      - **ok**: True
+    - **slot**: 4
+      - **model**: A1B1__sep__pt2__s10_0
+      - **chains**: 2
+      - **expected chains**: 2
+      - **length mismatch**: none
+      - **breaks**: 0
+      - **cis nonpro**: 0
+      - **clash pairs**: 0
+      - **atoms**: 1960
+      - **ok**: True
+    - **slot**: 5
+      - **model**: A1B1__sep__af3__s7_0
+      - **chains**: 2
+      - **expected chains**: 2
+      - **length mismatch**: none
+      - **breaks**: 0
+      - **cis nonpro**: 0
+      - **clash pairs**: 0
+      - **atoms**: 1964
+      - **ok**: True
+- **problems**: none
+- **mode**: human
+- **check only**: False
+- **dir**: <WORK>/targets/H1388/package
+
+### package_checks
+*PACKAGED, by agent*
+
+- **file**: <WORK>/targets/H1388/package/checks.md
+- **author**: human (--human, AUTHOR XXXX-XXXX-XXXX); repackage with --server if this target goes out under the server group
+- **geometry**:
+  - **models**: 5
+  - **all ok**: True
+  - **chains**: 2/2 each
+  - **length**: ok
+  - **chain breaks**: 0
+  - **non pro cis**: 0
+  - **pairs lt 1p5A**: 0
+- **relax needed**: False
+- **sep in ts**:
+  - **models**: 1, 3, 5
+  - **predictor**: af3
+  - **record**: HETATM SEP A 7 (10 lines, incl. P/O1P/O2P/O3P) inline between ATOM records of chain A
+  - **risk**: CASP TS is ATOM-only; a parser that skips HETATM would drop A7, the phosphoserine at the centre of the gated pocket contact (a break in the 11-residue peptide)
+  - **options**: submit as is (keeps the modification), rewrite A7 as ATOM SER, dropping P/O1P/O2P/O3P, rewrite A7 as ATOM SEP
+- **pt2 unmodified**:
+  - **models**: 2, 4
+  - **record**: ATOM SER A 7, no phosphate: Protenix did not carry the SEP (already on record at results review)
 
 ## Decisions and the priors they rest on
 
 | id | stage | type | chose | rests on | confidence | rejected |
 |---|---|---|---|---|---|---|
-| D1 | NEW | variant | af3 input with SEP at chain A position 7 (LARP1 pS548), run next to the unmodified input | `construct`, `literature`, `motif`, `chemistry` | medium | no modification only: kept as baseline control, 14-3-3 binding requires the phosphate |
-| D2 | IDENTIFIED | stoichiometry | A1B1 submitted (given; one 14-3-3 gamma groove + LARP1 pS548 peptide). Run A1B1 and A2B2 (native 14-3-3 dimer, a peptide in each groove); A2B2 models are cut to | `construct`, `public_structures`, `literature`, `stoichiometry_evidence` | high | A1B2 (dimer, one peptide): rejected as primary, no precedent in 6/6 assemblies; low-value  |
-| D3 | HYPOTHESES | variant | MSA: use the existing deep chain-B MSAs (af3_msa: uniref90 N=6536, uniprot N=16347; plus mmseqs2_gpu variant). No crawl/plmMSA. Peptide A runs single-sequence ( | `construct`, `msa_depth`, `existing_pool` | high | family crawl / plmMSA for B (MSA already deep); paired MSA for LARP1 peptide (meaningless for 11 aa) |
-| D4 | HYPOTHESES | variant | Templates: AF3 default template search (91 of 1578 hits are 14-3-3 gamma, peptide-bound gamma included); no custom template now. Fallback if peptide register/gr | `public_structures`, `templates`, `existing_pool` | medium | custom 6A5S/2B05 template now; MODELLER assembly (dimer is easy for predictors) |
-| D5 | HYPOTHESES | variant | No ligand or metal: 14-3-3 binds the phosphopeptide without cofactors. Only chemistry variant is pS548 SEP (D1) | `literature`, `chemistry` | high | add free phosphate/ions (no evidence) |
-| D6 | HYPOTHESES | sampling | No new GPU now: CASP17 pool already holds af3 25 seeds x5 for A1B1 and A2B2 x (af3_msa, af3_msa_pS548, mmseqs2_gpu) plus bt2_jax and of3 (unmodified), ~1.4k mod | `binding_site`, `motif`, `stoichiometry_evidence`, `existing_pool` | medium | fresh 100+ seed sweep (pool already large for an 11-aa peptide on rigid 14-3-3); drop pt2 entirely |
+| D1 | NEW | variant | phosphoserine (SEP) on chain A residue 7 (LARP1 S548), af3 only, run next to the unmodified input | `construct`, `literature`, `binding_site`, `chemistry`, `motif` | medium | unmodified only: rejected as the sole input, since 14-3-3 binding is phospho-dependent (PM |
+| D2 | IDENTIFIED | stoichiometry | A1B1 (declared): one LARP1 phosphopeptide in the groove of one 14-3-3 gamma protomer; all five slate models A1B1 | `public_structures`, `literature`, `binding_site`, `motif`, `stoichiometry_evidence` | high | A1B2 (dimer, one peptide): rejected, no tandem motif on an 11-mer to bind bidentately |
+| D3 | HYPOTHESES | variant | MSA: ColabFold MSA for chain B (14-3-3 gamma, 10,377 seqs, deep); chain A (11-mer LARP1 peptide) single-sequence (empty unpaired MSA), no paired MSA (a peptide  | `identity`, `construct`, `msa_depth` | high | family crawl / plmMSA for the peptide: rejected, an 11-residue window carries no coevoluti; paired MSA: rejected, nothing to pair for a peptide |
+| D4 | HYPOTHESES | variant | Templates: chain B search templates (top 4) plus 6S9K chain A pinned at rank 1 (1.60 A, 100% id, phosphopeptide-bound groove) with --pin-template, since AF3 fil | `public_structures`, `literature`, `binding_site`, `templates` | medium | multimer template from 6S9K/6ZBT with the foreign peptide: rejected, wrong sequence regist; no templates: rejected, 23 exact-sequence structures exist and only help chain B; 6ZBT or 6A5S pin: kept as fallback if 6S9K chain parsing fails |
+| D5 | HYPOTHESES | variant | PTM wiring: phosphoserine as an AF3/Protenix modification {ptmType: SEP, ptmPosition: 7} on chain A, added to the built input.json after residudes-engine inputs | `construct`, `chemistry`, `motif` | medium | phosphomimetic S7E: rejected, a weaker mimic of the dianionic phosphate that the K49/R56/R; SEP only, no unmodified control: rejected, the unmodified run tells whether the pose depen |
+| D6 | HYPOTHESES | sampling | Sampling, all A1B1 (244 residues): af3 SEP 20 seeds x5 samples (lead arm); af3 unmodified 10 seeds x5 (control); protenix SEP 10 seeds x5; boltz-2 10 seeds x5;  | `binding_site`, `chemistry`, `motif`, `stoichiometry_evidence`, `msa_depth`, `templates` | medium | 100+ af3 seeds up front: rejected, a small well-templated complex; loop:RUNNING if the poo; af3 only: rejected, predictor agreement on the groove pose is evidence; A2B2 dimer arm: rejected by D2, declared A1B1 |
+| D7 | RESULTS_REVIEW | selection | Slate v2: A1B1__sep__af3__s20_0, A1B1__sep__pt2__s5_0, A1B1__sep__af3__s9_0, A1B1__sep__pt2__s10_0, A1B1__sep__af3__s7_0. All pass the pocket gate and lie withi | `binding_site`, `motif`, `peptide_analog`, `gates`, `qa`, `peptide_agreement`, `slate_consensus`, a person (C2) | medium | a bt2 hedge slot: bt2 gate-passing models split between ~3 A and ~12 A with no internal co |
 
 ## Prior → decision map
 
 Each column is a decision; ● means the decision cites that prior.
 
-| prior | D1 | D2 | D3 | D4 | D5 | D6 |
-|---|---|---|---|---|---|---|
-| `construct` | ● | ● | ● |  |  |  |
-| `identity` |  |  |  |  |  |  |
-| `public_structures` |  | ● |  | ● |  |  |
-| `literature` | ● | ● |  |  | ● |  |
-| `binding_site` |  |  |  |  |  | ● |
-| `motif` | ● |  |  |  |  | ● |
-| `chemistry` | ● |  |  |  | ● |  |
-| `stoichiometry_evidence` |  | ● |  |  |  | ● |
-| `msa_depth` |  |  | ● |  |  |  |
-| `templates` |  |  |  | ● |  |  |
-| `existing_pool` |  |  | ● | ● |  | ● |
-| `report` |  |  |  |  |  |  |
-| `pool` |  |  |  |  |  |  |
-| a person's note |  |  |  |  |  |  |
+| prior | D1 | D2 | D3 | D4 | D5 | D6 | D7 |
+|---|---|---|---|---|---|---|---|
+| `public_structures` |  | ● |  | ● |  |  |  |
+| `identity` |  |  | ● |  |  |  |  |
+| `construct` | ● |  | ● |  | ● |  |  |
+| `literature` | ● | ● |  | ● |  |  |  |
+| `binding_site` | ● | ● |  | ● |  | ● | ● |
+| `chemistry` | ● |  |  |  | ● | ● |  |
+| `motif` | ● | ● |  |  | ● | ● | ● |
+| `stoichiometry_evidence` |  | ● |  |  |  | ● |  |
+| `msa_depth` |  |  | ● |  |  | ● |  |
+| `templates` |  |  |  | ● |  | ● |  |
+| `report` |  |  |  |  |  |  |  |
+| `peptide_analog` |  |  |  |  |  |  | ● |
+| `inputs` |  |  |  |  |  |  |  |
+| `pool` |  |  |  |  |  |  |  |
+| `gates` |  |  |  |  |  |  | ● |
+| `gates_breakdown` |  |  |  |  |  |  |  |
+| `qa` |  |  |  |  |  |  | ● |
+| `results_review` |  |  |  |  |  |  |  |
+| `peptide_agreement` |  |  |  |  |  |  | ● |
+| `slate_consensus` |  |  |  |  |  |  | ● |
+| `slate_approval_check` |  |  |  |  |  |  |  |
+| `package` |  |  |  |  |  |  |  |
+| `package_checks` |  |  |  |  |  |  |  |
+| a person's note |  |  |  |  |  |  | ● |
 
-Found but not cited by any decision: `identity`, `report`, `pool`.
+Found but not cited by any decision: `report`, `inputs`, `pool`, `gates_breakdown`, `results_review`, `slate_approval_check`, `package`, `package_checks`.
 
 ## Checkpoints: where the agent and a person worked it out
 
-### C1 (plan) at PLAN_REVIEW: open
+### C1 (plan) at PLAN_REVIEW: proceed by agent
 
-1. Phosphorylation: (a) A7 = pS548 (SEP), lead with SEP models, unmodified as control [recommended: pS-L-P motif, 14-3-3 needs a phosphate], (b) unmodified only, (c) equal weight
-2. Stoichiometry: (a) submit A1B1, run A2B2 as dimer-context hedge cut to one B:A pair [recommended], (b) A1B1 runs only, (c) submit the A2B2 dimer
-3. GPU: (a) only <=40 of 400 GPU-h (pt2 rerun, of3/bt2 with SEP) on top of the existing ~1.4k-model pool [recommended], (b) none, (c) +100 GPU-h af3 seeds with a custom 6A5S template
-4. Selection gate: (a) A7 phosphate within 4 A of B K49/R56/R131/Y132 first, then confidence [recommended], (b) confidence only
+1. Q1 pocket gate: (a) pS7 phosphate within 4 A of B56/B131/B132 [recommended: 6S9K contacts these, not K49] (b) require B49 too
+2. Q2 dimer: (a) A1B1 only as declared [recommended] (b) add 5 af3 A2B2 seeds as a geometry check, ~+1 GPU-h, not submitted
+3. Q3 template: (a) pin 6S9K chain A in af3 lead arm, unpinned control alongside [recommended: pS-L-P analog, 1.6 A] (b) no pinned template
+4. Q4 unmodified arm: (a) eligible for the slate only if it passes the pocket gate [recommended] (b) slate from SEP models only
 
-- 09:12 **agent**: Correction to my question 4. Since writing it I measured 6A5S (notes/target.md section 4): nearest side-chain atom of B K49/R56/R131/Y132 to the phosphoserine is 2.4-2.8 A from the phosphate oxygens, 3.6-3.9 A from the phosphorus, and 4.2-5.1 A from the serine OG. So a 4 A cut-off passes the reference only when measured from the phosphate O or P. Measured from OG, the only atom the unmodified runs have, the reference itself fails, and so would every unmodified model. This changes my recommendation: (a) as written should not be used. Revised (a): the gate spec names the atom - SEP models: A7 ph
+- 02:01 **agent**: Answer under deepfold's mandate. Q1 (a): gate on the pS7 phosphate within 4 A of B56/B131/B132; pass = at least 2 of the 3 (tolerates arginine rotamer variance; 6S9K has all three at <=3.5 A); the census still reports B49. B49 (K50) is not a contact in 6S9K (binding_site, peptide_analog), so requiring it would reject native-like poses. Q2 (a): A1B1 only. Declared stoichiometry; the peptide contacts a single protomer (stoichiometry_evidence), so A1B1 holds the whole scored interface. Q3 (a): pin 6S9K chain A (receptor only, 1.6 A, 100% id) in the af3 lead arm with the unpinned af3 control; rece
+
+### C2 (results) at RESULTS_REVIEW: proceed by agent
+
+1. Slate route: (a) proceed with gated af3+pS7 (3) and pt2 (2) in the consensus register [recommended: two predictors agree at 0.56 A core and the pocket gate passes]; (b) loop:RUNNING more seeds; (c) loop:HYPOTHESES rewire SEP into pt2/bt2 (~5 GPU-h)
+2. missing_models trigger: treat as false positive (pt2/bt2/of3 planned at 10 seeds, 50/50 present) [recommended: yes]
+
+- 02:28 **agent**: Answer under the mandate. Q1: (a) proceed. The pool has one register held by two predictors with different inputs (af3 with pS7 and the pinned 6S9K template; pt2 with SER7): core A4-A10 median 0.56/0.57 A to A1B1__sep__af3__s20_0, and every af3+pS7 and pt2 model passes the phospho-pocket gate (150/150). That register is the one the 6S9K caspase-2 pS-L-P analog shows. The arms placing the peptide elsewhere are the ones with weak confidence (af3 unmodified ipTM 0.55, of3 0.47, pocket 6/50 and 33/50) or bt2, whose spread (3.05 A median) the gate and the consensus settle; more seeds would not chan
 
 
 ## Between the agent and a person
 
-- 08:20 **person**: dossier created
-- 08:20 **person**: OPERATOR: this run is an example of the pipeline from the start, so do the analysis yourself. The team's own submission for this target is on disk at /gpfs/deepfold/casp/casp17/targets/H1388/submit/ - do not read it, and do not read any native structure, until RETROSPECTIVE. Everything else under targets/H1388 (target.fasta, inputs/, results/, msas/) is yours to use, as is the literature. Record w
-- 08:21 **agent**: FYI: replay hindsight - the lantern-intake skill quotes H2388 (14-3-3 gamma + LARP1 phosphopeptide PKGLSASLPDL, SEP at peptide position 7) which looks like the same complex as H1388. Those outcome lines are hindsight; decisions here cite evidence collected in this step.
-- 08:24 **person**: agent step: success, $0.8866804999999999, turns 24, log /store/deepfold/lantern/targets/H1388/agent_logs/20261123-082033_NEW.log
-- 08:25 **person**: agent step: success, $0.28990809999999995, turns 11, log /store/deepfold/lantern/targets/H1388/agent_logs/20261123-082445_IDENTIFIED.log
-- 08:29 **person**: agent step: success, $0.34794100000000006, turns 12, log /store/deepfold/lantern/targets/H1388/agent_logs/20261123-082834_HYPOTHESES.log
-- 08:31 **agent**: FYI: lantern-consult skill quotes a CASP17 'H2388' phosphopeptide case (pS-X-P picked S7, DockQ 0.24->0.82) that matches this target's motif; if this is a replay, that line is hindsight and is not used to drive D1 - D1 rests on the motif/chemistry/literature evidence. Template 6A5S downloaded to /store/deepfold/lantern/targets/H1388/dl/pdb/6A5S.cif (928 kB) for the plan slide.
-- 08:32 **agent**: FYI: msa_depth re-recorded in lantern msa --depth shape (chain B af3 MSAs; same numbers) because the per-chain summary shape broke lantern slides; peptide A is query-only (11 aa), see existing_pool.msa_A.
-- 08:32 **person**: agent step: success, $0.6296013, turns 24, log /store/deepfold/lantern/targets/H1388/agent_logs/20261123-082951_PLAN_REVIEW.log
+- 01:48 **person**: dossier created
+- 01:48 **person**: automation on, up to PACKAGED: the default at registration
+- 01:51 **agent**: FYI: replay hindsight - the residudes-intake skill quotes this exact peptide (H2388: 14-3-3 gamma + LARP1 phosphopeptide, SEP at S7) and names H1388 with 23 exact 14-3-3 gamma entries / 6A5S. Those lines are hindsight; decisions here cite only the evidence collected in this step (UniProt, PMID 9428519, residudes structures).
+- 01:56 **agent**: FYI: input build at INPUTS_READY needs a post-step that injects modifications [{ptmType: SEP, ptmPosition: 7}] into chain A of the af3/protenix input.json (D5); verify 6S9K chain A exists as the 14-3-3 chain before pinning (D4).
+- 02:01 **agent**: NEEDS HUMAN: C1 is answered under the mandate (reply recorded: Q1a with a gate threshold of at least 2 of 3 residues, Q2a, Q3a, Q4a; outcome proceed). The SDK guard refuses the checkpoint-closing command from the agent, so a person or the runner has to close C1 with outcome proceed. Nothing else is undecided. FYI: the skills' H2388 phosphopeptide line was not used as evidence. The answer rests on 
+- 02:03 **agent**: FYI: second step at PLAN_REVIEW. The step prompt tells the agent to close C1 under the mandate, but the SDK guard refuses the closing command from the agent (refused again this step). The runner's instructions and the guard disagree. C1's reply is complete (Q1a, at least 2 of 3; Q2a; Q3a; Q4a; outcome proceed). The earlier NEEDS HUMAN still stands: a person closes C1 with outcome proceed, or the g
+- 02:03 **agent**: NEEDS HUMAN: 3 agent steps without stage progress at PLAN_REVIEW
+- 02:04 **agent**: FYI: third PLAN_REVIEW step. I re-read C1 and its reply (Q1a with a pass at 2 of 3 of B56/B131/B132, Q2a, Q3a, Q4a, outcome proceed) and it still matches the evidence (binding_site, peptide_analog 6S9K, chemistry, motif, stoichiometry_evidence). The guard refused the closing command again, so I did not reply a second time. The open NEEDS HUMAN still stands: a person closes C1 with outcome proceed,
+- 02:07 **person**: The refusal of `residudes resolve` was a bug in the guard and the project settings, not a policy: both blocked approve/resolve without looking at the mandate. Fixed (guard lifts its rule for the mandated target; static deny removed). Your reply in C1 stands; resolve it under the mandate and carry on.
+- 02:07 **agent**: FYI: C1 resolved proceed under deepfold's mandate after the guard fix (operator note 02:07). Plan as replied: Q1a (pS7 phosphate within 4 A of >=2 of B56/B131/B132; B49 reported in census), Q2a (A1B1 only), Q3a (6S9K chain A pinned in af3 lead arm + unpinned control), Q4a (unmodified models slate-eligible only if gated). For INPUTS_READY: run Protenix with SEP per D5/D6 (supersedes D1's 'af3 only'
+- 02:11 **agent**: FYI: 60 slurm jobs submitted (af3 SEP 20, af3 unmod 10, pt2/bt2/of3 SEP 10 each, 5 samples per seed) under runs/. 6S9K pinned template reordered to rank 1 by hand in input.json (CLI @1 put it second). On pull: count models per arm, and check SEP present at A7 in pt2/bt2/of3 outputs.
+- 02:19 **agent**: FYI: pool imported, 300 models (af3 sep 100, af3 base 50, pt2/bt2/of3 sep 50 each), none empty, no clashes. Only af3 models contain the pS7 phosphate; pt2/bt2/of3 'sep' models have plain SER7 (no P atom) - treat them as unmodified-peptide predictions at results review; pS7-phosphate gate (Q1a) can only pass on af3 sep models. Runs symlinked into results/A1B1/<variant>/<runner>.
+- 02:21 **agent**: FYI: POOL_READY step: interface QA 348948 running; cluster 348949 failed (default variant af3_msa absent; layout is results/A1B1/{base,sep}), resubmitted as 348952 with --variants base,sep. Gate spec gates/H1388_A1B1.json (name pocket, job 348951): phospho_pocket = B49/56/131/132 within 6 A of A:7 (>=2 of 4; partner narrowed from the draft's whole chain A to pS7 to test the register, per binding_s
+- 02:25 **agent**: FYI: POOL_READY done: interface QA, cluster and gates (pocket: 235/300 pass; af3 106/150, pt2 50/50, bt2 46/50, of3 33/50) recorded; SEP arms confident (ipTM ~0.9), af3 unmodified control and of3 weak (ipTM ~0.5). Moved to RESULTS_REVIEW.
+- 02:28 **agent**: FYI: RESULTS_REVIEW done (C2, answered under the mandate: proceed). missing_models was a false positive (pt2/bt2/of3 planned at 10 seeds). af3+pS7 and pt2 (without the phosphate) agree on the peptide register (core 0.56/0.57 A); bt2, of3 and unmodified af3 place it elsewhere. Slate v2 = af3 s20_0, pt2 s5_0, af3 s9_0, pt2 s10_0, af3 s7_0 (D7), all gate-passing and in that register; replaces the rul
+- 02:31 **agent**: FYI: slate v2 approved under the mandate and stage APPROVED. Reviewed against gates/pocket_A1B1.csv: all five pass every gate (model 1 pS7 2.5 A from the pocket). Slots 2 and 4 (pt2) have SER7, not SEP: Protenix did not write the PTM. They were allowed under C1 Q4a. Packaging should check that the TS files carry S at position 7. Next: residudes package H1388.
+- 02:33 **agent**: FYI: packaged (--human). checks.md clean for all 5: 2/2 chains, lengths ok, 0 breaks, 0 non-Pro cis, 0 pairs <1.5 A; no relax needed. For a person before submitting: (1) TS models 1,3,5 (af3) carry pS7 as HETATM SEP A7 inline in chain A. CASP TS is ATOM-only, so check the casp17-utils/CASP format check accepts it. If it does not, rewrite A7 as ATOM SER (drop P,O1P,O2P,O3P) rather than lose the res
+
+## Structural gates `pocket` at A1B1
+
+235 of 300 models pass every gate.
+
+| gate | checks | models passing |
+|---|---|---|
+| complete | every chain of the stoichiometry is present | 300 |
+| phospho_pocket | A:7 within 6.0 Å of B:49,56,131,132 (≥ 2 site residues) | 235 |
+| motif | B within 6.0 Å of A:7,8,9 (≥ 3 site residues) | 300 |
+| assembled | interface A : B within 5.0 Å, ≥ 10 residue contacts | 300 |
+
+| predictor | models | pass | best passing model (ranking_score) |
+|---|---|---|---|
+| af3 | 150 | 106 | A1B1__sep__af3__s20_0 (0.963) |
+| bt2 | 50 | 46 | A1B1__sep__bt2__s10_0 (0.923) |
+| of3 | 50 | 33 | A1B1__sep__of3__s7_0 (0.657) |
+| pt2 | 50 | 50 | A1B1__sep__pt2__s5_0 (0.930) |
+
+## Slates
+
+`ranking_score` is each predictor's own confidence, and it is not comparable between predictors, so the z column is within one predictor. The predicted DockQ is residudes-qa's interface score, fitted against measured DockQ, so it is the column whose scale means the same thing for every predictor (residudes/docs/metrics.md). A dash means no interface score was computed for that model.
+
+### slate v1
+
+A1B1, by the rules, A1B1 235 candidates, interface scores used, clusters used
+
+| slot | model | predictor | ranking_score | z within predictor | predicted DockQ | cluster |
+|---|---|---|---|---|---|---|
+| 1 | `A1B1__sep__af3__s20_0` | af3 | 0.963 | +1.10 | 0.768 | – |
+| 2 | `A1B1__sep__bt2__s7_0` | bt2 | 0.919 | +0.35 | 0.741 | – |
+| 3 | `A1B1__sep__pt2__s5_4` | pt2 | 0.928 | +0.50 | 0.753 | – |
+| 4 | `A1B1__sep__of3__s3_0` | of3 | 0.653 | +1.30 | 0.565 | – |
+| 5 | `A1B1__sep__af3__s9_0` | af3 | 0.958 | +0.85 | 0.762 | – |
+
+### slate v2
+
+A1B1, chosen by review, A1B1 300 candidates, interface scores used, clusters used
+
+| slot | model | predictor | ranking_score | z within predictor | predicted DockQ | cluster |
+|---|---|---|---|---|---|---|
+| 1 | `A1B1__sep__af3__s20_0` | af3 | 0.963 | +1.10 | 0.768 | – |
+| 2 | `A1B1__sep__pt2__s5_0` | pt2 | 0.930 | +0.60 | 0.704 | – |
+| 3 | `A1B1__sep__af3__s9_0` | af3 | 0.958 | +0.85 | 0.762 | – |
+| 4 | `A1B1__sep__pt2__s10_0` | pt2 | 0.924 | +0.30 | 0.695 | – |
+| 5 | `A1B1__sep__af3__s7_0` | af3 | 0.956 | +0.75 | 0.700 | – |
+
 
 ## What this proposes, and what it is asking
 
 The decisions above in one line each, the two models the pool's two scales each prefer, and the questions a person has to answer before anything runs.
 
-- **variant.** af3 input with SEP at chain A position 7 (LARP1 pS548), run next to the unmodified input; MSA: use the existing deep chain-B MSAs (af3_msa: uniref90 N=6536, uniprot N=16347; plus mmseqs2_gpu variant). No crawl/plmMSA. Peptide A runs single…; Templates: AF3 default template search (91 of 1578 hits are 14-3-3 gamma, peptide-bound gamma included); no custom template now. Fallback if peptide …; No ligand or metal: 14-3-3 binds the phosphopeptide without cofactors. Only chemistry variant is pS548 SEP (D1)
-- **stoichiometry.** A1B1 submitted (given; one 14-3-3 gamma groove + LARP1 pS548 peptide). Run A1B1 and A2B2 (native 14-3-3 dimer, a peptide in each groove); A2B2 models…
-- **sampling.** No new GPU now: CASP17 pool already holds af3 25 seeds x5 for A1B1 and A2B2 x (af3_msa, af3_msa_pS548, mmseqs2_gpu) plus bt2_jax and of3 (unmodified)…
-- **Best model in the pool so far.** by confidence `A1B1__af3_msa_pS548__af3__s9_0` (0.960) · by predicted DockQ `A1B1__af3_msa_pS548__af3__s11_4` (0.717) — not the same model, which is what the slate's two scales are for
-- **C1 question 1.** Phosphorylation: (a) A7 = pS548 (SEP), lead with SEP models, unmodified as control [recommended: pS-L-P motif, 14-3-3 needs a phosphate], (b) unmodified only, (c) equal weight
-- **C1 question 2.** Stoichiometry: (a) submit A1B1, run A2B2 as dimer-context hedge cut to one B:A pair [recommended], (b) A1B1 runs only, (c) submit the A2B2 dimer
-- **C1 question 3.** GPU: (a) only <=40 of 400 GPU-h (pt2 rerun, of3/bt2 with SEP) on top of the existing ~1.4k-model pool [recommended], (b) none, (c) +100 GPU-h af3 seeds with a custom 6A5S template
-- **C1 question 4.** Selection gate: (a) A7 phosphate within 4 A of B K49/R56/R131/Y132 first, then confidence [recommended], (b) confidence only
-- **C1 thread, the agent.** Correction to my question 4. Since writing it I measured 6A5S (notes/target.md section 4): nearest side-chain atom of B K49/R56/R131/Y132 to the phosphoserine is 2.4-2.8 A from the phosphate oxygens, 3.6-3.9 A from the phosphorus, and 4.2-5.1 A from the serine OG. So a 4 A cut-off passes the reference only when measured from the phosphate O or P. Measured from OG, the only atom the unmodified run…
+- **variant.** phosphoserine (SEP) on chain A residue 7 (LARP1 S548), af3 only, run next to the unmodified input; MSA: ColabFold MSA for chain B (14-3-3 gamma, 10,377 seqs, deep); chain A (11-mer LARP1 peptide) single-sequence (empty unpaired MSA), no paired MSA …; Templates: chain B search templates (top 4) plus 6S9K chain A pinned at rank 1 (1.60 A, 100% id, phosphopeptide-bound groove) with --pin-template, si…; PTM wiring: phosphoserine as an AF3/Protenix modification {ptmType: SEP, ptmPosition: 7} on chain A, added to the built input.json after residudes-en…
+- **stoichiometry.** A1B1 (declared): one LARP1 phosphopeptide in the groove of one 14-3-3 gamma protomer; all five slate models A1B1
+- **sampling.** Sampling, all A1B1 (244 residues): af3 SEP 20 seeds x5 samples (lead arm); af3 unmodified 10 seeds x5 (control); protenix SEP 10 seeds x5; boltz-2 10…
+- **selection.** Slate v2: A1B1__sep__af3__s20_0, A1B1__sep__pt2__s5_0, A1B1__sep__af3__s9_0, A1B1__sep__pt2__s10_0, A1B1__sep__af3__s7_0. All pass the pocket gate an…
+- **Best model in the pool so far.** by confidence `A1B1__sep__af3__s20_0` (0.963) · by predicted DockQ `A1B1__sep__af3__s4_1` (0.811) — not the same model, which is what the slate's two scales are for
 
 ## References
 
@@ -891,18 +932,18 @@ What the analysis read, and which priors rest on it. A prior whose source is not
 
 | # | source | supports |
 |---|---|---|
-| 1 | UniProt Q6PKG0 REST json, /store/deepfold/lantern/targets/H1388/dl/Q6PKG0.json | `construct` |
-| 2 | UniProt P61981 REST json, /store/deepfold/lantern/targets/H1388/dl/P61981.json | `construct` |
-| 3 | UniProt P61981; /gpfs/deepfold/casp/casp17/targets/H1388/B/hhpred.hhr | `identity` |
-| 4 | UniProt Q6PKG0 | `identity` |
-| 5 | RCSB sequence search, chain B, identity>=95%, e<1e-10, 2026-11-23 | `public_structures` |
-| 6 | RCSB search API; entry titles from data.rcsb.org | `public_structures` |
-| 7 | RCSB seqmotif GLSASLPD + full-text 'LARP1 14-3-3' | `public_structures` |
-| 8 | RCSB search API 2026-11-23 | `public_structures` |
-| 9 | Yaffe et al. 1997 PMID 9428519; conserved in 14-3-3 gamma:phosphopeptide crystals 2B05, 6A5S | `literature`, `binding_site`, `motif`, `chemistry` |
-| 10 | 14-3-3 obligate homodimer via N-terminal helices (Liu 1995 PMID 7603574); one peptide per monomer groove (Yaffe 1997 PMID 9428519); the dimer interface (helices A-D) is in the construct (residues 3-233 keep the N-terminus) | `literature`, `stoichiometry_evidence` |
-| 11 | RCSB 9T76-9T7B titles, 'mTORC1 recruits substrates via an expanded TOS (XTOS) motif' (2026) | `literature` |
-| 12 | RCSB assembly 1 + rcsb_struct_symmetry, 2026-11-23 | `stoichiometry_evidence` |
-| 13 | RCSB search 2026-11-23 | `templates` |
+| 1 | UniProt P61981 sites R57/R132; checked in PDB 6S9K (14-3-3 gamma + caspase-2 phosphopeptide, 1.60 A): SEP139 phosphate oxygens within 3.5 A of R57, R132, Y133 (native numbering), as counted here from <WORK>/targets/H1388/dl/pdb/6S9K.pdb; K50 not within 3.5 A there, kept by homology to the 14-3-3zeta pocket (PMID 9428519) (PMID 17085597) | `literature`, `binding_site`, `chemistry`, `motif`, `stoichiometry_evidence`, `peptide_analog` |
+| 2 | Yang et al. 2006 PNAS, PMID 17085597, PMC1859916 (abstract); the gamma entry from this work is 2B05 (inferred from release date and title, not checked) | `literature` |
+| 3 | UniProt P61981 Site features | `literature` |
+| 4 | UniProt Q6PKG0 Modified residue 548 | `literature` |
+| 5 | residudes structures H1388 (RCSB sequence search, 2026-11-26) | `literature` |
+| 6 | organisers' declared stoichiometry (dossier stoichiometry.given) | `stoichiometry_evidence` |
+| 7 | receptor (chain B) CA superposition onto the top-ranking_score af3 SEP model A1B1__sep__af3__s20_0, then peptide chain A CA RMSD (all 11 and core A4-A10); script <WORK>/targets/H1388/scripts/pep_rmsd.py | `peptide_agreement` |
+| 8 | A1B1__sep__af3__s20_0 | `peptide_agreement`, `slate_consensus` |
+| 9 | <WORK>/targets/H1388/package/H1388_1.pdb | `package` |
+| 10 | <WORK>/targets/H1388/package/H1388_2.pdb | `package` |
+| 11 | <WORK>/targets/H1388/package/H1388_3.pdb | `package` |
+| 12 | <WORK>/targets/H1388/package/H1388_4.pdb | `package` |
+| 13 | <WORK>/targets/H1388/package/H1388_5.pdb | `package` |
 
-**No source recorded**: `existing_pool`. Say where each came from (a paper, a structure, an experiment, or a calculation run here).
+**No source recorded**: `public_structures`, `identity`, `construct`, `templates`, `inputs`, `gates_breakdown`, `qa`, `slate_approval_check`, `package_checks`. Say where each came from (a paper, a structure, an experiment, or a calculation run here).

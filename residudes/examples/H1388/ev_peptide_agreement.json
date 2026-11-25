@@ -1,0 +1,9 @@
+{"method": "receptor (chain B) CA superposition onto the top-ranking_score af3 SEP model A1B1__sep__af3__s20_0, then peptide chain A CA RMSD (all 11 and core A4-A10); script <WORK>/targets/H1388/scripts/pep_rmsd.py",
+ "reference": "A1B1__sep__af3__s20_0",
+ "per_arm": {
+  "sep/af3": {"n": 100, "pep_rmsd_median": 3.00, "core_rmsd_median": 0.56, "frac_core_lt_2A": 0.99},
+  "sep/pt2": {"n": 50, "pep_rmsd_median": 2.85, "core_rmsd_median": 0.57, "frac_core_lt_2A": 1.00, "top_model": "A1B1__sep__pt2__s5_0 core 0.48 A", "note": "pt2 wrote SER7 (no phosphate) yet places the core in the same register"},
+  "sep/bt2": {"n": 50, "pep_rmsd_median": 4.02, "core_rmsd_median": 3.05, "frac_core_lt_2A": 0.00, "top_model": "A1B1__sep__bt2__s1_0 core 10.5 A (different placement)"},
+  "sep/of3": {"n": 50, "pep_rmsd_median": 6.54, "core_rmsd_median": 6.82, "frac_core_lt_2A": 0.00, "top_model": "A1B1__sep__of3__s6_0 core 12.2 A"},
+  "base/af3": {"n": 50, "pep_rmsd_median": 7.76, "core_rmsd_median": 7.91, "frac_core_lt_2A": 0.00, "note": "unmodified af3 shifts the register (gate pocket 6/50)"}},
+ "reading": "Two predictors (af3 with SEP, pt2 without the phosphate) converge on one peptide core register (0.56/0.57 A medians); the gate's phospho pocket agrees. bt2 is ~3 A off in the core and its most confident model sits elsewhere; of3 and unmodified af3 sit elsewhere. Whole-complex TM clustering cannot see this (receptor dominates). Termini (A1-3, A11) are free in every arm."}

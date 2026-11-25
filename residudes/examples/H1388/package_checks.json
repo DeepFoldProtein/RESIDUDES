@@ -1,0 +1,8 @@
+{"file": "<WORK>/targets/H1388/package/checks.md",
+ "author": "human (--human, AUTHOR XXXX-XXXX-XXXX); repackage with --server if this target goes out under the server group",
+ "geometry": {"models": 5, "all_ok": true, "chains": "2/2 each", "length": "ok", "chain_breaks": 0, "non_pro_cis": 0, "pairs_lt_1p5A": 0},
+ "relax_needed": false,
+ "sep_in_ts": {"models": [1,3,5], "predictor": "af3", "record": "HETATM SEP A 7 (10 lines, incl. P/O1P/O2P/O3P) inline between ATOM records of chain A",
+   "risk": "CASP TS is ATOM-only; a parser that skips HETATM would drop A7, the phosphoserine at the centre of the gated pocket contact (a break in the 11-residue peptide)",
+   "options": ["submit as is (keeps the modification)", "rewrite A7 as ATOM SER, dropping P/O1P/O2P/O3P", "rewrite A7 as ATOM SEP"]},
+ "pt2_unmodified": {"models": [2,4], "record": "ATOM SER A 7, no phosphate: Protenix did not carry the SEP (already on record at results review)"}}

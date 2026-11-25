@@ -8,8 +8,8 @@
 
 #show: metropolis-theme.with(
   aspect-ratio: "16-9",
-  config-info(title: [#"H1388: target report"], subtitle: [#"stage PLAN_REVIEW"],
-    author: [lantern · DeepFold], date: [#"2026-11-23"]),
+  config-info(title: [#"H1388: target report"], subtitle: [#"stage SLATE_PROPOSED"],
+    author: [residudes · DeepFold], date: [#"2026-11-26"]),
   config-common(new-section-slide-fn: none),
 )
 
@@ -18,24 +18,23 @@
 == In one page
 
 #text(size: 14pt)[
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"What it is"] #"A (11 aa) subunit1 — Q6PKG0; La-related protein 1 (LARP1), Homo sapiens, residues 542-552 · B (233 aa) subunit2 — P61981; 14-3-3 protein gamma (YWHAG), Homo sapiens; 14-3-3 protein family; Pfam PF00244; InterPro IPR000308, IPR023409, IPR023410, IPR036815. Given stoichiometry A1B1."
+- #text(fill: rgb("#D55E00"), weight: "bold")[#"What it is"] #"A (11 aa) subunit1 — Homo sapiens (Eukaryota; Metazoa; Chordata; Mammalia; Primates); Q6PKG0 (LARP1_HUMAN), residues 542-552; La-related protein 1 (LARP1); the peptide is an intrinsically disordered linker segment, n · B (233 aa) subunit2 — Homo sapiens (Eukaryota; Metazoa; Chordata; Mammalia; Primates); P61981 (1433G_HUMAN, YW…"
 - #text(fill: rgb("#D55E00"), weight: "bold")[#"The chemistry the FASTA does not carry"] #"A7 phosphoserine (CCD SEP) — S7 chosen; S5 rejected"
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"MSA depth"] #"deepest `af3/uniprot.a3m` 16,347 sequences, thinnest `af3/bfd.a3m` 1,607, over 4 measured alignments"
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"Structures that exist"] #"33 PDB entries named in the record: `11hg`, `11jj`, `2b05`, `2br9`, `3iqu`, `3uzd`, `4e2e`, `4j6s` …"
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"The pool"] #"875 models in 9 clusters. cluster 1 is af3_msa_pS548 and nothing else (125 of the 125 models that variant has): that input reaches a shape the others do not"
-  - #"2 clusters hold models from three or more predictors; the largest is 7 (bt2_jax 59, of3 39, af3 24)"
-  - #"one predictor only: cluster 0 (bt2_jax, 133), cluster 1 (af3, 125), cluster 6 (of3, 58), cluster 4 (of3, 31) — a shape no other predictor found"
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"What nobody knows"] #"No paper or structure found on the 14-3-3:LARP1 complex itself (Europe PMC 'LARP1 14-3-3' 50 hits, none on the complex; one web search). The FASTA names no modification; the CASP description text was not available to this step - if it says phosphopeptide, the pSer is S7. Whether one or two peptides bind the 14-3-3 dimer in the …"
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"Open, and waiting on a person (C1)"] #"(1) Phosphorylation; (2) Stoichiometry; (3) GPU; (4) Selection gate"
+- #text(fill: rgb("#D55E00"), weight: "bold")[#"MSA depth"] #"deepest `B` 10,377 sequences, thinnest `A` 0, over 2 measured alignments"
+- #text(fill: rgb("#D55E00"), weight: "bold")[#"Structures that exist"] #"24 PDB entries named in the record: `2b05`, `3uzd`, `4e2e`, `4j6s`, `4o46`, `5d3e`, `6a5s`, `6byj` …"
+- #text(fill: rgb("#D55E00"), weight: "bold")[#"The pool"] #"300 models in 12 clusters. cluster 6 is sep and nothing else (39 of the 250 models that variant has): that input reaches a shape the others do not"
+  - #"cluster 2 is sep and nothing else (34 of the 250 models that variant has): that input reaches a shape the others do not"
+  - #"cluster 7 is sep and nothing else (31 of the 250 models that variant has): that input reaches a shape the others do not"
+- #text(fill: rgb("#D55E00"), weight: "bold")[#"What nobody knows"] #"[\"No paper on the 14-3-3:LARP1 pS548 interaction or its structure was found (Europe PMC: '\\\"LARP1\\\" AND \\\"14-3-3\\\"', 'LARP1 AND Ser548', 'LARP1 AND (14-3-3 OR YWHA*)'); the organisers' description is not in the dossier, so whether the peptide was phosphorylated in the experiment is not confirmed here.\", \"Which kinase phosphoryl…"
 ]
 
 == The target
 
 #text(size: 12pt)[
-- *construct*: #"chains: A (subunit1, 11 aa): seq: PKGLSASLPDL; maps to: human LARP1 (UniProt Q6PKG0) residues 542…; given stoichiometry: A1B1"
-- *identity*: #"B: uniprot: P61981; name: 14-3-3 protein gamma (YWHAG), Homo sapiens; family: 14-3-3 protein…; A: uniprot: Q6PKG0; name: La-related protein 1 (LARP1), Homo sapiens, residues …"
-- *public structures*: #"exact sequence sweep: method: RCSB sequence search, chain B, identity>=95%, e<1e-10, 2026-11-23; n entities: 23…; peptide: method: RCSB seqmotif GLSASLPD + full-text 'LARP1 1…"
-- *templates*: #"B: 23 exact human 14-3-3 gamma PDB structures (see public_structures); best peptide-bound: 6…; A: no template; peptide placement comes from the 14-3-3 groove (binding_site/mo…"
+- *construct*: #"A: length: 11; native region: LARP1 Q6PKG0 542-552; numbering: input = native - 541; input S…; B: length: 233; native region: P61981 3-234 (native length 247; C-terminal 235-…"
+- *identity*: #"A: organism: Homo sapiens (Eukaryota; Metazoa; Chordata; Mammalia; Primates); uniprot: Q6PKG…; B: organism: Homo sapiens (Eukaryota; Metazoa; Chordata; Mammalia; Primates); u…"
+- *public structures*: #"23 PDB entries; near-identical 2b05 (B), 3uzd (B), 4e2e (B), 4j6s (B), 4o46 (B), 5d3e (B), 6a5s (B), 6byj (B), 6byl (B), 6fel (B), 6gkf (B), 6gkg (B), 6s9k (B), 6sad (B), 6y4k (B), 6y6b (B), 6zbt (B), 6zc9 (B), 7a6r (B), 7a6y (B), 8xi3 (B), 9ci3 (B), 6bzd (B)"
+- *templates*: #"B colabfold: 6byj_A 100% id, qcov 2-233/233, E 1.5e-116; 6y6b_B 100%; 6bzd_B 99.5% (R57E); 6zc9_A 99.1…; A: none (peptide); hhsearch: not run this step: chain B already has 2…"
 - *stoichiometry given*: #"A1B1"
 ]
 
@@ -43,12 +42,15 @@
 
 #text(size: 12pt)[#table(columns: (auto, auto, 1fr), stroke: 0.4pt + luma(200), inset: 5pt,
   [*prior*], [*found at*], [*what*],
-  [#"literature"], [#"NEW"], [#"claims: claim: 14-3-3 proteins bind phosphoserine motifs; mode I co…, claim: 14-3-3 is a cup-shap…; not known: No paper or structure found on the 14-3-3:LARP1 complex itself (Europe PMC 'LARP1 14-3-3'…; search…"],
-  [#"binding_site"], [#"NEW"], [#"chain: B; residues: 49, 56, 131, 132; what: phosphate pocket of 14-3-3 gamma (input numbering; native K50 R57 R132 Y133); peptide cha…; source: Yaffe et al. 1997 PMID 9428519; conserved in 14-3-3 gamma:phospho…"],
-  [#"motif"], [#"NEW"], [#"chain: A; residues: 7; what: LARP1 S548 = peptide S7, 14-3-3 mode-I-like pS-X-P (S7-L8-P9); S5 rejected (S-A-S, no Pro…; source: UniProt Q6PKG0 (S548 phosphoserine); PMID 9428519"],
-  [#"chemistry"], [#"NEW"], [#"modification: phosphoserine (CCD SEP) on chain A residue 7 (LARP1 S548); candidates: S7: chosen: pS-X-P motif, UniProt-annotated phosphosite; S5: rejected: S-A-S has no Pro a…; basis: 14-3-3 binds phosphorylat…"],
-  [#"stoichiometry_evidence"], [#"IDENTIFIED"], [#"given: A1B1 (CASP; chain A = LARP1 peptide 11 aa, chain B = 14-3-3 gamma 3-233); homolog assemblies: method: RCSB assembly 1 + rcsb_struct_symmetry, 2026-11-23; entries: 2B05: tetrameric, A2…; family prior: 14…"],
-  [#"existing_pool"], [#"HYPOTHESES"], [#"root: /gpfs/deepfold/casp/casp17/targets/H1388/results; found: existing pool (CASP17 run, 2026-06) for A1B1 and A2B2; input variants af3_msa, af3_msa_pS…; per combo: af3: 25 seeds x 5 samples per sto/variant (…"],
+  [#"literature"], [#"NEW"], [#"claims: claim: 14-3-3 proteins bind phosphoserine-containing protei…, claim: 14-3-3 acts as a dim…; not known: No paper on the 14-3-3:LARP1 pS548 interaction or its struc…, Which kinase phosphorylates…; search…"],
+  [#"binding_site"], [#"NEW"], [#"chain: B; residues: 49, 56, 131, 132; what: 14-3-3 gamma phosphate pocket in the amphipathic groove (native K50, R57, R132, Y133): th…; source: UniProt P61981 sites R57/R132; checked in PDB 6S9K (14-3-3 gamma …"],
+  [#"chemistry"], [#"NEW"], [#"modification: phosphoserine (CCD SEP) on chain A residue 7 (LARP1 Ser548); chain: A; residues: 7; candidates: S7: chosen: only serine followed by X-Pro (S7-L8-P9, pS-X-P), and UniProt Q6PKG0 records …; motif: …"],
+  [#"motif"], [#"NEW"], [#"chain: A; residues: 7, 8, 9; pattern: pS-X-P; what: 14-3-3 binding core on the LARP1 peptide (S7-L8-P9); source: Yaffe et al. 1997, PMID 9428519"],
+  [#"stoichiometry_evidence"], [#"IDENTIFIED"], [#"given: A1B1; given source: organisers' declared stoichiometry (dossier stoichiometry.given); family: 14-3-3 is a constitutive homodimer (PMID 9428519); each protomer has its own amphipathic …; homolog assembli…"],
+  [#"peptide_analog"], [#"PLAN_REVIEW"], [#"entry: 6S9K; chain receptor: A (14-3-3 gamma); chain peptide: B (caspase-2); peptide seqres start: DYDL(SEP)LPFPVCESCPLYKKLRLSTDT; core match: 6S9K caspase-2 pS139-L-P and LARP1 pS548-L-P (input A7-L8-P9) shar…"],
+  [#"inputs"], [#"INPUTS_READY"], [#"built: 2026-11-26; base: file: <WORK>/targets/H1388/inputs/base/input.json; sto: A1B1; msa:…; sep: file: <WORK>/targets/H1388/inputs/sep/input.json; same as: base;…"],
+  [#"gates_breakdown"], [#"POOL_READY"], [#"spec: <WORK>/targets/H1388/gates/H1388_A1B1.json; csv: <WORK>/targets/H1388/gates/pocket_A1B1.csv; job: 348951; pass all: 235/300; phospho pocket pass: sep/af3: 10…"],
+  [#"qa"], [#"POOL_READY"], [#"sto: A1B1; interface: job: 348948; file: <WORK>/targets/H1388/qa/interface_A1B1/xgb_dock…; cluster: job: 348952; dir: <WORK>/targets/H1388/qa/cluster_A1B1/A1B1/poo…"],
 )]
 
 == The chains, and the residues a gate would use
@@ -59,91 +61,117 @@
 == What the literature settles, and what it does not
 
 #align(center)[#image("figs/literature.svg", height: 76%)]
-#text(size: 11pt)[#"5 claims, 5 with a source · not settled: No paper or structure found on the 14-3-3:LARP1 complex itself (Europe PMC 'LARP1 14-3-3' 50 hits, none on the complex; one web search). The FASTA names no modification; the CASP description text was not available to this step - …"]
+#text(size: 11pt)[#"7 claims, 7 with a source · not settled: [\"No paper on the 14-3-3:LARP1 pS548 interaction or its structure was found (Europe PMC: '\\\"LARP1\\\" AND \\\"14-3-3\\\"', 'LARP1 AND Ser548', 'LARP1 AND (14-3-3 OR YWHA*)'); the organisers' description is not in the dossier, so whethe…"]
 
 == The sites the analysis found, residue by residue
 
 #align(center)[#image("figs/sites.svg", height: 76%)]
-#text(size: 11pt)[#"binding_site B: K49, R56, R131, Y132 · motif A: S7 · phosphoserine (CCD SEP) on A7"]
+#text(size: 11pt)[#"binding_site B: K49, R56, R131, Y132 · motif A: S7, L8, P9 · phosphoserine (CCD SEP) on A7"]
 
 == The motifs, and every place they can sit
 
 #align(center)[#image("figs/motif.svg", width: 92%)]
-#text(size: 11pt)[#"pS-X-P on A: S7 · S-A-S on A: S5"]
+#text(size: 11pt)[#"pS-X-P on A: S7"]
 
 == MSA depth and coverage
 
 #align(center)[#image("figs/msa_coverage.svg", width: 92%)]
-#text(size: 12pt)[#"af3/uniref90.a3m": 6,536 sequences, 4,692 ≥50% coverage · #"af3/uniprot.a3m": 16,347 sequences, 13,544 ≥50% coverage · #"af3/mgnify.a3m": 4,332 sequences, 1,860 ≥50% coverage · #"af3/bfd.a3m": 1,607 sequences, 957 ≥50% coverage]
+#text(size: 12pt)[#"A": 0 sequences, 0 ≥50% coverage · #"B": 10,377 sequences, 8,105 ≥50% coverage]
 
 == The pool: confidence per stoichiometry and predictor
 
 Best (and median of the top 10) ipTM for complexes, pTM for monomers. Darker is more confident.
 
-#text(size: 12pt)[#table(columns: 3, stroke: 0.4pt + white, inset: 6pt, align: center,
-  [], [*#"A1B1"*], [*#"A2B2"*],
-  [*#"af3"*], table.cell(fill: rgb(15, 122, 182))[#text(fill: white)[#"0.94 (0.94)"]], table.cell(fill: rgb(17, 123, 183))[#text(fill: white)[#"0.93 (0.92)"]],
-  [*#"bt2_jax"*], table.cell(fill: rgb(21, 126, 184))[#text(fill: white)[#"0.91 (0.91)"]], table.cell(fill: rgb(14, 122, 182))[#text(fill: white)[#"0.94 (0.94)"]],
-  [*#"of3"*], table.cell(fill: rgb(68, 151, 198))[#text(fill: white)[#"0.73 (0.62)"]], table.cell(fill: rgb(26, 128, 185))[#text(fill: white)[#"0.90 (0.90)"]],
+#text(size: 12pt)[#table(columns: 2, stroke: 0.4pt + white, inset: 6pt, align: center,
+  [], [*#"A1B1"*],
+  [*#"af3"*], table.cell(fill: rgb(15, 122, 182))[#text(fill: white)[#"0.94 (0.93)"]],
+  [*#"bt2"*], table.cell(fill: rgb(23, 126, 185))[#text(fill: white)[#"0.91 (0.90)"]],
+  [*#"of3"*], table.cell(fill: rgb(84, 160, 203))[#text(fill: white)[#"0.67 (0.61)"]],
+  [*#"pt2"*], table.cell(fill: rgb(20, 125, 184))[#text(fill: white)[#"0.92 (0.92)"]],
 )]
 
 == The pool, clustered: the alternatives a slate hedges across
 
 #align(center)[#image("figs/clusters.svg", height: 76%)]
-#text(size: 11pt)[#"875 models, 9 clusters in 3 input variants · best predicted DockQ per cluster: af3_msa_pS548:1 0.72, af3_msa:0 0.71, mmseqs2_gpu:0 0.71"]
-
-== What each cluster is: the model at the centre of it
-
-#grid(columns: 4, gutter: 8pt,
-  figure(image("figs/C0_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C0 · 133 models · conf 0.93 · DockQ 0.61 · bt2_jax"]]),
-  figure(image("figs/C1_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C1 · 125 models · conf 0.96 · DockQ 0.66 · af3"]]),
-  figure(image("figs/C8_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C8 · 123 models · conf 0.92 · DockQ 0.46 · af3/bt2_jax"]]),
-  figure(image("figs/C7_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C7 · 122 models · conf 0.93 · DockQ 0.46 · bt2_jax/of3/af3"]]),
-  figure(image("figs/C5_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C5 · 101 models · conf 0.92 · DockQ 0.44 · af3/bt2_jax"]]),
-  figure(image("figs/C3_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C3 · 95 models · conf 0.73 · DockQ 0.43 · of3/af3"]]),
-  figure(image("figs/C2_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C2 · 87 models · conf 0.93 · DockQ 0.45 · of3/bt2_jax/af3"]]),
-  figure(image("figs/C6_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C6 · 58 models · conf 0.77 · DockQ 0.41 · of3"]]),
-)
-#text(size: 11pt)[#"Each is the model with the highest membership in its cluster, superposed on the first and coloured by chain. Clusters are ordered by size; the numbers are the cluster's, not the model's."]
+#text(size: 11pt)[#"300 models, 12 clusters in 2 input variants · best predicted DockQ per cluster: sep:6 0.81, sep:10 0.81, sep:9 0.80"]
 
 == Decisions and the priors they rest on
 
 #text(size: 10pt)[#table(columns: (auto, auto, 1fr, auto), stroke: 0.4pt + luma(200), inset: 4pt,
   [*id*], [*type*], [*chose*], [*rests on*],
-  [#"D1"], [#"variant"], [#"af3 input with SEP at chain A position 7 (LARP1 pS548), run next to the unmodified input"], [#"construct, literature, motif, chemistry"],
-  [#"D2"], [#"stoichiometry"], [#"A1B1 submitted (given; one 14-3-3 gamma groove + LARP1 pS548 peptide). Run A1B1 and A2B2 (native 14-3-3 dimer, a p…"], [#"construct, public_structures, literature, stoichiometry_evidence"],
-  [#"D3"], [#"variant"], [#"MSA: use the existing deep chain-B MSAs (af3_msa: uniref90 N=6536, uniprot N=16347; plus mmseqs2_gpu variant). No …"], [#"construct, msa_depth, existing_pool"],
-  [#"D4"], [#"variant"], [#"Templates: AF3 default template search (91 of 1578 hits are 14-3-3 gamma, peptide-bound gamma included); no custom…"], [#"public_structures, templates, existing_pool"],
-  [#"D5"], [#"variant"], [#"No ligand or metal: 14-3-3 binds the phosphopeptide without cofactors. Only chemistry variant is pS548 SEP (D1)"], [#"literature, chemistry"],
-  [#"D6"], [#"sampling"], [#"No new GPU now: CASP17 pool already holds af3 25 seeds x5 for A1B1 and A2B2 x (af3_msa, af3_msa_pS548, mmseqs2_gpu…"], [#"binding_site, motif, stoichiometry_evidence, existing_pool"],
+  [#"D1"], [#"variant"], [#"phosphoserine (SEP) on chain A residue 7 (LARP1 S548), af3 only, run next to the unmodified input"], [#"construct, literature, binding_site, chemistry, motif"],
+  [#"D2"], [#"stoichiometry"], [#"A1B1 (declared): one LARP1 phosphopeptide in the groove of one 14-3-3 gamma protomer; all five slate models A1B1"], [#"public_structures, literature, binding_site, motif, stoichiometry_evi…"],
+  [#"D3"], [#"variant"], [#"MSA: ColabFold MSA for chain B (14-3-3 gamma, 10,377 seqs, deep); chain A (11-mer LARP1 peptide) single-sequence (…"], [#"identity, construct, msa_depth"],
+  [#"D4"], [#"variant"], [#"Templates: chain B search templates (top 4) plus 6S9K chain A pinned at rank 1 (1.60 A, 100% id, phosphopeptide-bo…"], [#"public_structures, literature, binding_site, templates"],
+  [#"D5"], [#"variant"], [#"PTM wiring: phosphoserine as an AF3/Protenix modification {ptmType: SEP, ptmPosition: 7} on chain A, added to the …"], [#"construct, chemistry, motif"],
+  [#"D6"], [#"sampling"], [#"Sampling, all A1B1 (244 residues): af3 SEP 20 seeds x5 samples (lead arm); af3 unmodified 10 seeds x5 (control); p…"], [#"binding_site, chemistry, motif, stoichiometry_evidence, msa_depth, te…"],
+  [#"D7"], [#"selection"], [#"Slate v2: A1B1__sep__af3__s20_0, A1B1__sep__pt2__s5_0, A1B1__sep__af3__s9_0, A1B1__sep__pt2__s10_0, A1B1__sep__af3…"], [#"binding_site, motif, peptide_analog, gates, qa, peptide_agreement, sl…"],
 )]
 
 == Checkpoint C1 (plan) at PLAN REVIEW
 
 #text(size: 12pt)[
-+ #"Phosphorylation: (a) A7 = pS548 (SEP), lead with SEP models, unmodified as control [recommended: pS-L-P motif, 14-3-3 needs a phosphate], (b) unmodified only, (c) equal weight"
-+ #"Stoichiometry: (a) submit A1B1, run A2B2 as dimer-context hedge cut to one B:A pair [recommended], (b) A1B1 runs only, (c) submit the A2B2 dimer"
-+ #"GPU: (a) only <=40 of 400 GPU-h (pt2 rerun, of3/bt2 with SEP) on top of the existing ~1.4k-model pool [recommended], (b) none, (c) +100 GPU-h af3 seeds with a custom 6A5S template"
-+ #"Selection gate: (a) A7 phosphate within 4 A of B K49/R56/R131/Y132 first, then confidence [recommended], (b) confidence only"
++ #"Q1 pocket gate: (a) pS7 phosphate within 4 A of B56/B131/B132 [recommended: 6S9K contacts these, not K49] (b) require B49 too"
++ #"Q2 dimer: (a) A1B1 only as declared [recommended] (b) add 5 af3 A2B2 seeds as a geometry check, ~+1 GPU-h, not submitted"
++ #"Q3 template: (a) pin 6S9K chain A in af3 lead arm, unpinned control alongside [recommended: pS-L-P analog, 1.6 A] (b) no pinned template"
++ #"Q4 unmodified arm: (a) eligible for the slate only if it passes the pocket gate [recommended] (b) slate from SEP models only"
 ]
 #text(size: 11pt)[
-- #text(fill: rgb("#2a2a2e"), weight: "bold")[agent]: #"Correction to my question 4. Since writing it I measured 6A5S (notes/target.md section 4): nearest side-chain atom of B K49/R56/R131/Y132 to the phosphoserine is 2.4-2.8 A from the phosphate oxygens, 3.6-3.9 A from the phosphorus, and 4.2-5.1 A from the serine OG. So a 4 A cut-off passes the reference only when measured from th…"
+- #text(fill: rgb("#2a2a2e"), weight: "bold")[agent]: #"Answer under deepfold's mandate. Q1 (a): gate on the pS7 phosphate within 4 A of B56/B131/B132; pass = at least 2 of the 3 (tolerates arginine rotamer variance; 6S9K has all three at <=3.5 A); the census still reports B49. B49 (K50) is not a contact in 6S9K (binding_site, peptide_analog), so requiring it would reject native-lik…"
+- #text(fill: rgb("#D55E00"), weight: "bold")[resolved by a person]: #"proceed"
 ]
 
-== Best model per stoichiometry: structures (by chain)
+== Checkpoint C2 (results) at RESULTS REVIEW
 
-#grid(columns: 2, gutter: 6pt,
-  figure(image("figs/A1B1_chains.jpg", height: 33%), caption: [#"A1B1: A1B1__af3_msa_pS548__af3__s1_0"]),
-  figure(image("figs/A2B2_chains.jpg", height: 33%), caption: [#"A2B2: A2B2__af3_msa_pS548__af3__s1_0"]),
-)
+#text(size: 12pt)[
++ #"Slate route: (a) proceed with gated af3+pS7 (3) and pt2 (2) in the consensus register [recommended: two predictors agree at 0.56 A core and the pocket gate passes]; (b) loop:RUNNING more seeds; (c) loop:HYPOTHESES rewire SEP into…"
++ #"missing_models trigger: treat as false positive (pt2/bt2/of3 planned at 10 seeds, 50/50 present) [recommended: yes]"
+]
+#text(size: 11pt)[
+- #text(fill: rgb("#2a2a2e"), weight: "bold")[agent]: #"Answer under the mandate. Q1: (a) proceed. The pool has one register held by two predictors with different inputs (af3 with pS7 and the pinned 6S9K template; pt2 with SER7): core A4-A10 median 0.56/0.57 A to A1B1__sep__af3__s20_0, and every af3+pS7 and pt2 model passes the phospho-pocket gate (150/150). That register is the one…"
+- #text(fill: rgb("#D55E00"), weight: "bold")[resolved by a person]: #"proceed"
+]
 
-== Best model per stoichiometry: confidence (pLDDT)
+== First results: the review
 
-#grid(columns: 2, gutter: 6pt,
-  figure(image("figs/A1B1_plddt.jpg", height: 33%), caption: [#"A1B1"]),
-  figure(image("figs/A2B2_plddt.jpg", height: 33%), caption: [#"A2B2"]),
-)
-#text(size: 11pt)[pLDDT: #text(fill: rgb("#0053D6"))[■] > 90 · #text(fill: rgb("#65CBF3"))[■] 70–90 · #text(fill: rgb("#FFDB13"))[■] 50–70 · #text(fill: rgb("#FF7D45"))[■] < 50]
+- #"missing_models: A1B1/sep/bt2 50/100, A1B1/sep/of3 50/100, A1B1/sep/pt2 50/100"
+- #"missing_models_false_positive: the trigger expects 100 per sep cell because sep/af3 ran 20 seeds; D6 planned 10 seeds x5 for pt2/bt2/of3, and pool records expected 50 = n 50 for each, 0 empty, 0 clas…"
+- #"peptide_register_split: on receptor superposition, af3-SEP and pt2 put the peptide core A4-A10 in one register (median 0.56/0.57 A to A1B1__sep__af3__s20_0, 99-100% under 2 A); bt2 median 3.05 A and …"
+- #"ptm_not_carried: only af3 wrote SEP at A7; pt2/bt2/of3 sep runs wrote SER7 (evidence pool). pt2 still reproduces the af3-SEP register without the phosphate; ipTM is not comparable between af3-SEP and…"
+
+== Structural gates #"pocket" at #"A1B1"
+
+#text(size: 20pt)[*235* of 300 models pass every gate]
+
+#text(size: 14pt)[#grid(columns: (1.5fr, 1fr), gutter: 18pt,
+  table(columns: (auto, 1fr, auto), stroke: 0.4pt + luma(200), inset: 6pt, [*gate*], [*checks*], [*pass*],
+    [#"complete"], [#"all chains present"], [#"300"],
+    [#"phospho_pocket"], [#"A:7 within 6.0 Å of B:49,56,131,132 (≥ 2 site residues)"], [#"235"],
+    [#"motif"], [#"B within 6.0 Å of A:7,8,9 (≥ 3 site residues)"], [#"300"],
+    [#"assembled"], [#"interface A : B within 5.0 Å, ≥ 10 residue contacts"], [#"300"],
+  ),
+  table(columns: (auto, auto, auto), stroke: 0.4pt + luma(200), inset: 6pt, [*predictor*], [*models*], [*pass*],
+    [#"af3"], [#"150"], [#"106"],
+    [#"bt2"], [#"50"], [#"46"],
+    [#"of3"], [#"50"], [#"33"],
+    [#"pt2"], [#"50"], [#"50"],
+  ),
+)]
+
+== The slate: structures
+
+Pictures are being rendered (`residudes slides` again when the render job is done).
+
+== Slate v2 (chosen by review)
+
+#text(size: 12pt)[#table(columns: 6, stroke: 0.4pt + luma(200), inset: 5pt,
+  [*slot*], [*model*], [*runner*], [*ipTM*], [*z (runner)*], [*interface*],
+  [#"1"], [#"A1B1__sep__af3__s20_0"], [#"af3"], [#"0.939"], [#"1.1"], [#"0.768"],
+  [#"2"], [#"A1B1__sep__pt2__s5_0"], [#"pt2"], [#"0.92"], [#"0.6"], [#"0.7037"],
+  [#"3"], [#"A1B1__sep__af3__s9_0"], [#"af3"], [#"0.933"], [#"0.85"], [#"0.7617"],
+  [#"4"], [#"A1B1__sep__pt2__s10_0"], [#"pt2"], [#"0.912"], [#"0.3"], [#"0.6947"],
+  [#"5"], [#"A1B1__sep__af3__s7_0"], [#"af3"], [#"0.931"], [#"0.75"], [#"0.6996"],
+)]
 
 #include "agent.typ"
 
@@ -151,44 +179,38 @@ Best (and median of the top 10) ipTM for complexes, pTM for monomers. Darker is 
 
 #text(size: 11pt)[#table(columns: (auto, 1fr, auto), stroke: 0.4pt + luma(200), inset: 5pt,
   [*\#*], [*source*], [*supports*],
-  [#"1"], [#"UniProt Q6PKG0 REST json, /store/deepfold/lantern/targets/H1388/dl/Q6PKG0.json"], [#"construct"],
-  [#"2"], [#"UniProt P61981 REST json, /store/deepfold/lantern/targets/H1388/dl/P61981.json"], [#"construct"],
-  [#"3"], [#"UniProt P61981; /gpfs/deepfold/casp/casp17/targets/H1388/B/hhpred.hhr"], [#"identity"],
-  [#"4"], [#"UniProt Q6PKG0"], [#"identity"],
-  [#"5"], [#"RCSB sequence search, chain B, identity>=95%, e<1e-10, 2026-11-23"], [#"public_structures"],
-  [#"6"], [#"RCSB search API; entry titles from data.rcsb.org"], [#"public_structures"],
-  [#"7"], [#"RCSB seqmotif GLSASLPD + full-text 'LARP1 14-3-3'"], [#"public_structures"],
-  [#"8"], [#"RCSB search API 2026-11-23"], [#"public_structures"],
-  [#"9"], [#"Yaffe et al. 1997 PMID 9428519; conserved in 14-3-3 gamma:phosphopeptide crystals 2B05, 6A5S"], [#"literature, binding_site, motif, chemis…"],
-  [#"10"], [#"14-3-3 obligate homodimer via N-terminal helices (Liu 1995 PMID 7603574); one peptide per monomer groove (Yaffe 1997 PMID 9428519); the dimer interfa…"], [#"literature, stoichiometry_evidence"],
-  [#"11"], [#"RCSB 9T76-9T7B titles, 'mTORC1 recruits substrates via an expanded TOS (XTOS) motif' (2026)"], [#"literature"],
-  [#"12"], [#"RCSB assembly 1 + rcsb_struct_symmetry, 2026-11-23"], [#"stoichiometry_evidence"],
-  [#"13"], [#"RCSB search 2026-11-23"], [#"templates"],
+  [#"1"], [#"UniProt P61981 sites R57/R132; checked in PDB 6S9K (14-3-3 gamma + caspase-2 phosphopeptide, 1.60 A): SEP139 phosphate oxygens within 3.5 A of R57, R…"], [#"literature, binding_site, chemistry, mo…"],
+  [#"2"], [#"Yang et al. 2006 PNAS, PMID 17085597, PMC1859916 (abstract); the gamma entry from this work is 2B05 (inferred from release date and title, not checke…"], [#"literature"],
+  [#"3"], [#"UniProt P61981 Site features"], [#"literature"],
+  [#"4"], [#"UniProt Q6PKG0 Modified residue 548"], [#"literature"],
+  [#"5"], [#"residudes structures H1388 (RCSB sequence search, 2026-11-26)"], [#"literature"],
+  [#"6"], [#"organisers' declared stoichiometry (dossier stoichiometry.given)"], [#"stoichiometry_evidence"],
+  [#"7"], [#"receptor (chain B) CA superposition onto the top-ranking_score af3 SEP model A1B1__sep__af3__s20_0, then peptide chain A CA RMSD (all 11 and core A4-…"], [#"peptide_agreement"],
+  [#"8"], [#"A1B1__sep__af3__s20_0"], [#"peptide_agreement, slate_consensus"],
 )]
-#text(size: 11pt)[*No source recorded*: #"existing_pool"]
+#text(size: 11pt)[*No source recorded*: #"public_structures, identity, construct, templates, inputs, gates_breakdown, qa"]
 
 == What this proposes, and what it is asking
 
 #text(size: 13pt)[
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"variant"] #"af3 input with SEP at chain A position 7 (LARP1 pS548), run next to the unmodified input; MSA: use the existing deep chain-B MSAs (af3_msa: uniref90 N=6536, uniprot N=16347; plus mmseqs2_gpu variant). No crawl/plmMSA. Peptide A runs single…; Templates: AF3 de…"
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"stoichiometry"] #"A1B1 submitted (given; one 14-3-3 gamma groove + LARP1 pS548 peptide). Run A1B1 and A2B2 (native 14-3-3 dimer, a peptide in each groove); A2B2 models…"
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"sampling"] #"No new GPU now: CASP17 pool already holds af3 25 seeds x5 for A1B1 and A2B2 x (af3_msa, af3_msa_pS548, mmseqs2_gpu) plus bt2_jax and of3 (unmodified)…"
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"Best model in the pool so far"] #"by confidence `A1B1__af3_msa_pS548__af3__s9_0` (0.960) · by predicted DockQ `A1B1__af3_msa_pS548__af3__s11_4` (0.717) — not the same model, which is what the slate's two scales are for"
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"C1 question 1"] #"Phosphorylation: (a) A7 = pS548 (SEP), lead with SEP models, unmodified as control [recommended: pS-L-P motif, 14-3-3 needs a phosphate], (b) unmodified only, (c) equal weight"
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"C1 question 2"] #"Stoichiometry: (a) submit A1B1, run A2B2 as dimer-context hedge cut to one B:A pair [recommended], (b) A1B1 runs only, (c) submit the A2B2 dimer"
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"C1 question 3"] #"GPU: (a) only <=40 of 400 GPU-h (pt2 rerun, of3/bt2 with SEP) on top of the existing ~1.4k-model pool [recommended], (b) none, (c) +100 GPU-h af3 seeds with a custom 6A5S template"
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"C1 question 4"] #"Selection gate: (a) A7 phosphate within 4 A of B K49/R56/R131/Y132 first, then confidence [recommended], (b) confidence only"
-- #text(fill: rgb("#D55E00"), weight: "bold")[#"C1 thread, the agent"] #"Correction to my question 4. Since writing it I measured 6A5S (notes/target.md section 4): nearest side-chain atom of B K49/R56/R131/Y132 to the phosphoserine is 2.4-2.8 A from the phosphate oxygens, 3.6-3.9 A from the phosphorus, and 4.2-5.1 A from the serin…"
+- #text(fill: rgb("#D55E00"), weight: "bold")[#"variant"] #"phosphoserine (SEP) on chain A residue 7 (LARP1 S548), af3 only, run next to the unmodified input; MSA: ColabFold MSA for chain B (14-3-3 gamma, 10,377 seqs, deep); chain A (11-mer LARP1 peptide) single-sequence (empty unpaired MSA), no paired MSA …; Template…"
+- #text(fill: rgb("#D55E00"), weight: "bold")[#"stoichiometry"] #"A1B1 (declared): one LARP1 phosphopeptide in the groove of one 14-3-3 gamma protomer; all five slate models A1B1"
+- #text(fill: rgb("#D55E00"), weight: "bold")[#"sampling"] #"Sampling, all A1B1 (244 residues): af3 SEP 20 seeds x5 samples (lead arm); af3 unmodified 10 seeds x5 (control); protenix SEP 10 seeds x5; boltz-2 10…"
+- #text(fill: rgb("#D55E00"), weight: "bold")[#"selection"] #"Slate v2: A1B1__sep__af3__s20_0, A1B1__sep__pt2__s5_0, A1B1__sep__af3__s9_0, A1B1__sep__pt2__s10_0, A1B1__sep__af3__s7_0. All pass the pocket gate an…"
+- #text(fill: rgb("#D55E00"), weight: "bold")[#"Best model in the pool so far"] #"by confidence `A1B1__sep__af3__s20_0` (0.963) · by predicted DockQ `A1B1__sep__af3__s4_1` (0.811) — not the same model, which is what the slate's two scales are for"
 ]
 
 == What the agent spent
 
 #text(size: 13pt)[#table(columns: 4, stroke: 0.4pt + luma(200), inset: 5pt,
   [*stage*], [*steps*], [*turns*], [*USD*],
-  [#"NEW"], [#"1"], [#"24"], [#"0.89"],
-  [#"IDENTIFIED"], [#"1"], [#"11"], [#"0.29"],
-  [#"HYPOTHESES"], [#"1"], [#"12"], [#"0.35"],
-  [#"PLAN_REVIEW"], [#"1"], [#"24"], [#"0.63"],
-  [*total*], [#"4"], [#"71"], [#"2.15"],
+  [#"NEW"], [#"1"], [#"22"], [#"0.96"],
+  [#"IDENTIFIED"], [#"1"], [#"6"], [#"0.26"],
+  [#"HYPOTHESES"], [#"1"], [#"11"], [#"0.35"],
+  [#"PLAN_REVIEW"], [#"5"], [#"54"], [#"1.53"],
+  [#"INPUTS_READY"], [#"1"], [#"19"], [#"0.54"],
+  [#"RUNNING"], [#"1"], [#"19"], [#"0.49"],
+  [#"POOL_READY"], [#"2"], [#"10"], [#"0.87"],
+  [*total*], [#"12"], [#"141"], [#"5.00"],
 )]
 

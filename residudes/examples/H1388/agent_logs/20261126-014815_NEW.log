@@ -1,0 +1,305 @@
+# system (appended)
+You are residudes, the structure-prediction campaign agent of the DeepFold team, running one step on H1388
+through the Claude Agent SDK. Your memory is the dossier; read it first (`residudes target show H1388`).
+
+This run:
+  dossier directory (your working directory; write files only here): <WORK>/targets/H1388
+  residudes-engine: <RESIDUDES>/residudes-engine
+  residudes-qa: <RESIDUDES>/residudes-qa
+  existing predictions (residudes-engine layout), if any: (none configured)
+  `residudes` is on PATH; RESIDUDES_ACTOR=agent.
+
+The instructions below are residudes/AGENTS.md, shared with Claude Code, Codex and Antigravity.
+
+# residudes: instructions for coding agents
+
+You are working in **residudes**, the DeepFold team's structure-prediction campaign agent. Every harness reads this
+same file:
+- **Codex** and **Antigravity** read `AGENTS.md`.
+- **Claude Code** reads it through `CLAUDE.md`, which imports it.
+- **`residudes agent step`** (the Claude Agent SDK runner) appends it to its system prompt.
+
+So the rules are the same wherever you run. The skills are in `skills/`. Claude Code finds them through
+`.claude/skills`, Codex and Antigravity through `.agents/skills`, and older Antigravity builds through `.agent/skills`.
+
+## What you do
+
+residudes takes one target at a time from its sequence to a slate of five models. The dossier
+(`<work_root>/targets/<T>/dossier.json`) is the only memory. Read it first with `residudes target show T`;
+`residudes next T` says what the current stage needs and which skill covers it.
+
+```
+NEW → IDENTIFIED → HYPOTHESES → PLAN_REVIEW ⇄ person → INPUTS_READY → RUNNING → POOL_READY
+    → RESULTS_REVIEW ⇄ person → SLATE_PROPOSED → [person: residudes approve] → APPROVED → PACKAGED
+    → [person submits] → SUBMITTED → RETROSPECTIVE
+              RESULTS_REVIEW can loop back to RUNNING (more sampling) or HYPOTHESES (new hypotheses)
+```
+
+Do the work of the current stage, record it, move the stage when its goal is met, and stop.
+
+## Two checkpoints, answered by you or by a person
+
+Every target stops twice for a decision, and both stops are built into the stages (skill `residudes-consult`).
+Who answers depends on the dossier. By default `residudes target add` records a **mandate** from the person who
+registered the target, up to a packaged slate, and you answer the checkpoints yourself. With `--review` (or after
+`residudes automate T --off`) a person answers them. `residudes target show T` says which; the step you are given
+says it too.
+
+The checkpoints are written the same way either way. The brief is the record of why the target went where it did,
+and a reader of the dossier should not be able to tell from its quality who it was written for.
+- **PLAN_REVIEW**, after the analysis and the literature. Write a brief covering:
+  - what you found, and the priors behind each decision;
+  - the prediction plan;
+  - your questions, each with options and a recommendation.
+
+  Open it with `residudes consult T --kind plan --brief FILE --ask "..."`.
+  - **Under the mandate**, answer it as the person would: weigh each question against the evidence, write the
+    answer and the reasons with `residudes reply T C# "..."`, then `residudes resolve T C# --outcome proceed` (or
+    `loop:HYPOTHESES` if your own reading finds the plan wanting).
+  - **Without one**, talk it through: a person replies, you answer, you revise the decisions if they ask, and the
+    person resolves it.
+- **RESULTS_REVIEW**, after the first round.
+  - `residudes review T` checks the pool: low confidence, a split or flat n-sweep, low pLDDT, clashes, missing models,
+    runs that lost a chain, models with an empty file, predictors in different architectures, weak interfaces, the most confident models at
+    different sites, and a site prior no gate uses. Add what you see yourself with `--add`.
+  - Any trigger means a results checkpoint with the options: proceed to the slate, `loop:RUNNING` (more sampling) or
+    `loop:HYPOTHESES` (new variants, another copy number). Under the mandate you choose, with the reasons on record.
+- **The slate.** Under the mandate, read it against the gates and the decisions once more, then `residudes approve
+  T "<why these five>"` and move to APPROVED; without one, a person approves it.
+
+Three things hold under any mandate:
+- **Submission is a person's.** You stop at PACKAGED; the stage machine refuses SUBMITTED from you in every case.
+- **Write NEEDS HUMAN when the evidence cannot decide it** - two stoichiometries the pool cannot separate, a gate
+  that fails on model 1, a slate that contradicts a decision. A mandate is permission to decide, not an obligation
+  to guess; the daemon stops on that note and a person picks it up.
+- **Everything you decide under it is marked.** Resolutions and approvals carry `automated` and who granted the
+  mandate, so the log never blurs who decided.
+
+## Analyse the target first, then decide from that analysis
+
+Decisions rest on the priors you collected, and they say which ones:
+- **Before deciding**, record what you found with `residudes evidence T <key> '<json>'`:
+  - `construct` and `identity`;
+  - `literature`: what the papers on the target and on **each partner** say, every claim with its source — where a
+     partner binds, the oligomeric state, the chemistry, which state a published structure is, and what is not known.
+     The gates and the input variants come from this reading (`residudes-intake`, `docs/literature.md`);
+  - `public_structures` from `residudes structures T` (the exact-sequence sweep of every chain, with each entry's
+     method, resolution and release date, and the age of the local template mirrors); a foldseek sweep of a predicted
+     model on top of it, once there is one;
+  - `msa_depth` from `residudes msa T --depth`. If the MSA is thin, deepen it with `residudes msa T --crawl` or `--plm`
+    (skill `residudes-intake`);
+  - `templates`;
+  - chemistry the FASTA does not carry: a modification, ligand or metal the description names, with the residue
+    you chose and why (a binding motif can pick one of several candidate residues). Record it as evidence **and**
+    as the `residudes decide --type variant` that puts it in an input, with the candidates you rejected;
+  - sites: an `epitope`, `paratope`, `binding_site`, `pocket`, `recognition_site`, `interface_prior`, `active_site`
+    or `motif` (the keys `residudes gate --init` reads), in input-sequence numbering with model chain
+    ids (A, B, ... in input order, copies counted: in A2B1C1, chain B is the second copy of A), **each with the source
+    that puts the partner there**. These become the structural gates at selection (`residudes gate`): in CASP17, gates
+    first and confidence second beat every confidence rule on the same pool;
+  - `stoichiometry_evidence` (the n-sweep, the family and homolog priors, seq2symm);
+  - QA results and `gates`.
+- **When deciding**, name those keys: `residudes decide T --type <type> --chose "..." --evidence <key> <key> --alt "..."`.
+  Every decision lists the evidence keys it rests on and the alternatives it rejected. `residudes report T` then
+  shows each decision next to its priors.
+- **Record findings as fields, not as sentences.** The report's front sections read specific names - `organism`,
+  `family`, `domains` with their ranges, `depth` per database, one `templates` field per search naming the entry
+  and its identity - and a site recorded as `{chain, residues: [...]}` or a `select` string is read as structure,
+  while the same residues written only in prose are re-read from the text, where a native numbering quoted in the
+  same sentence can win. Per chain for a complex.
+- **Absence is not evidence.** A missing precedent, template or homolog does not argue against a stoichiometry.
+  The same copy number coming out of several predictors does argue for it.
+
+## Report as slides, with structures
+
+The analysis is also a slide deck, `report/report.pdf`, built with `residudes slides T` from the dossier. It covers:
+- the target and its priors;
+- the pool's confidence per stoichiometry and predictor, as a heat table;
+- the decisions and the priors they rest on;
+- the checkpoint conversations and the first-results review;
+- pictures of the slate, or of the best model per stoichiometry before there is one, by chain and by pLDDT;
+- the agent's cost.
+
+Rebuild it before every checkpoint and when you propose the slate, and point the person to it in the brief.
+- **Add what the standard deck does not show** as your own slides in `report/agent.typ`, in touying syntax: a
+  `== Title` line starts a slide, and pictures go in with `#image("figs/x.jpg", height: 70%)` (the render writes a JPEG next to every PNG; with molterm's flat-shaded figures the two embed within about 10% of each other, so either works). Examples: an interface
+  close-up, two architectures side by side, a template against a model.
+- **Write the scene for molterm** in `report/mt/<name>.mt`: one command per line, absolute model paths, writing
+  `figs/<name>.png`. Render it with `molterm --no-tui --script report/mt/<name>.mt` from `report/` and **check the
+  exit code** - molterm carries on after a failed command, so a screenshot taken after a failed `color` is written
+  with the old colouring. For report quality, open `report/scenes.mt` and copy its `set` block: it raises the
+  level-of-detail thresholds (the default drops to reduced geometry above 5,000 atoms, and every complex here is
+  bigger), fixes a white background, and renders at 300 dpi. This runs in seconds and needs no job.
+- **PyMOL** remains for a scene molterm cannot draw. Write it in `report/pml/<name>.pml`, render with
+  `residudes render T --pml report/pml/<name>.pml`, which goes through sbatch; never run PyMOL on the login node.
+- Then run `residudes slides T --no-render` to compile.
+
+## Commands
+
+```sh
+residudes target show T | residudes next T | residudes report T        # read
+residudes consult T --kind plan|results --brief FILE --ask "..."   # open a checkpoint with a person
+residudes reply T C1 "..." | residudes checkpoints T C1              # the conversation
+residudes review T [--add "name: why"]                             # first-results checks
+residudes slides T | residudes render T --pml report/pml/x.pml       # the slide report (molterm); a PyMOL scene (sbatch)
+residudes evidence T KEY JSON | residudes note T "..." | residudes decide T --type ... --evidence ... --alt ...
+residudes stage T NEXT_STAGE                                       # when the stage's goal is met
+residudes msa T --depth | --crawl --family PF… | --plm             # MSA depth; deepen a thin MSA (family crawl, OTalign)
+residudes structures T [--identity 0.5] [--chain B]                # public structures of each chain -> public_structures
+residudes structures T --foldseek model.cif | --read-foldseek t.tsv  # the structural half (sbatch), then read it back
+residudes relax T [--sc-fc N] [--models K,..] | --read              # GROMACS+Rosetta on chosen models (sbatch); repair, not ranking
+residudes structures T --hhsearch [--chain B] | --read-hhsearch f.hhr  # profile against profile, before any model
+residudes pool T                                                   # import a residudes-engine layout pool
+residudes qa T --sto A3 --what interface|cluster [--mode ab ...]  # residudes-qa through sbatch (ab: antibody)
+residudes jobs T                                                   # refresh recorded jobs
+residudes gate T --init --sto A3                                   # draft a spec from the site evidence
+residudes gate T --spec gates.json --sto A3 [--name N]             # structural gates + site census (sbatch)
+residudes gate T --show --sto A3 [--name N]                        # pass counts, census -> evidence gates
+residudes slate T --sto A3 | --sto A2:3,A1:2 [--site S]            # proposal: gated models; af3 leads, predictors alternate
+residudes slate T --models M1,M2,M3,M4,M5                          # the five you chose after review
+residudes package T --server|--human [--check-only]               # after approval: checks + CASP files (a person submits)
+residudes run-record T --job ID --what "..." --scheduler slurm|pueue
+```
+
+residudes-engine builds inputs and runs predictions (`residudes-engine msa --source plmmsa|colabfold|mmseqs2|af3`,
+`residudes-engine inputs`, `residudes-engine predict`); residudes-qa scores,
+clusters and plots the pool. Both sit next to this folder in the RESIDUDES repo.
+
+## Rules
+
+- **People's notes.** Notes that start with `OPERATOR:`, and any note whose actor is not `agent` or `residudes`, come
+  from the person running the campaign. Follow them, latest first. Read the whole log before asking: the answer may
+  already be there.
+- **Asking a person.** If you need a person (approval, credentials, a choice the evidence cannot settle), write
+  `residudes note T "NEEDS HUMAN: ..."` and stop. That pauses the target until someone answers. For something a
+  person should see that does not stop you, write `FYI: ...` and carry on.
+- **Heavy compute** goes through `sbatch` or the pueue queues that residudes-engine knows, never on the login node. Submit
+  long jobs, record them with `run-record`, and end the step; the next step picks up when they finish.
+- **Reading about the target is part of the work, not a detour.** Use the harness's web search and fetch, and the
+  Europe PMC, RCSB and UniProt REST endpoints, which answer from this cluster (`residudes-intake` has the calls). The
+  team's own PDFs per target are under `target_notes/<T>/papers/`. Record each claim with its source. If the harness
+  has no web access, say so in the plan brief and ask the person for the papers rather than guessing.
+- **Never:**
+  - delete recursively (move to a trash folder instead);
+  - scan shared storage (`find`, `du` or `ls -R` on `/`, `/gpfs` or `/store`);
+  - poll faster than once a minute;
+  - cancel other people's jobs;
+  - force-push.
+- **Never act outward.** Do not submit to CASP, do not run `residudes approve` or `residudes resolve`, and do not
+  change `RESIDUDES_ACTOR`. A
+  person approves the slate and submits it. In the SDK runner a guard enforces this. In Claude Code,
+  `.claude/settings.json` sets `RESIDUDES_ACTOR=agent` and denies `approve`.
+- **Record as you go.** A step ends when its USD budget runs out, wherever it has got to. Write each finding with
+  `residudes evidence` when you make it: a step that ends early is normal, a finding that was never recorded is lost.
+- **A path in the dossier is absolute, and checked.** Evidence, notes and references are read later from another
+  working directory, so a relative path silently stops resolving: on H2338 the agent recorded two PDFs it had read
+  as `target_notes/…`, could not find them a step later, and wrote them off as never having existed. Record the
+  absolute path, and only after confirming the file is there and is the size a real file would be (a refused
+  download leaves a few hundred bytes of error page).
+- **Edit the dossier only through `residudes` commands.** Never edit `dossier.json` by hand. For long JSON, write it to a
+  file in the dossier directory and pass `residudes evidence T KEY @file.json`. A long command full of quotes can be
+  declined, or quoted wrongly. If a command is declined, read the reason, make it simpler, and try again; do not stop.
+- **Replays.** The skills quote CASP17 outcomes by target name. When you replay one of those targets, its lines
+  are hindsight. Say so in an `FYI:` note, and do not let them drive a decision: cite the evidence you collected.
+- **Results scored against an unreleased native stay internal.** `residudes export` leaves them out unless given
+  `--with-retro`.
+
+## Skills
+
+| skill | use it at |
+|---|---|
+| `residudes-setup` | first run on a machine: resources, databases, config, skill links |
+| `residudes-intake` | NEW and HYPOTHESES: construct, identity, the literature on the target and each partner, public structures, MSA depth, input variants |
+| `residudes-stoichiometry` | IDENTIFIED, a stage-2 reissue, or predictors disagreeing on the oligomeric state |
+| `residudes-consult` | PLAN_REVIEW and RESULTS_REVIEW, and whenever a person replied in a checkpoint |
+| `residudes-modeller` | HYPOTHESES or RESULTS_REVIEW, when the complex or a homolog's assembly is public: MODELLER model of the whole assembly on the target's sequences as an AF3 multimer template (a homolog's cage; a released complex with gaps) |
+| `residudes-selection` | POOL_READY, RESULTS_REVIEW (the slate) and APPROVED: residudes-qa, structural gates and site census (`residudes gate`), slate |
+| `residudes-ops-safety` | whenever you submit, watch or pull jobs |
+| `residudes-structure-view` | whenever the conversation turns on a shape: show it with molterm rather than describing it |
+
+
+# prompt
+Target H1388 is at stage NEW. This step: analyse the target: construct mapping, organism and family (UniProt, Pfam / InterPro), the literature on it and its partners (the site a partner binds, the chemistry, the oligomeric state, each with its source), public structures with their identity (`residudes structures T`, and `--hhsearch` for remote homologues), MSA depth per chain; then write it up in `notes/target.md`. Use the `residudes-intake` skill. Budget: 2.0 USD of agent time; GPU budget 400.0 h for the target. Record each finding with `residudes evidence` as you make it, not at the end: the step stops when the budget runs out, and a step that ends early is normal, while a finding that was never recorded is lost.
+
+[Bash] {'command': 'residudes target show H1388 2>&1 | head -80; residudes next H1388 2>&1 | head -30; ls', 'description': 'Show dossier and next step'}
+[Skill] {'skill': 'residudes-intake'}
+[Bash] {'command': 'python3 -c "\nimport json;d=json.load(open(\'dossier.json\'));print(json.dumps({k:v for k,v in d.items() if k not in (\'log\',)},indent=1)[:3000])"; ls /data/casp17/target_notes/H1388/papers/ 2>&1', 'description': 'Read dossier contents and papers folder'}
+[tool error] Exit code 2
+{
+ "target": "H1388",
+ "stage": "NEW",
+ "created": "2026-11-26T01:48:05+09:00",
+ "sequence": {
+  "fasta": "<WORK>/H1388.fasta",
+  "text": ">H1388,subunit1|\nPKGLSASLPDL\n>H1388,subunit2|\nSDREQLVQKARLAEQAERYDDMAAAMKNVTELNEPLSNEERNLLSVAYKNVVGARRSSWRVISSIEQKTSADGNEKKIEMVRAYREKIEKELEAVCQDVLSLLDNYLIKNCSETQYESKVFYLKMKGDYYRYLAEVATGEKRATVVESSEKAYSEAHEISKEHMQPTHPIRLGLALNYSVFYYEIQNAPEQACHLAKTAFDDAIAELDTLNEDSYKDSTLIMQLLRDNLTLWT\n"
+ },
+ "stoichiometry": {
+  "given": "A1B1"
+ },
+ "deadlines": {},
+ "evidence": {},
+ "decisions": [],
+ "runs": [],
+ "slate": {},
+ "approvals": 
+[Bash] {'command': 'mkdir -p notes dl && curl -s "https://rest.uniprot.org/uniprotkb/search?query=sequence:SDREQLVQKARLAEQAERYDDMAAAMKNVTELNEPLSNEERNLLSVAYKNVVGARRSSWRVISS&fields=accession,protein_name,organism_name,length&format=tsv&size=5" ; echo; curl -s "https://rest.uniprot.org/uniprotkb/P61981.fasta" > dl/P61981.fasta; curl -s "https://rest.uniprot.org/uniprotkb/Q6PKG0.fasta" > dl/Q6PKG0.fasta; python3 - <<\'E\'\ndef r(f): return \'\'.join(l.strip() for l in open(f) if not l.startswith(\'>\'))\ng=r(\'dl/P61981.fasta\'); l=r(\'dl/Q6PKG0.fasta\')\nb="SDREQLVQKARLAEQAERYDDMAAAMKNVTELNEPLSNEERNLLSVAYKNVVGARRSSWRVISSIEQKTSADGNEKKIEMVRAYREKIEKELEAVCQDVLSLLDNYLIKNCSETQYESKVFYLKMKGDYYRYLAEVATGEKRATVVESSEKAYSEAHEISKEHMQPTHPIRLGLALNYSVFYYEIQNAPEQACHLAKTAFDDAIAELDTLNEDSYKDSTLIMQLLRDNLTLWT"\nprint(len(
+[Bash] {'command': 'python3 - <<\'E\'\ndef r(f): return \'\'.join(l.strip() for l in open(f) if not l.startswith(\'>\'))\ng=r(\'dl/P61981.fasta\')\nb="SDREQLVQKARLAEQAERYDDMAAAMKNVTELNEPLSNEERNLLSVAYKNVVGARRSSWRVISSIEQKTSADGNEKKIEMVRAYREKIEKELEAVCQDVLSLLDNYLIKNCSETQYESKVFYLKMKGDYYRYLAEVATGEKRATVVESSEKAYSEAHEISKEHMQPTHPIRLGLALNYSVFYYEIQNAPEQACHLAKTAFDDAIAELDTLNEDSYKDSTLIMQLLRDNLTLWT"\ni=g.find(b[1:]); print(\'input2 = native\',i+1,\'end native\',i+len(b)-1, \'native len\',len(g))\nfor n in (50,57,58,130,131,132): print(n, g[n-1], \'input\', n-1, b[n-2])\nE\nhead -3 dl/P61981.fasta dl/Q6PKG0.fasta | grep \'>\'', 'description': 'Compute offset and check key residues'}
+Mapped both chains to UniProt: chain A is LARP1 542–552 (human), chain B is 14-3-3 gamma 3–234 with an extra S at the N-terminus. Next I record these and start the structure and MSA sweeps.
+[Bash] {'command': 'python3 -c "\nb=\'SDREQLVQKARLAEQAERYDDMAAAMKNVTELNEPLSNEERNLLSVAYKNVVGARRSSWRVISSIEQKTSADGNEKKIEMVRAYREKIEKELEAVCQDVLSLLDNYLIKNCSETQYESKVFYLKMKGDYYRYLAEVATGEKRATVVESSEKAYSEAHEISKEHMQPTHPIRLGLALNYSVFYYEIQNAPEQACHLAKTAFDDAIAELDTLNEDSYKDSTLIMQLLRDNLTLWT\'\nprint({n:b[n-1] for n in (49,56,127,128,131,132,133)})"\ncurl -s "https://rest.uniprot.org/uniprotkb/P61981.json" | python3 -c "\nimport json,sys;d=json.load(sys.stdin)\nfor f in d[\'features\']:\n  if f[\'type\'] in (\'Site\',\'Binding site\',\'Modified residue\',\'Region\',\'Domain\',\'Motif\'): print(f[\'type\'],f[\'location\'][\'start\'][\'value\'],f[\'location\'][\'end\'][\'value\'],f.get(\'description\',\'\'),f.get(\'ligand\',{}).get(\'name\',\'\'))\nprint([x[\'properties\'] for x in d[\'uniProtKBCrossReferences\'] if x[
+[Bash] {'command': 'curl -s "https://rest.uniprot.org/uniprotkb/P61981.json" | python3 -c "\nimport json,sys;d=json.load(sys.stdin)\nprint([(x[\'database\'],x[\'id\']) for x in d[\'uniProtKBCrossReferences\'] if x[\'database\'] in (\'Pfam\',\'InterPro\')])"\n(timeout 600 residudes structures H1388 > dl/structures.txt 2>&1 &) ; residudes msa --help 2>&1 | head -30', 'description': 'Get Pfam/InterPro ids; start structures sweep'}
+Now record identity and construct evidence.
+[Bash] {'command': 'cat > dl/ev_identity.json <<\'E\'\n{"A": {"organism": "Homo sapiens (Eukaryota; Metazoa; Chordata; Mammalia; Primates)", "uniprot": "Q6PKG0 (LARP1_HUMAN), residues 542-552", "family": "La-related protein 1 (LARP1); the peptide is an intrinsically disordered linker segment, no domain", "domains": [], "basis": "exact substring of Q6PKG0 at 542-552 (single occurrence), as counted here from the UniProt FASTA"},\n "B": {"organism": "Homo sapiens (Eukaryota; Metazoa; Chordata; Mammalia; Primates)", "uniprot": "P61981 (1433G_HUMAN, YWHAG), residues 3-234 plus an N-terminal S in place of native V2", "family": "14-3-3 protein family", "domains": [{"name": "14-3-3 domain", "pfam": "PF00244", "interpro": ["IPR000308", "IPR023410", "IPR036815", "IPR023409"], "range_input": "1-233 (whole c
+Literature search via Europe PMC.
+[Bash] {'command': 'for q in \'"LARP1" AND "14-3-3"\' \'LARP1 AND Ser548\'; do curl -s "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$q")&format=json&pageSize=8&resultType=core" | python3 -c "\nimport json,sys\nfor r in json.load(sys.stdin)[\'resultList\'][\'result\']: print(r.get(\'pmid\'),r.get(\'pmcid\'),r.get(\'doi\'),r.get(\'pubYear\'),r.get(\'title\')[:110])"; echo; done; cat dl/structures.txt | head -60', 'description': 'Search Europe PMC; check structures output'}
+[Bash] {'command': 'residudes evidence H1388 public_structures @<(python3 - <<\'E\'\nimport json\nprint(json.dumps({"A":"no PDB entity >=90% identity (11-residue peptide; residudes structures H1388)",\n"B":"23 PDB entities at 100% identity, 100% coverage (residudes structures H1388, run 2026-11-26): 2B05 2.55 A phosphopeptide; 3UZD 1.86 A; 4E2E 2.25; 4J6S 3.08 TH N-term; 4O46 2.90 NS1 tail; 5D3E 2.75 CFTR; 6A5S 2.10 TFEB peptide; 6BYJ 2.90; 6BYL 3.35; 6BZD 2.67 R57E; 6FEL 2.84 CaMKK2; 6GKF 2.60, 6GKG 2.85 caspase-2; 6S9K 1.60 caspase-2 peptide; 6SAD 2.75; 6Y4K 3.00; 6Y6B 3.08; 6ZBT 1.80, 6ZC9 1.90 Nedd4-2; 7A6R 2.70, 7A6Y 2.50 DAPK2; 8XI3 3.00 EM; 9CI3 3.96 EM LRRK2",\n"best_peptide_bound":"6S9K 1.60 A (caspase-2 phosphopeptide); 6ZBT 1.80 A (Nedd4-2); 6A5S 2.10 A (TFEB)",\n"complex":"no public s
+[Bash] {'command': 'for id in 9428519 17085597; do curl -s "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:$id%20AND%20SRC:MED&format=json&resultType=core" | python3 -c "\nimport json,sys,re\nr=json.load(sys.stdin)[\'resultList\'][\'result\'][0]; print(r[\'pmid\'],r.get(\'authorString\',\'\')[:80],r.get(\'journalInfo\',{}).get(\'journal\',{}).get(\'title\'));print(re.sub(\'<[^>]+>\',\'\',r.get(\'abstractText\',\'\'))[:1500]);print()"; done', 'description': 'Fetch abstracts of 14-3-3 motif papers'}
+[Bash] {'command': 'cat > dl/ev_lit.json <<\'E\'\n{"claims": [\n {"claim": "14-3-3 proteins bind phosphoserine-containing proteins through two motifs, RSXpSXP (mode 1) and RXY/FXpSXP (mode 2); the bound peptide is extended, with a tight turn at the pS+2 Pro (cis).", "source": "Yaffe et al. 1997 Cell, PMID 9428519 (abstract read via Europe PMC)"},\n {"claim": "14-3-3 acts as a dimer; the dimer binds tandem phosphoserine motifs bidentately.", "source": "PMID 9428519 (abstract)"},\n {"claim": "Structures of all seven human 14-3-3 isoforms bound to ligands; specificity determinants for phosphopeptide orientation in the amphipathic groove; domain flexibility.", "source": "Yang et al. 2006 PNAS, PMID 17085597, PMC1859916 (abstract); the gamma entry from this work is 2B05 (inferred from release date and
+[Bash] {'command': 'cd <RESIDUDES>/residudes-engine && (residudes-engine msa --help 2>&1 | head -40); residudes note H1388 "FYI: replay hindsight - the residudes-intake skill quotes this exact peptide (H2388: 14-3-3 gamma + LARP1 phosphopeptide, SEP at S7) and names H1388 with 23 exact 14-3-3 gamma entries / 6A5S. Those lines are hindsight; decisions here cite only the evidence collected in this step (UniProt, PMID 9428519, residudes structures)."', 'description': 'Show MSA builder help; note hindsight FYI'}
+[Bash] {'command': 'cd <WORK>/targets/H1388 && timeout 900 residudes-engine msa --fasta <WORK>/H1388.fasta --sto A1B1 --name H1388 --source colabfold --out <WORK>/targets/H1388/msas/colabfold > dl/msa_colabfold.log 2>&1; echo exit $?; tail -5 dl/msa_colabfold.log; ls -R msas | head -30', 'description': 'Build ColabFold MSA via remote API', 'timeout': 960000}
+MSA built (14-3-3: 10,377 sequences; peptide: none, as expected). Measuring depth now.
+[Bash] {'command': 'residudes msa H1388 --depth msas/colabfold/msa/unpaired_A.a3m msas/colabfold/msa/unpaired_B.a3m 2>&1 | tail -25; head -c 600 msas/colabfold/msa/templates_B.m8', 'description': 'Measure MSA depth per chain'}
+[Bash] {'command': 'residudes evidence H1388 msa_depth \'{"source":"colabfold API (residudes-engine msa --source colabfold, 2026-11-26), <WORK>/targets/H1388/msas/colabfold/msa","A":{"file":"unpaired_A.a3m","n":0,"n_cov50":0,"coverage_median":0,"assessment":"empty, expected for an 11-residue peptide; not a lever - the pose comes from the receptor groove and the pS-X-P chemistry"},"B":{"file":"unpaired_B.a3m","n":10377,"n_cov50":8105,"coverage_median":7660,"median_identity":0.529,"thin_regions":"none"},"paired_rows":1,"effective":"B deep, A none","assessment":"no deepening needed for B; deepening A is not meaningful","plot":"report/figs/msa_coverage.svg"}\' && residudes evidence H1388 templates \'{"B_colabfold":"6byj_A 100% id, qcov 2-233/233, E 1.5e-116; 6y6b_B 100%; 6bzd_B
+[Bash] {'command': "mkdir -p <WORK>/targets/H1388/dl/pdb && cd <WORK>/targets/H1388 && curl -s https://files.rcsb.org/download/6S9K.pdb -o dl/pdb/6S9K.pdb && ls -l dl/pdb/6S9K.pdb && python3 -I - dl/pdb/6S9K.pdb <<'E'\nimport sys,math\nat=[l for l in open(sys.argv[1]) if l.startswith(('ATOM','HETATM'))]\nP=[l for l in at if l[17:20] in ('SEP','TPO')]\nprint({(l[21],l[22:26].strip(),l[17:20]) for l in P})\nph=[l for l in P if l[12:16].strip() in ('O1P','O2P','O3P','OP1','OP2','OP3','P')]\nnear=set()\nfor a in ph:\n  xa=[float(a[30+8*i:38+8*i]) for i in range(3)]\n  for b in at:\n    if b[21]==a[21]: continue\n    xb=[float(b[30+8*i:38+8*i]) for i in range(3)]\n    if math.dist(xa,xb)<3.5 and b[17:20]!='HOH': near.add((a[21],b[21],b[17:20],int(b[22:26])
+[Bash] {'command': 'cat > dl/ev_bs.json <<\'E\'\n{"chain": "B", "residues": [49, 56, 131, 132], "what": "14-3-3 gamma phosphate pocket in the amphipathic groove (native K50, R57, R132, Y133): the pS7 phosphate of chain A should sit here", "source": "UniProt P61981 sites R57/R132; checked in PDB 6S9K (14-3-3 gamma + caspase-2 phosphopeptide, 1.60 A): SEP139 phosphate oxygens within 3.5 A of R57, R132, Y133 (native numbering), as counted here from <WORK>/targets/H1388/dl/pdb/6S9K.pdb; K50 not within 3.5 A there, kept by homology to the 14-3-3zeta pocket (PMID 9428519)", "partner": {"chain": "A", "residues": [7]}, "numbering": "input = native - 1 (checked: input K49, R56, R131, Y132 in FASTA)", "use": "contact gate: chain A residue 7 within ~4 A of chain B 56/131/132"}\nE\nres
+Now the write-up.
+[Write] {'file_path': '<WORK>/targets/H1388/notes/target.md', 'content': "# H1388: human 14-3-3 gamma with a LARP1 peptide\n\n## 1. Identification\n\n| field | value |\n|---|---|\n| CASP id | H1388 |\n| organisers' description | not in the dossier (only the FASTA was registered) |\n| declared stoichiometry | A1B1 (dossier `stoichiometry.given`) |\n| chain A | 11 aa, `PKGLSASLPDL`, human LARP1 (Q6PKG0) 542–552 |\n| chain B | 233 aa, human 14-3-3 gamma (P61981, YWHAG) 3–234 with an N-terminal S |\n| method | not known |\n| dossier created | 2026-11-26 |\n\n## 2. The chains\n\n### Chain A: LARP1 542–552\n- It is an exact, single-occurrence substring of Q6PKG0 at 542–552, as counted here from the UniProt FASTA. `input = native − 541`.\n- It has two serines. S5 is native S546. S7
+[Bash] {'command': 'residudes decide H1388 --type variant --chose "phosphoserine (SEP) on chain A residue 7 (LARP1 S548), af3 only, run next to the unmodified input" --evidence chemistry motif literature binding_site construct --alt "SEP on S5: rejected, no +2 Pro and no recorded phosphosite" --alt "unmodified only: rejected as the sole input, since 14-3-3 binding is phospho-dependent (PMID 9428519); kept as the control" && residudes stage H1388 IDENTIFIED && residudes next H1388 | head -3', 'description': 'Record SEP variant decision, advance stage'}
+H1388 is analysed, written up in `notes/target.md`, and moved from NEW to IDENTIFIED. The next stage is the stoichiometry hypotheses. I recorded each finding with `residudes evidence` as I went.
+
+**What the target is**
+- **Chain A** is 11 residues, `PKGLSASLPDL`: an exact, single match to human LARP1 (Q6PKG0) residues 542–552. Its residue 7 is LARP1 Ser548, which UniProt lists as phosphorylated.
+- **Chain B** is human 14-3-3 gamma (P61981) residues 3–234, with an extra S at the N-terminus in place of the native Met-Val. Input numbering is native minus 1, and the C-terminal tail (235–247) is missing. The whole chain is the 14-3-3 domain (Pfam PF00244, InterPro IPR000308).
+- The dossier has no description from the organisers, only the FASTA.
+
+**Literature**
+- 14-3-3 proteins bind phosphoserine motifs RSXpSXP and RXY/FXpSXP, and act as dimers (Yaffe 1997, PMID 9428519; Yang 2006, PMID 17085597). I could read only the abstracts of both.
+- In the peptide, only S7 is followed by X-Pro (S7-L8-P9). It has no arginine upstream, so it fits neither full consensus.
+- I found no paper on 14-3-3 binding LARP1 pS548, and the team papers folder for H1388 does not exist.
+
+**Sites and chemistry**
+- **Phosphoserine on A7:** recorded as an input variant for af3 (decision D1), with the unmodified peptide run beside it as the control. I rejected S5 because it has no proline two residues on.
+- **Phosphate pocket on chain B:** residues 49, 56, 131 and 132 in input numbering (native K50, R57, R132, Y133). In the 1.60 Å structure 6S9K, the phosphate sits within 3.5 Å of R57, R132 and Y133. K50 is not within that distance there; I kept it because the 14-3-3 zeta papers put it in the pocket.
+- This pocket becomes a contact gate at selection.
+
+**Public structures**
+- Chain B matches 23 PDB entries at 100 % identity. The best with a bound peptide are 6S9K (1.60 Å), 6ZBT (1.80 Å) and 6A5S (2.10 Å).
+- Chain A has none, and nothing in the PDB shows this peptide bound to 14-3-3.
+- AF3's own template search filters out near-identical entries, so one of these has to be passed in explicitly.
+- The local PDB template mirror is 215 days old.
+- I did not run HHsearch: chain B already has exact matches, and an 11-residue peptide is too short for a profile search.
+
+**MSA depth (ColabFold)**
+- Chain B has 10,377 sequences, 8,105 of them covering at least half the chain, with no thin regions.
+- Chain A has none, which is expected for a peptide of this length.
+- No deepening is needed. The coverage plot is `report/figs/msa_coverage.svg`.
+
+**Open questions for the plan checkpoint**
+- Whether the peptide was phosphorylated in the experiment: the FASTA carries no modification and the organisers' description isn't in the dossier.
+- The copy number: A1B1 is declared, but 14-3-3 is a dimer in the family, so an A2B2 run could serve as a check.
+
+The intake skill's own worked examples mention this exact peptide and name H1388, so those lines are hindsight on a replay. I flagged that in an FYI note, and decisions cite only the evidence collected in this step.
+
+This step used about $0.92 of the $2 budget.
+
+# result
+{'subtype': 'success', 'cost_usd': 0.9613246000000001, 'is_error': False, 'turns': 22, 'session': 'd6a96e20-541a-4fc3-bf92-d9753ce6beb1', 'result': " LARP1 pS548, and the team papers folder for H1388 does not exist.\n\n**Sites and chemistry**\n- **Phosphoserine on A7:** recorded as an input variant for af3 (decision D1), with the unmodified peptide run beside it as the control. I rejected S5 because it has no proline two residues on.\n- **Phosphate pocket on chain B:** residues 49, 56, 131 and 132 in input numbering (native K50, R57, R132, Y133). In the 1.60 Å structure 6S9K, the phosphate sits within 3.5 Å of R57, R132 and Y133. K50 is not within that distance there; I kept it because the 14-3-3 zeta papers put it in the pocket.\n- This pocket becomes a contact gate at selection.\n\n**Public structures**\n- Chain B matches 23 PDB entries at 100 % identity. The best with a bound peptide are 6S9K (1.60 Å), 6ZBT (1.80 Å) and 6A5S (2.10 Å).\n- Chain A has none, and nothing in the PDB shows this peptide bound to 14-3-3.\n- AF3's own template search filters out near-identical entries, so one of these has to be passed in explicitly.\n- The local PDB template mirror is 215 days old.\n- I did not run HHsearch: chain B already has exact matches, and an 11-residue peptide is too short for a profile search.\n\n**MSA depth (ColabFold)**\n- Chain B has 10,377 sequences, 8,105 of them covering at least half the chain, with no thin regions.\n- Chain A has none, which is expected for a peptide of this length.\n- No deepening is needed. The coverage plot is `report/figs/msa_coverage.svg`.\n\n**Open questions for the plan checkpoint**\n- Whether the peptide was phosphorylated in the experiment: the FASTA carries no modification and the organisers' description isn't in the dossier.\n- The copy number: A1B1 is declared, but 14-3-3 is a dimer in the family, so an A2B2 run could serve as a check.\n\nThe intake skill's own worked examples mention this exact peptide and name H1388, so those lines are hindsight on a replay. I flagged that in an FYI note, and decisions cite only the evidence collected in this step.\n\nThis step used about $0.92 of the $2 budget.", 'log': '<WORK>/targets/H1388/agent_logs/20261126-014815_NEW.log'}

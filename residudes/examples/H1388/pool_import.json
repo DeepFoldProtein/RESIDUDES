@@ -1,0 +1,11 @@
+{"pool_csv": "<WORK>/targets/H1388/pool.csv",
+ "layout": "runs/<runner>_<variant> symlinked as results/A1B1/<variant>/<runner> (absolute links) for residudes pool --dir",
+ "jobs": "60/60 slurm jobs COMPLETED (348884-348943)",
+ "total_models": 300, "empty_models": 0, "has_clash": 0,
+ "per_run": [
+  {"sto":"A1B1","variant":"sep","runner":"af3","n":100,"expected":100,"rs_median":0.944,"rs_max":0.963,"iptm_max":0.939,"sep_in_model":"100/100 (P atom present, SEP chain A res 7)"},
+  {"sto":"A1B1","variant":"base","runner":"af3","n":50,"expected":50,"rs_median":0.652,"rs_max":0.764,"iptm_max":0.693,"sep_in_model":"0/50 (unmodified control, as intended)"},
+  {"sto":"A1B1","variant":"sep","runner":"pt2","n":50,"expected":50,"rs_median":0.918,"rs_max":0.93,"iptm_max":0.92,"sep_in_model":"0/50 (no P atom; res 7 written SER)"},
+  {"sto":"A1B1","variant":"sep","runner":"bt2","n":50,"expected":50,"rs_median":0.912,"rs_max":0.923,"iptm_max":0.908,"sep_in_model":"0/50 (no P atom; res 7 written SER)"},
+  {"sto":"A1B1","variant":"sep","runner":"of3","n":50,"expected":50,"rs_median":0.585,"rs_max":0.743,"iptm_max":0.669,"sep_in_model":"0/50 (no P atom; res 7 written SER)"}],
+ "finding": "Only af3 carried the pS7 phosphate into its models. pt2/bt2/of3 'sep' runs output plain SER7 with no phosphorus, so their models are effectively unmodified-peptide predictions despite the variant label. pt2 and bt2 still score high (rs ~0.91-0.92) while af3 unmodified scores 0.65 and of3 0.59, so the pt2/bt2 confidence did not come from the phosphate (possibly template/predictor bias). Whether pt2/bt2 received the modification at featurization and dropped it on write, or never received it, is not established from the logs read."}

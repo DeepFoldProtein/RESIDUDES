@@ -1,0 +1,35 @@
+chain A (H1388,subunit1|): 0 entities at >= 90% identity
+    none — no public structure of this sequence
+    entry     ident  cover  res Å released   method / title
+
+chain B (H1388,subunit2|): 23 entities at >= 90% identity
+    entry     ident  cover  res Å released   method / title
+  * 2B05       100%   100%   2.55 2005-10-11 X-ray Crystal Structure of 14-3-3 gamma in complex with a phosphos
+  * 3UZD       100%   100%   1.86 2012-03-21 X-ray Crystal structure of 14-3-3 GAMMA
+  * 4E2E       100%   100%   2.25 2012-03-21 X-ray Crystal structure of a tyrosine 3-monooxygenase/tryptophan 5
+  * 4J6S       100%   100%   3.08 2013-10-02 X-ray 14-3-3gamma complexed with the N-terminal sequence of tyrosi
+  * 4O46       100%   100%   2.90 2014-04-30 X-ray 14-3-3-gamma in complex with influenza NS1 C-terminal tail p
+  * 5D3E       100%   100%   2.75 2016-03-16 X-ray Crystal structure of human 14-3-3 gamma in complex with CFTR
+  * 6A5S       100%   100%   2.10 2019-02-13 X-ray Structure of 14-3-3 gamma in complex with TFEB 14-3-3 bindin
+  * 6BYJ       100%   100%   2.90 2018-05-09 X-ray Structure of human 14-3-3 gamma bound to O-GlcNAc peptide
+  * 6BYL       100%   100%   3.35 2018-05-09 X-ray Structure of 14-3-3 gamma bound to O-GlcNAcylated thr peptid
+  * 6FEL       100%   100%   2.84 2018-01-10 X-ray Structure of 14-3-3 gamma in complex with CaMKK2 14-3-3 bind
+  * 6GKF       100%   100%   2.60 2018-10-17 X-ray Structure of 14-3-3 gamma in complex with caspase-2 14-3-3 b
+  * 6GKG       100%   100%   2.85 2018-10-17 X-ray Structure of 14-3-3 gamma in complex with caspase-2 14-3-3 b
+  * 6S9K       100%   100%   1.60 2020-01-22 X-ray Structure of 14-3-3 gamma in complex with caspase-2 peptide 
+  * 6SAD       100%   100%   2.75 2020-01-22 X-ray Structure of 14-3-3 gamma in complex with double phosphoryla
+  * 6Y4K       100%   100%   3.00 2021-01-27 X-ray Crystal structure of human 14-3-3 gamma in complex with CaMK
+  * 6Y6B       100%   100%   3.08 2021-02-03 X-ray Crystal structure of human 14-3-3 gamma in complex with CaMK
+  * 6ZBT       100%   100%   1.80 2021-07-21 X-ray Structure of 14-3-3 gamma in complex with Nedd4-2 14-3-3 bin
+  * 6ZC9       100%   100%   1.90 2021-07-21 X-ray Structure of 14-3-3 gamma in complex with Nedd4-2 14-3-3 bin
+  * 7A6R       100%   100%   2.70 2021-08-25 X-ray Structure of 14-3-3 gamma in complex with DAPK2 peptide cont
+  * 7A6Y       100%   100%   2.50 2021-08-25 X-ray Structure of 14-3-3 gamma in complex with DAPK2 peptide stab
+  * 8XI3       100%   100%   3.00 2024-10-02 EM Structure of mouse SCMC-14-3-3gama complex
+  * 9CI3       100%   100%   3.96 2025-09-03 EM Structure of the LRRK2/14-3-3 complex
+  * 6BZD       100%   100%   2.67 2018-05-09 X-ray Structure of 14-3-3 gamma R57E mutant bound to GlcNAcylated 
+
+* near-identical (95% identity over 90% of the chain) — B: 2B05, 3UZD, 4E2E, 4J6S, 4O46, 5D3E, 6A5S, 6BYJ, 6BYL, 6FEL (+13 more)
+  AlphaFold 3 filters these out of its own template search, so pass them in as templates deliberately, or say in the dossier why not.
+  template db: PDB mmCIF (templates) — stale (2026-04-25, 215 days old)
+  template db: foldseek PDB — stale (2024-01-01, 1060 days old)
+  template db: foldseek PDB 2026 (newer copy) — ok (2026-08-02, 116 days old)

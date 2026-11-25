@@ -1,0 +1,268 @@
+# system (appended)
+You are residudes, the structure-prediction campaign agent of the DeepFold team, running one step on H1388
+through the Claude Agent SDK. Your memory is the dossier; read it first (`residudes target show H1388`).
+
+This run:
+  dossier directory (your working directory; write files only here): <WORK>/targets/H1388
+  residudes-engine: <RESIDUDES>/residudes-engine
+  residudes-qa: <RESIDUDES>/residudes-qa
+  existing predictions (residudes-engine layout), if any: (none configured)
+  `residudes` is on PATH; RESIDUDES_ACTOR=agent.
+
+The instructions below are residudes/AGENTS.md, shared with Claude Code, Codex and Antigravity.
+
+# residudes: instructions for coding agents
+
+You are working in **residudes**, the DeepFold team's structure-prediction campaign agent. Every harness reads this
+same file:
+- **Codex** and **Antigravity** read `AGENTS.md`.
+- **Claude Code** reads it through `CLAUDE.md`, which imports it.
+- **`residudes agent step`** (the Claude Agent SDK runner) appends it to its system prompt.
+
+So the rules are the same wherever you run. The skills are in `skills/`. Claude Code finds them through
+`.claude/skills`, Codex and Antigravity through `.agents/skills`, and older Antigravity builds through `.agent/skills`.
+
+## What you do
+
+residudes takes one target at a time from its sequence to a slate of five models. The dossier
+(`<work_root>/targets/<T>/dossier.json`) is the only memory. Read it first with `residudes target show T`;
+`residudes next T` says what the current stage needs and which skill covers it.
+
+```
+NEW → IDENTIFIED → HYPOTHESES → PLAN_REVIEW ⇄ person → INPUTS_READY → RUNNING → POOL_READY
+    → RESULTS_REVIEW ⇄ person → SLATE_PROPOSED → [person: residudes approve] → APPROVED → PACKAGED
+    → [person submits] → SUBMITTED → RETROSPECTIVE
+              RESULTS_REVIEW can loop back to RUNNING (more sampling) or HYPOTHESES (new hypotheses)
+```
+
+Do the work of the current stage, record it, move the stage when its goal is met, and stop.
+
+## Two checkpoints, answered by you or by a person
+
+Every target stops twice for a decision, and both stops are built into the stages (skill `residudes-consult`).
+Who answers depends on the dossier. By default `residudes target add` records a **mandate** from the person who
+registered the target, up to a packaged slate, and you answer the checkpoints yourself. With `--review` (or after
+`residudes automate T --off`) a person answers them. `residudes target show T` says which; the step you are given
+says it too.
+
+The checkpoints are written the same way either way. The brief is the record of why the target went where it did,
+and a reader of the dossier should not be able to tell from its quality who it was written for.
+- **PLAN_REVIEW**, after the analysis and the literature. Write a brief covering:
+  - what you found, and the priors behind each decision;
+  - the prediction plan;
+  - your questions, each with options and a recommendation.
+
+  Open it with `residudes consult T --kind plan --brief FILE --ask "..."`.
+  - **Under the mandate**, answer it as the person would: weigh each question against the evidence, write the
+    answer and the reasons with `residudes reply T C# "..."`, then `residudes resolve T C# --outcome proceed` (or
+    `loop:HYPOTHESES` if your own reading finds the plan wanting).
+  - **Without one**, talk it through: a person replies, you answer, you revise the decisions if they ask, and the
+    person resolves it.
+- **RESULTS_REVIEW**, after the first round.
+  - `residudes review T` checks the pool: low confidence, a split or flat n-sweep, low pLDDT, clashes, missing models,
+    runs that lost a chain, models with an empty file, predictors in different architectures, weak interfaces, the most confident models at
+    different sites, and a site prior no gate uses. Add what you see yourself with `--add`.
+  - Any trigger means a results checkpoint with the options: proceed to the slate, `loop:RUNNING` (more sampling) or
+    `loop:HYPOTHESES` (new variants, another copy number). Under the mandate you choose, with the reasons on record.
+- **The slate.** Under the mandate, read it against the gates and the decisions once more, then `residudes approve
+  T "<why these five>"` and move to APPROVED; without one, a person approves it.
+
+Three things hold under any mandate:
+- **Submission is a person's.** You stop at PACKAGED; the stage machine refuses SUBMITTED from you in every case.
+- **Write NEEDS HUMAN when the evidence cannot decide it** - two stoichiometries the pool cannot separate, a gate
+  that fails on model 1, a slate that contradicts a decision. A mandate is permission to decide, not an obligation
+  to guess; the daemon stops on that note and a person picks it up.
+- **Everything you decide under it is marked.** Resolutions and approvals carry `automated` and who granted the
+  mandate, so the log never blurs who decided.
+
+## Analyse the target first, then decide from that analysis
+
+Decisions rest on the priors you collected, and they say which ones:
+- **Before deciding**, record what you found with `residudes evidence T <key> '<json>'`:
+  - `construct` and `identity`;
+  - `literature`: what the papers on the target and on **each partner** say, every claim with its source — where a
+     partner binds, the oligomeric state, the chemistry, which state a published structure is, and what is not known.
+     The gates and the input variants come from this reading (`residudes-intake`, `docs/literature.md`);
+  - `public_structures` from `residudes structures T` (the exact-sequence sweep of every chain, with each entry's
+     method, resolution and release date, and the age of the local template mirrors); a foldseek sweep of a predicted
+     model on top of it, once there is one;
+  - `msa_depth` from `residudes msa T --depth`. If the MSA is thin, deepen it with `residudes msa T --crawl` or `--plm`
+    (skill `residudes-intake`);
+  - `templates`;
+  - chemistry the FASTA does not carry: a modification, ligand or metal the description names, with the residue
+    you chose and why (a binding motif can pick one of several candidate residues). Record it as evidence **and**
+    as the `residudes decide --type variant` that puts it in an input, with the candidates you rejected;
+  - sites: an `epitope`, `paratope`, `binding_site`, `pocket`, `recognition_site`, `interface_prior`, `active_site`
+    or `motif` (the keys `residudes gate --init` reads), in input-sequence numbering with model chain
+    ids (A, B, ... in input order, copies counted: in A2B1C1, chain B is the second copy of A), **each with the source
+    that puts the partner there**. These become the structural gates at selection (`residudes gate`): in CASP17, gates
+    first and confidence second beat every confidence rule on the same pool;
+  - `stoichiometry_evidence` (the n-sweep, the family and homolog priors, seq2symm);
+  - QA results and `gates`.
+- **When deciding**, name those keys: `residudes decide T --type <type> --chose "..." --evidence <key> <key> --alt "..."`.
+  Every decision lists the evidence keys it rests on and the alternatives it rejected. `residudes report T` then
+  shows each decision next to its priors.
+- **Record findings as fields, not as sentences.** The report's front sections read specific names - `organism`,
+  `family`, `domains` with their ranges, `depth` per database, one `templates` field per search naming the entry
+  and its identity - and a site recorded as `{chain, residues: [...]}` or a `select` string is read as structure,
+  while the same residues written only in prose are re-read from the text, where a native numbering quoted in the
+  same sentence can win. Per chain for a complex.
+- **Absence is not evidence.** A missing precedent, template or homolog does not argue against a stoichiometry.
+  The same copy number coming out of several predictors does argue for it.
+
+## Report as slides, with structures
+
+The analysis is also a slide deck, `report/report.pdf`, built with `residudes slides T` from the dossier. It covers:
+- the target and its priors;
+- the pool's confidence per stoichiometry and predictor, as a heat table;
+- the decisions and the priors they rest on;
+- the checkpoint conversations and the first-results review;
+- pictures of the slate, or of the best model per stoichiometry before there is one, by chain and by pLDDT;
+- the agent's cost.
+
+Rebuild it before every checkpoint and when you propose the slate, and point the person to it in the brief.
+- **Add what the standard deck does not show** as your own slides in `report/agent.typ`, in touying syntax: a
+  `== Title` line starts a slide, and pictures go in with `#image("figs/x.jpg", height: 70%)` (the render writes a JPEG next to every PNG; with molterm's flat-shaded figures the two embed within about 10% of each other, so either works). Examples: an interface
+  close-up, two architectures side by side, a template against a model.
+- **Write the scene for molterm** in `report/mt/<name>.mt`: one command per line, absolute model paths, writing
+  `figs/<name>.png`. Render it with `molterm --no-tui --script report/mt/<name>.mt` from `report/` and **check the
+  exit code** - molterm carries on after a failed command, so a screenshot taken after a failed `color` is written
+  with the old colouring. For report quality, open `report/scenes.mt` and copy its `set` block: it raises the
+  level-of-detail thresholds (the default drops to reduced geometry above 5,000 atoms, and every complex here is
+  bigger), fixes a white background, and renders at 300 dpi. This runs in seconds and needs no job.
+- **PyMOL** remains for a scene molterm cannot draw. Write it in `report/pml/<name>.pml`, render with
+  `residudes render T --pml report/pml/<name>.pml`, which goes through sbatch; never run PyMOL on the login node.
+- Then run `residudes slides T --no-render` to compile.
+
+## Commands
+
+```sh
+residudes target show T | residudes next T | residudes report T        # read
+residudes consult T --kind plan|results --brief FILE --ask "..."   # open a checkpoint with a person
+residudes reply T C1 "..." | residudes checkpoints T C1              # the conversation
+residudes review T [--add "name: why"]                             # first-results checks
+residudes slides T | residudes render T --pml report/pml/x.pml       # the slide report (molterm); a PyMOL scene (sbatch)
+residudes evidence T KEY JSON | residudes note T "..." | residudes decide T --type ... --evidence ... --alt ...
+residudes stage T NEXT_STAGE                                       # when the stage's goal is met
+residudes msa T --depth | --crawl --family PF… | --plm             # MSA depth; deepen a thin MSA (family crawl, OTalign)
+residudes structures T [--identity 0.5] [--chain B]                # public structures of each chain -> public_structures
+residudes structures T --foldseek model.cif | --read-foldseek t.tsv  # the structural half (sbatch), then read it back
+residudes relax T [--sc-fc N] [--models K,..] | --read              # GROMACS+Rosetta on chosen models (sbatch); repair, not ranking
+residudes structures T --hhsearch [--chain B] | --read-hhsearch f.hhr  # profile against profile, before any model
+residudes pool T                                                   # import a residudes-engine layout pool
+residudes qa T --sto A3 --what interface|cluster [--mode ab ...]  # residudes-qa through sbatch (ab: antibody)
+residudes jobs T                                                   # refresh recorded jobs
+residudes gate T --init --sto A3                                   # draft a spec from the site evidence
+residudes gate T --spec gates.json --sto A3 [--name N]             # structural gates + site census (sbatch)
+residudes gate T --show --sto A3 [--name N]                        # pass counts, census -> evidence gates
+residudes slate T --sto A3 | --sto A2:3,A1:2 [--site S]            # proposal: gated models; af3 leads, predictors alternate
+residudes slate T --models M1,M2,M3,M4,M5                          # the five you chose after review
+residudes package T --server|--human [--check-only]               # after approval: checks + CASP files (a person submits)
+residudes run-record T --job ID --what "..." --scheduler slurm|pueue
+```
+
+residudes-engine builds inputs and runs predictions (`residudes-engine msa --source plmmsa|colabfold|mmseqs2|af3`,
+`residudes-engine inputs`, `residudes-engine predict`); residudes-qa scores,
+clusters and plots the pool. Both sit next to this folder in the RESIDUDES repo.
+
+## Rules
+
+- **People's notes.** Notes that start with `OPERATOR:`, and any note whose actor is not `agent` or `residudes`, come
+  from the person running the campaign. Follow them, latest first. Read the whole log before asking: the answer may
+  already be there.
+- **Asking a person.** If you need a person (approval, credentials, a choice the evidence cannot settle), write
+  `residudes note T "NEEDS HUMAN: ..."` and stop. That pauses the target until someone answers. For something a
+  person should see that does not stop you, write `FYI: ...` and carry on.
+- **Heavy compute** goes through `sbatch` or the pueue queues that residudes-engine knows, never on the login node. Submit
+  long jobs, record them with `run-record`, and end the step; the next step picks up when they finish.
+- **Reading about the target is part of the work, not a detour.** Use the harness's web search and fetch, and the
+  Europe PMC, RCSB and UniProt REST endpoints, which answer from this cluster (`residudes-intake` has the calls). The
+  team's own PDFs per target are under `target_notes/<T>/papers/`. Record each claim with its source. If the harness
+  has no web access, say so in the plan brief and ask the person for the papers rather than guessing.
+- **Never:**
+  - delete recursively (move to a trash folder instead);
+  - scan shared storage (`find`, `du` or `ls -R` on `/`, `/gpfs` or `/store`);
+  - poll faster than once a minute;
+  - cancel other people's jobs;
+  - force-push.
+- **Never act outward.** Do not submit to CASP, do not run `residudes approve` or `residudes resolve`, and do not
+  change `RESIDUDES_ACTOR`. A
+  person approves the slate and submits it. In the SDK runner a guard enforces this. In Claude Code,
+  `.claude/settings.json` sets `RESIDUDES_ACTOR=agent` and denies `approve`.
+- **Record as you go.** A step ends when its USD budget runs out, wherever it has got to. Write each finding with
+  `residudes evidence` when you make it: a step that ends early is normal, a finding that was never recorded is lost.
+- **A path in the dossier is absolute, and checked.** Evidence, notes and references are read later from another
+  working directory, so a relative path silently stops resolving: on H2338 the agent recorded two PDFs it had read
+  as `target_notes/…`, could not find them a step later, and wrote them off as never having existed. Record the
+  absolute path, and only after confirming the file is there and is the size a real file would be (a refused
+  download leaves a few hundred bytes of error page).
+- **Edit the dossier only through `residudes` commands.** Never edit `dossier.json` by hand. For long JSON, write it to a
+  file in the dossier directory and pass `residudes evidence T KEY @file.json`. A long command full of quotes can be
+  declined, or quoted wrongly. If a command is declined, read the reason, make it simpler, and try again; do not stop.
+- **Replays.** The skills quote CASP17 outcomes by target name. When you replay one of those targets, its lines
+  are hindsight. Say so in an `FYI:` note, and do not let them drive a decision: cite the evidence you collected.
+- **Results scored against an unreleased native stay internal.** `residudes export` leaves them out unless given
+  `--with-retro`.
+
+## Skills
+
+| skill | use it at |
+|---|---|
+| `residudes-setup` | first run on a machine: resources, databases, config, skill links |
+| `residudes-intake` | NEW and HYPOTHESES: construct, identity, the literature on the target and each partner, public structures, MSA depth, input variants |
+| `residudes-stoichiometry` | IDENTIFIED, a stage-2 reissue, or predictors disagreeing on the oligomeric state |
+| `residudes-consult` | PLAN_REVIEW and RESULTS_REVIEW, and whenever a person replied in a checkpoint |
+| `residudes-modeller` | HYPOTHESES or RESULTS_REVIEW, when the complex or a homolog's assembly is public: MODELLER model of the whole assembly on the target's sequences as an AF3 multimer template (a homolog's cage; a released complex with gaps) |
+| `residudes-selection` | POOL_READY, RESULTS_REVIEW (the slate) and APPROVED: residudes-qa, structural gates and site census (`residudes gate`), slate |
+| `residudes-ops-safety` | whenever you submit, watch or pull jobs |
+| `residudes-structure-view` | whenever the conversation turns on a shape: show it with molterm rather than describing it |
+
+
+# prompt
+Target H1388 is at stage POOL_READY. This step: `residudes qa T --sto S --what interface` and `--what cluster`; draft the structural gates with `residudes gate T --init --sto S` (site gates from the evidence), check and edit the draft against what the analysis supports (sites, references), and run it with `residudes gate T --spec <draft> --sto S` (sbatch: stop and let the next step continue while they run); when they are done, `residudes gate T --show` and move to RESULTS_REVIEW. Use the `residudes-selection` skill. Budget: 2.0 USD of agent time; GPU budget 400.0 h for the target. Record each finding with `residudes evidence` as you make it, not at the end: the step stops when the budget runs out, and a step that ends early is normal, while a finding that was never recorded is lost.
+
+[Bash] {'command': 'residudes target show H1388 2>&1 | head -150; residudes next H1388'}
+QA, cluster and gate jobs have all finished. Next I'll check the gate results and the cluster output.
+[Bash] {'command': 'residudes jobs H1388 2>&1 | tail -5; residudes gate H1388 --show --sto A1B1 --name pocket 2>&1 | head -60; cat gates/H1388_A1B1.json'}
+The gates have run and are recorded. Now I'll read the interface and cluster QA outputs so I can record them.
+[Bash] {'command': 'ls; ls qa 2>/dev/null; ls qa/* 2>/dev/null | head -40'}
+[Bash] {'command': 'cd <WORK>/targets/H1388/qa && tail -5 cluster_A1B1.348952.log; find cluster_A1B1 -maxdepth 4 | head -30; ls interface_A1B1/csv | head; head -3 interface_A1B1/xgb_dockq.csv; wc -l interface_A1B1/xgb_dockq.csv'}
+[Bash] {'command': "python3 - <<'E'\nimport csv,collections,statistics as s\nr=list(csv.DictReader(open('interface_A1B1/xgb_dockq.csv')))\ng=collections.defaultdict(list)\nfor x in r: g[(x['model'],x['msa'])].append(x)\nfor k,v in sorted(g.items()):\n  xs=[float(i['xgb_mean']) for i in v]; ip=[float(i['iptm']) for i in v if i['iptm']]\n  print(k,len(v),'xgb med %.3f max %.3f'%(s.median(xs),max(xs)),'iptm med %.3f'%(s.median(ip) if ip else -1))\nE\nhead -1 cluster_A1B1/A1B1/pool-c14948db/tm/ranking.csv; head -6 cluster_A1B1/A1B1/pool-c14948db/tm/ranking.csv | cut -c1-200; ls cluster_A1B1/A1B1/pool-c14948db/tm/results | head"}
+[Bash] {'command': 'cd <WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/results && head -15 cluster_summary.csv | cut -c1-250; echo; cat method_summary.csv | cut -c1-250 | head -12'}
+I'll record the interface and cluster QA results, then move the target to RESULTS_REVIEW.
+[Bash] {'command': 'cd <WORK>/targets/H1388 && cat > qa/qa_A1B1_evidence.json <<\'E\'\n{"sto":"A1B1",\n "interface":{"job":348948,"file":"<WORK>/targets/H1388/qa/interface_A1B1/xgb_dockq.csv","n":300,\n  "per_arm_xgb_dockq_median_max_iptm_median":{\n   "af3_sep":[0.753,0.811,0.917],"pt2_sep":[0.728,0.766,0.905],"bt2_sep":[0.695,0.767,0.883],\n   "af3_base":[0.475,0.567,0.552],"of3_sep":[0.450,0.565,0.473]},\n  "reading":"SEP arms of af3/pt2/bt2 give confident interfaces (ipTM ~0.9, xgb-DockQ ~0.7-0.8); unmodified af3 control and of3 are weak (ipTM ~0.5): phosphate drives confidence, as D1 expected; of3 likely did not carry SEP or is weaker on peptides"},\n "cluster":{"job":348952,"dir":"<WORK>/targets/H1388/qa/cluster_A1B1/A1B1/
+H1388 has finished POOL_READY and is now at RESULTS_REVIEW. The interface QA, the clustering and the gate run all completed, and their results are in the dossier.
+
+**Gates:** 235 of 300 A1B1 models pass every gate.
+
+| Predictor | Pass / models | Best passing model (ranking score) |
+|---|---|---|
+| af3 | 106/150 | 0.963 |
+| protenix | 50/50 | 0.930 |
+| boltz-2 | 46/50 | 0.923 |
+| openfold3 | 33/50 | 0.657 |
+
+- The previous step had already checked and edited the gate spec (`gates/H1388_A1B1.json`), so I ran nothing new.
+- All 65 failures come from the phosphate-pocket gate: phosphoserine 7 must sit within 6 Å of at least two of the four pocket residues on 14-3-3 gamma (B49, B56, B131, B132). This is the gate that checks the peptide's register.
+- Every model passes the pS-L-P motif gate and the docking sanity gate.
+
+**Interface QA (job 348948):**
+
+| Arm | Median interface-confidence score (ipTM) | Predicted interface quality (median / max) |
+|---|---|---|
+| af3 with phosphoserine | 0.917 | 0.75 / 0.81 |
+| protenix with phosphoserine | 0.905 | 0.73 / 0.77 |
+| boltz-2 with phosphoserine | 0.883 | 0.70 / 0.77 |
+| af3 unmodified control | 0.552 | 0.48 / 0.57 |
+| openfold3 with phosphoserine | 0.473 | 0.45 / 0.57 |
+
+- With the phosphate, af3, protenix and boltz-2 give confident interfaces.
+- The unmodified af3 control is weak, which supports the decision to model the phosphoserine.
+- OpenFold3 is also weak. It may not have carried the phosphoserine into its input; nobody has checked that yet, and the next review should.
+
+**Clustering (job 348952):** 12 clusters, split mostly by predictor and variant, each internally very tight (TM ≥ 0.976). The comparison is over the whole complex, so the 233-residue receptor dominates it and it can't tell peptide registers apart. The gates do that job.
+
+The interface and cluster results are recorded as `qa` evidence, alongside the gate results. The next step is the results review (`residudes review H1388`) and then the slate.
+
+# result
+{'subtype': 'success', 'cost_usd': 0.24610710000000002, 'is_error': False, 'turns': 8, 'session': 'e9b4fa50-a519-44f4-bfd4-26db518eec96', 'result': "H1388 has finished POOL_READY and is now at RESULTS_REVIEW. The interface QA, the clustering and the gate run all completed, and their results are in the dossier.\n\n**Gates:** 235 of 300 A1B1 models pass every gate.\n\n| Predictor | Pass / models | Best passing model (ranking score) |\n|---|---|---|\n| af3 | 106/150 | 0.963 |\n| protenix | 50/50 | 0.930 |\n| boltz-2 | 46/50 | 0.923 |\n| openfold3 | 33/50 | 0.657 |\n\n- The previous step had already checked and edited the gate spec (`gates/H1388_A1B1.json`), so I ran nothing new.\n- All 65 failures come from the phosphate-pocket gate: phosphoserine 7 must sit within 6 Å of at least two of the four pocket residues on 14-3-3 gamma (B49, B56, B131, B132). This is the gate that checks the peptide's register.\n- Every model passes the pS-L-P motif gate and the docking sanity gate.\n\n**Interface QA (job 348948):**\n\n| Arm | Median interface-confidence score (ipTM) | Predicted interface quality (median / max) |\n|---|---|---|\n| af3 with phosphoserine | 0.917 | 0.75 / 0.81 |\n| protenix with phosphoserine | 0.905 | 0.73 / 0.77 |\n| boltz-2 with phosphoserine | 0.883 | 0.70 / 0.77 |\n| af3 unmodified control | 0.552 | 0.48 / 0.57 |\n| openfold3 with phosphoserine | 0.473 | 0.45 / 0.57 |\n\n- With the phosphate, af3, protenix and boltz-2 give confident interfaces.\n- The unmodified af3 control is weak, which supports the decision to model the phosphoserine.\n- OpenFold3 is also weak. It may not have carried the phosphoserine into its input; nobody has checked that yet, and the next review should.\n\n**Clustering (job 348952):** 12 clusters, split mostly by predictor and variant, each internally very tight (TM ≥ 0.976). The comparison is over the whole complex, so the 233-residue receptor dominates it and it can't tell peptide registers apart. The gates do that job.\n\nThe interface and cluster results are recorded as `qa` evidence, alongside the gate results. The next step is the results review (`residudes review H1388`) and then the slate.", 'log': '<WORK>/targets/H1388/agent_logs/20261126-022430_POOL_READY.log'}

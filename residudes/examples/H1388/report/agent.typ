@@ -1,18 +1,24 @@
-== Template: 14-3-3 gamma groove with a pS peptide (6A5S)
+== The closest public pose: 6S9K (14-3-3 gamma + caspase-2 pS139 peptide)
 
-#grid(columns: (60%, 40%), gutter: 1em,
-  image("figs/template_6a5s.jpg", height: 70%),
+#grid(columns: (55%, 45%), gutter: 1em,
+  image("figs/pocket_6s9k.png", height: 72%),
   [
-  - 6A5S: human 14-3-3 gamma dimer (grey) with TFEB pS211 peptide (orange) in each groove, 2.1 Å.
-  - Phosphate pocket (blue): K50, R57, R132, Y133 (native) = input B 49/56/131/132.
-  - Plan gate: LARP1 peptide S7 (pS548, pS-L-P) phosphate within ~4 Å of the pocket, peptide in the groove, register N→C as mode I.
-  - No 14-3-3:LARP1 structure is public; placement is by family prior.
+  - Grey: 14-3-3 gamma (100 % identical to chain B), 1.60 Å.
+  - Orange: the caspase-2 phosphopeptide, *DL-pS-L-P-F*.
+  - Blue: the phosphate pocket, K50 R57 R132 Y133 (native) = B49 B56 B131 B132 (input).
+  - LARP1 is *SA-pS-L-P-D*: it shares pS, +1 Leu and +2 Pro with caspase-2. This is the register prior.
+  - Use: a pinned template for chain B (D4), and the pocket gate (pS7 phosphate near B56/B131/B132).
   ])
 
-== Plan at a glance
+== First results: where each predictor puts the LARP1 peptide
 
-- Stoichiometry: A1B1 (given) submitted; A2B2 (native 14-3-3 dimer) run as a context hedge, cut to one B:A pair.
-- Inputs: unmodified vs SEP at A7 (pS548); deep B MSA, peptide single-sequence; AF3 default templates.
-- Pool: existing CASP17 run, ~1.4k models (af3 25 seeds x 5 x 3 variants x 2 sto; bt2_jax, of3). No new GPU now.
-- Reserve ≤ 40 of 400 GPU-h: pt2 rerun (no model files) + of3/bt2 with SEP if registers differ.
-- Selection: gate (pS7 in pocket) first, confidence second.
+#grid(columns: (58%, 42%), gutter: 1em,
+  image("figs/pep_split.png", height: 72%),
+  [
+  Most confident model per arm, superposed on 14-3-3 gamma (hidden; blue sticks = pocket B49/56/131/132).
+  - #text(fill: rgb("#D55E00"))[af3 + pS7] (s20_0) and #text(fill: rgb("#009E73"))[pt2] (s5_0): one register, core A4-A10 median 0.56 / 0.57 Å apart.
+  - #text(fill: rgb("#CC79A7"))[bt2] (s1_0): 10.5 Å off; arm median 3.05 Å.
+  - #text(fill: rgb("#E69F00"))[af3 unmodified] (s5_0): 7.9 Å median, register shifted.
+  - #text(fill: rgb("#56B4E9"))[of3] (s6_0): 12 Å, ipTM 0.67.
+  - Only af3 carried the phosphate; pt2 agrees without it.
+  ])

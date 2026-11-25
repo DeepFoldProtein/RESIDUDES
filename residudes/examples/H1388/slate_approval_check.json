@@ -1,0 +1,12 @@
+{"slate": "<WORK>/targets/H1388/slate_v2.json",
+ "gate_spec": "<WORK>/targets/H1388/gates/H1388_A1B1.json",
+ "gate_csv": "<WORK>/targets/H1388/gates/pocket_A1B1.csv",
+ "per_model": [
+  {"slot":1,"model":"A1B1__sep__af3__s20_0","pass":true,"phospho_pocket_min_A":2.505,"motif_min_A":2.505,"contacts":46,"A7":"SEP"},
+  {"slot":2,"model":"A1B1__sep__pt2__s5_0","pass":true,"phospho_pocket_min_A":4.322,"motif_min_A":2.806,"contacts":40,"A7":"SER (PTM not carried)"},
+  {"slot":3,"model":"A1B1__sep__af3__s9_0","pass":true,"phospho_pocket_min_A":2.537,"motif_min_A":2.537,"contacts":44,"A7":"SEP"},
+  {"slot":4,"model":"A1B1__sep__pt2__s10_0","pass":true,"phospho_pocket_min_A":4.221,"motif_min_A":2.844,"contacts":43,"A7":"SER (PTM not carried)"},
+  {"slot":5,"model":"A1B1__sep__af3__s7_0","pass":true,"phospho_pocket_min_A":2.53,"motif_min_A":2.53,"contacts":42,"A7":"SEP"}],
+ "model_files": "all five present, 154-164 kB",
+ "against_decisions": {"D2":"all A1B1","D5/D7":"af3+pS7 leads; pt2 SER7 slots allowed by C1 Q4a (unmodified eligible only if gated) and C2 (a)","D6":"gate decides, confidence ranks within predictor: holds"},
+ "verdict": "no gate fails on model 1; slate consistent with decisions"}

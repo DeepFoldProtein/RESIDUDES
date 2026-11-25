@@ -1,0 +1,6 @@
+{"built": "2026-11-26",
+ "base": {"file": "<WORK>/targets/H1388/inputs/base/input.json", "sto": "A1B1", "msa": "<WORK>/targets/H1388/msas/colabfold/msa (A empty, B 10,377 seqs)", "templates_B": ["pin_6s9k_A (rank 1, moved to first by hand; the CLI @1 placed it second)", "7v9b_A 65%", "6byj_F 100%", "6y6b_B 100%"], "templates_A": "none"},
+ "sep": {"file": "<WORK>/targets/H1388/inputs/sep/input.json", "same_as": "base", "modification": {"chain": "A", "residues": [7], "ptmType": "SEP", "ptmPosition": 7}},
+ "runs": {"af3_sep": "seeds 1-20 x5, slurm 348884-348903", "af3_base": "seeds 1-10 x5, 348904-348913", "pt2_sep": "seeds 1-10 x5, 348914-348923", "bt2_sep": "seeds 1-10 x5, 348924-348933", "of3_sep": "seeds 1-10 x5, 348934-348943"},
+ "gpu_budget": "60 jobs, 2 h wall limit each (120 GPU-h worst case of 400); expected ~5-10 GPU-h",
+ "open_check": "whether bt2/of3/pt2 runners carry the SEP modification: check the output CIFs for SEP at A7 on pull; label unmodified if not"}

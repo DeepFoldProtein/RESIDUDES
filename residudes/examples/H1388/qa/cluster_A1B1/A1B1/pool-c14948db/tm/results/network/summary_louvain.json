@@ -1,0 +1,41 @@
+{
+  "n_nodes": 300,
+  "n_edges": 3370,
+  "density": 0.07513935340022297,
+  "graph_components": 1,
+  "hub_indices": [
+    149,
+    137,
+    78,
+    107,
+    108,
+    142,
+    110,
+    228,
+    68,
+    85
+  ],
+  "hub_names": [
+    "af3_seed20_sample4__sep.pdb",
+    "af3_seed18_sample2__sep.pdb",
+    "af3_seed6_sample3__sep.pdb",
+    "af3_seed12_sample2__sep.pdb",
+    "af3_seed12_sample3__sep.pdb",
+    "af3_seed19_sample2__sep.pdb",
+    "af3_seed13_sample0__sep.pdb",
+    "of3_seed6_sample3__sep.pdb",
+    "af3_seed4_sample3__sep.pdb",
+    "af3_seed8_sample0__sep.pdb"
+  ],
+  "community_method": "louvain",
+  "n_communities": 6,
+  "modularity": 0.727150658611114,
+  "community_sizes_top10": [
+    88,
+    57,
+    48,
+    47,
+    39,
+    21
+  ]
+}

@@ -1,5 +1,0 @@
-{"root":"/gpfs/deepfold/casp/casp17/targets/H1388/results",
- "found":"existing pool (CASP17 run, 2026-06) for A1B1 and A2B2; input variants af3_msa, af3_msa_pS548, mmseqs2_gpu",
- "per_combo":"af3: 25 seeds x 5 samples per sto/variant (af3_msa, af3_msa_pS548, mmseqs2_gpu); bt2_jax and of3: af3_msa and mmseqs2_gpu (no pS548 variant); pt2: inference.log ends 'done' but no model files (only ERR/log) in every sto/variant",
- "templates_B":"af3 default hmmsearch: 1578 hits, 91 are 14-3-3 gamma, so close templates are present without a custom template",
- "msa_A":"peptide (11 aa): uniref90/uniprot/mgnify contain only the query (expected for a peptide); A templates_hmmsearch 34 lines, irrelevant"}

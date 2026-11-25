@@ -61,7 +61,7 @@ environments, the MSA databases, and the three components that must be obtained 
 
 | Topic | Document |
 |---|---|
-| Example run | [`residudes/examples/H1388`](residudes/examples/H1388/): four agent steps at a cost of $2.15, with dossier, write-up, figures, the open checkpoint and all transcripts |
+| Example run | [`residudes/examples/H1388`](residudes/examples/H1388/): registered and left alone, to a packaged slate in 45 minutes - 15 agent steps, $6.81, 300 models predicted for the run, both checkpoints answered by the agent; dossier, write-up, figures and every transcript |
 | Component documentation | [`residudes/README.md`](residudes/README.md) · [`residudes-engine/README.md`](residudes-engine/README.md) · [`residudes-qa/README.md`](residudes-qa/README.md) |
 | Effect of model selection | [`residudes/docs/casp17_cases.md`](residudes/docs/casp17_cases.md): per-target intervals, including cases where selection lost accuracy |
 | Setup and containers | [`docs/setup.md`](docs/setup.md) · [`containers/README.md`](containers/README.md) |

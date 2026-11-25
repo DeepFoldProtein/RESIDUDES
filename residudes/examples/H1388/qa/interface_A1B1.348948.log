@@ -1,0 +1,55 @@
+  rows: 300
+  per variant: {'sep': 250, 'base': 50}
+  per method:  {'af3': 150, 'bt2': 50, 'of3': 50, 'pt2': 50}
+  saved: <WORK>/targets/H1388/qa/interface_A1B1/parquet/index.parquet
+  auto-detected 1 contacting interface(s) (>=10 contacts): [('A', 'B')]
+
+=== run-ppi-v4: 300 cifs x 1 interface(s) [('A', 'B')] on cuda ===
+Loading bbdep rotamer library from <RESIDUDES>/residudes-qa/data/files/ema/dunbrack/ALL.bbdep.rotamers.lib...
+Loaded 22 residue types:
+  ARG: 1369 φ/ψ bins, 68450 rotamers
+  ASN: 1369 φ/ψ bins, 49284 rotamers
+  ASP: 1369 φ/ψ bins, 24642 rotamers
+  CPR: 1369 φ/ψ bins, 2738 rotamers
+  CYD: 1369 φ/ψ bins, 4107 rotamers
+  CYH: 1369 φ/ψ bins, 4107 rotamers
+  CYS: 1369 φ/ψ bins, 4107 rotamers
+  GLN: 1369 φ/ψ bins, 68450 rotamers
+  GLU: 1369 φ/ψ bins, 68450 rotamers
+  HIS: 1369 φ/ψ bins, 49284 rotamers
+  ILE: 1369 φ/ψ bins, 12321 rotamers
+  LEU: 1369 φ/ψ bins, 12321 rotamers
+  LYS: 1369 φ/ψ bins, 68450 rotamers
+  MET: 1369 φ/ψ bins, 36963 rotamers
+  PHE: 1369 φ/ψ bins, 24642 rotamers
+  PRO: 1369 φ/ψ bins, 2738 rotamers
+  SER: 1369 φ/ψ bins, 4107 rotamers
+  THR: 1369 φ/ψ bins, 4107 rotamers
+  TPR: 1369 φ/ψ bins, 2738 rotamers
+  TRP: 1369 φ/ψ bins, 49284 rotamers
+  TYR: 1369 φ/ψ bins, 24642 rotamers
+  VAL: 1369 φ/ψ bins, 4107 rotamers
+MPNNScorer initialized: model=v_48_020, device=cuda, num_seq=1, temp=0.1, skip_sampling=True
+    [ppi_v4_multi cif 50/300] rows=50
+    [ppi_v4_multi cif 100/300] rows=100
+    [ppi_v4_multi cif 150/300] rows=150
+    [ppi_v4_multi cif 200/300] rows=200
+    [ppi_v4_multi cif 250/300] rows=250
+    [ppi_v4_multi cif 300/300] rows=300
+
+--- interface A-B ---
+  [target=dockq]
+  prep_xgb_ppi_input: master=(300, 168)  feat_cols=222 (base=164 oh=7 z_method=11 z_target=40)
+  imputed 5500 NaN cells via train_feature_means
+  predict_xgb_ppi: n=300  min=0.3346  mean=0.6395  max=0.8112
+  [target=ics]
+  prep_xgb_ppi_input: master=(300, 169)  feat_cols=222 (base=164 oh=7 z_method=11 z_target=40)
+  imputed 5500 NaN cells via train_feature_means
+  predict_xgb_ppi: n=300  min=0.1727  mean=0.4990  max=0.7916
+  [target=ips]
+  prep_xgb_ppi_input: master=(300, 170)  feat_cols=222 (base=164 oh=7 z_method=11 z_target=40)
+  imputed 5500 NaN cells via train_feature_means
+  predict_xgb_ppi: n=300  min=0.3297  mean=0.6216  max=0.7501
+
+=== run-ppi-v4 done (targets=['dockq', 'ics', 'ips']) ===
+  combined table: <WORK>/targets/H1388/qa/interface_A1B1/xgb_dockq.csv

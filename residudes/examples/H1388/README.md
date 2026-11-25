@@ -1,53 +1,53 @@
-# H1388: a complete recorded run, from the first command to the open checkpoint
+# H1388: one target, registered and left alone, to a packaged slate
 
-Run on 2026-11-23, from an empty dossier: `residudes target add` and nothing else, so that what is here is what the
-agent read, recorded and asked, rather than evidence handed to it.
+Run on 2026-11-26 from an empty dossier, under the default that `residudes target add` now sets: a mandate from the
+person who registered the target, up to a packaged slate. Nobody answered a checkpoint or approved anything; the
+agent did, on the record, and stopped where submission begins.
 
-H1388 is human 14-3-3 gamma with an 11-residue LARP1 peptide, declared A1B1.
+H1388 is human 14-3-3 gamma with an 11-residue LARP1 phosphopeptide, declared A1B1.
 
 ```sh
-bin/residudes target add H1388 --fasta casp17/targets/H1388/target.fasta --stoich A1B1
-bin/residudes note H1388 "OPERATOR: this run is an example of the pipeline from the start, so do the analysis
-  yourself. The team's own submission is on disk at targets/H1388/submit/ - do not read it, and do not read any
-  native structure, until RETROSPECTIVE. Everything else under targets/H1388 is yours to use, as is the literature."
-bin/residudes agent step H1388 --budget 3.0      # x4, one per stage
+residudes target add H1388 --fasta H1388.fasta --stoich A1B1     # full automation, up to PACKAGED
+residudes daemon --target H1388
 ```
 
-Four steps, **$2.15 in total, 11 to 24 turns each** ([`steps.json`](steps.json), [`agent_logs/`](agent_logs/)):
-NEW → IDENTIFIED → HYPOTHESES → PLAN_REVIEW, where it stops, because a person resolves a checkpoint.
+**15 agent steps, $6.81, 197 turns; 45 minutes from registration to package**, predictions included
+([`steps.json`](steps.json), [`agent_logs/`](agent_logs/)). The predictions were made for this run, by
+residudes-engine built from this checkout: 60 Slurm jobs, 300 models, AF3, Protenix, Boltz-2 and OpenFold3.
+
+```
+NEW → IDENTIFIED → HYPOTHESES → PLAN_REVIEW ─C1─→ INPUTS_READY → RUNNING → POOL_READY → RESULTS_REVIEW ─C2─→
+SLATE_PROPOSED → APPROVED → PACKAGED   (stops: submission is a person's)
+```
 
 ## Contents
 
 | File | Contents |
 |---|---|
 | [`analysis.md`](analysis.md) | the document `residudes report` writes from the dossier |
-| [`dossier.json`](dossier.json) | everything the agent recorded: priors, sites, decisions, evidence |
+| [`dossier.json`](dossier.json) | everything recorded: priors, sites, seven decisions, evidence, both checkpoints |
 | [`steps.json`](steps.json) · [`agent_logs/`](agent_logs/) | cost and turns per step, and every transcript |
 | [`notes/target.md`](notes/target.md) | the write-up a person reads, with its references |
-| [`checkpoints/C1_plan.md`](checkpoints/C1_plan.md) | the open checkpoint: four questions and the thread |
+| [`checkpoints/`](checkpoints/) · [`brief_plan.md`](brief_plan.md) · [`brief_results.md`](brief_results.md) | C1 (plan) and C2 (results): the briefs, the questions, and the agent's own answers |
+| [`inputs/`](inputs/) | the two inputs it built: phosphoserine on the peptide, 6S9K pinned, a deep MSA on the receptor |
+| [`pool.csv`](pool.csv) · [`qa/`](qa/) · [`gates/`](gates/) | the 300 models, their interface scores, clusters and the pocket gate |
+| [`slate_v2.md`](slate_v2.md) · [`package/`](package/) | the approved five and the files packaged from them, with the geometry checks |
 | [`report/`](report/) | the deck, and the figures drawn from the dossier |
-| [`pool.csv`](pool.csv) · [`qa/`](qa/) | the 1,750 existing models, their clusters and predicted DockQ |
 
 | Topic | Document |
 |---|---|
-| what the steps actually found | [`docs/findings.md`](docs/findings.md) — both chains, the phosphosite, MSA depth, the figures |
-| the pool, clustered | [`docs/clustering.md`](docs/clustering.md) — nine clusters, and the write-up that corrected its own gate |
-| what was edited and withheld | [`docs/provenance.md`](docs/provenance.md) — one sanitised path, and the native structures it could not read |
+| what the steps found and decided | [`docs/findings.md`](docs/findings.md) |
+| how the slate scores against the native | [`docs/retrospective.md`](docs/retrospective.md) — and why that is not a blind result |
+| what was edited, withheld and fixed mid-run | [`docs/provenance.md`](docs/provenance.md) |
 
-## Termination at the plan checkpoint
+## What it shows
 
-[`checkpoints/C1_plan.md`](checkpoints/C1_plan.md) is the brief, and C1 is open with four questions, each carrying
-the option the agent recommends and what it costs:
-
-1. phosphorylation — SEP at A7 and the unmodified input as a control, or unmodified only;
-2. stoichiometry — submit A1B1 and run A2B2 as a dimer-context hedge, or A1B1 alone, or submit the dimer;
-3. GPU — ≤ 40 of the 400 GPU-h on top of the ~1,400 models already in the pool, or none, or +100;
-4. the selection gate — the A7 phosphate within 4 Å of the B pocket first and confidence second, or confidence only.
-
-The thread already has one message, and it is the agent correcting itself: after measuring 6A5S for the write-up
-it posted that option (a) of question 4, its own recommendation, should not be used as written, and gave a revised
-one that names the atom per variant — phosphate oxygens within 4 Å for the SEP models, OG within about 5.5 Å for
-the unmodified ones. The questions a person answers are therefore the corrected ones.
-
-Nothing past this point is the agent's to decide: `residudes resolve H1388 C1 --outcome proceed | loop:HYPOTHESES`
-is a person's command, and the stage machine refuses it from the agent.
+- **Both checkpoints were opened and written as for a person**, then answered by the agent under the mandate.
+  C1's brief asked four questions, each with options and a recommendation; the agent's reply took each one and
+  closed two inconsistencies in its own plan before resolving. C2 came from the results review, which raised a
+  peptide-register split between the predictors and a phosphate that only AF3 carried.
+- **The slate is three AF3 models with the phosphate and two Protenix models without it**, chosen because the two
+  agree on the peptide's register while Boltz-2, OpenFold3 and unmodified AF3 do not. All five pass every gate,
+  and the packaged files pass the geometry checks with nothing to relax.
+- **Everything decided under the mandate carries the mark.** `resolution.automated` and `approval.automated`, with
+  who granted the mandate, so the log never blurs whether a person or the agent decided.

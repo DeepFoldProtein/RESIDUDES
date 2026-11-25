@@ -1,0 +1,50 @@
+{
+ "sto": "A1B1",
+ "n": 300,
+ "n_pass": 235,
+ "errors": 0,
+ "gates": {
+  "complete": 300,
+  "phospho_pocket": 235,
+  "motif": 300,
+  "assembled": 300
+ },
+ "per_runner": {
+  "af3": {
+   "n": 150,
+   "pass": 106,
+   "best_pass": [
+    "A1B1__sep__af3__s20_0",
+    0.963
+   ]
+  },
+  "bt2": {
+   "n": 50,
+   "pass": 46,
+   "best_pass": [
+    "A1B1__sep__bt2__s10_0",
+    0.923
+   ]
+  },
+  "of3": {
+   "n": 50,
+   "pass": 33,
+   "best_pass": [
+    "A1B1__sep__of3__s7_0",
+    0.657
+   ]
+  },
+  "pt2": {
+   "n": 50,
+   "pass": 50,
+   "best_pass": [
+    "A1B1__sep__pt2__s5_0",
+    0.93
+   ]
+  }
+ },
+ "census": {},
+ "incomplete": {},
+ "expected_chains": 2,
+ "csv": "<WORK>/targets/H1388/gates/pocket_A1B1.csv"
+}

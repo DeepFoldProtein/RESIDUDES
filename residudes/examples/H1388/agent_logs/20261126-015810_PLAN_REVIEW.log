@@ -1,0 +1,266 @@
+# system (appended)
+You are residudes, the structure-prediction campaign agent of the DeepFold team, running one step on H1388
+through the Claude Agent SDK. Your memory is the dossier; read it first (`residudes target show H1388`).
+
+This run:
+  dossier directory (your working directory; write files only here): <WORK>/targets/H1388
+  residudes-engine: <RESIDUDES>/residudes-engine
+  residudes-qa: <RESIDUDES>/residudes-qa
+  existing predictions (residudes-engine layout), if any: (none configured)
+  `residudes` is on PATH; RESIDUDES_ACTOR=agent.
+
+The instructions below are residudes/AGENTS.md, shared with Claude Code, Codex and Antigravity.
+
+# residudes: instructions for coding agents
+
+You are working in **residudes**, the DeepFold team's structure-prediction campaign agent. Every harness reads this
+same file:
+- **Codex** and **Antigravity** read `AGENTS.md`.
+- **Claude Code** reads it through `CLAUDE.md`, which imports it.
+- **`residudes agent step`** (the Claude Agent SDK runner) appends it to its system prompt.
+
+So the rules are the same wherever you run. The skills are in `skills/`. Claude Code finds them through
+`.claude/skills`, Codex and Antigravity through `.agents/skills`, and older Antigravity builds through `.agent/skills`.
+
+## What you do
+
+residudes takes one target at a time from its sequence to a slate of five models. The dossier
+(`<work_root>/targets/<T>/dossier.json`) is the only memory. Read it first with `residudes target show T`;
+`residudes next T` says what the current stage needs and which skill covers it.
+
+```
+NEW → IDENTIFIED → HYPOTHESES → PLAN_REVIEW ⇄ person → INPUTS_READY → RUNNING → POOL_READY
+    → RESULTS_REVIEW ⇄ person → SLATE_PROPOSED → [person: residudes approve] → APPROVED → PACKAGED
+    → [person submits] → SUBMITTED → RETROSPECTIVE
+              RESULTS_REVIEW can loop back to RUNNING (more sampling) or HYPOTHESES (new hypotheses)
+```
+
+Do the work of the current stage, record it, move the stage when its goal is met, and stop.
+
+## Two checkpoints, answered by you or by a person
+
+Every target stops twice for a decision, and both stops are built into the stages (skill `residudes-consult`).
+Who answers depends on the dossier. By default `residudes target add` records a **mandate** from the person who
+registered the target, up to a packaged slate, and you answer the checkpoints yourself. With `--review` (or after
+`residudes automate T --off`) a person answers them. `residudes target show T` says which; the step you are given
+says it too.
+
+The checkpoints are written the same way either way. The brief is the record of why the target went where it did,
+and a reader of the dossier should not be able to tell from its quality who it was written for.
+- **PLAN_REVIEW**, after the analysis and the literature. Write a brief covering:
+  - what you found, and the priors behind each decision;
+  - the prediction plan;
+  - your questions, each with options and a recommendation.
+
+  Open it with `residudes consult T --kind plan --brief FILE --ask "..."`.
+  - **Under the mandate**, answer it as the person would: weigh each question against the evidence, write the
+    answer and the reasons with `residudes reply T C# "..."`, then `residudes resolve T C# --outcome proceed` (or
+    `loop:HYPOTHESES` if your own reading finds the plan wanting).
+  - **Without one**, talk it through: a person replies, you answer, you revise the decisions if they ask, and the
+    person resolves it.
+- **RESULTS_REVIEW**, after the first round.
+  - `residudes review T` checks the pool: low confidence, a split or flat n-sweep, low pLDDT, clashes, missing models,
+    runs that lost a chain, models with an empty file, predictors in different architectures, weak interfaces, the most confident models at
+    different sites, and a site prior no gate uses. Add what you see yourself with `--add`.
+  - Any trigger means a results checkpoint with the options: proceed to the slate, `loop:RUNNING` (more sampling) or
+    `loop:HYPOTHESES` (new variants, another copy number). Under the mandate you choose, with the reasons on record.
+- **The slate.** Under the mandate, read it against the gates and the decisions once more, then `residudes approve
+  T "<why these five>"` and move to APPROVED; without one, a person approves it.
+
+Three things hold under any mandate:
+- **Submission is a person's.** You stop at PACKAGED; the stage machine refuses SUBMITTED from you in every case.
+- **Write NEEDS HUMAN when the evidence cannot decide it** - two stoichiometries the pool cannot separate, a gate
+  that fails on model 1, a slate that contradicts a decision. A mandate is permission to decide, not an obligation
+  to guess; the daemon stops on that note and a person picks it up.
+- **Everything you decide under it is marked.** Resolutions and approvals carry `automated` and who granted the
+  mandate, so the log never blurs who decided.
+
+## Analyse the target first, then decide from that analysis
+
+Decisions rest on the priors you collected, and they say which ones:
+- **Before deciding**, record what you found with `residudes evidence T <key> '<json>'`:
+  - `construct` and `identity`;
+  - `literature`: what the papers on the target and on **each partner** say, every claim with its source — where a
+     partner binds, the oligomeric state, the chemistry, which state a published structure is, and what is not known.
+     The gates and the input variants come from this reading (`residudes-intake`, `docs/literature.md`);
+  - `public_structures` from `residudes structures T` (the exact-sequence sweep of every chain, with each entry's
+     method, resolution and release date, and the age of the local template mirrors); a foldseek sweep of a predicted
+     model on top of it, once there is one;
+  - `msa_depth` from `residudes msa T --depth`. If the MSA is thin, deepen it with `residudes msa T --crawl` or `--plm`
+    (skill `residudes-intake`);
+  - `templates`;
+  - chemistry the FASTA does not carry: a modification, ligand or metal the description names, with the residue
+    you chose and why (a binding motif can pick one of several candidate residues). Record it as evidence **and**
+    as the `residudes decide --type variant` that puts it in an input, with the candidates you rejected;
+  - sites: an `epitope`, `paratope`, `binding_site`, `pocket`, `recognition_site`, `interface_prior`, `active_site`
+    or `motif` (the keys `residudes gate --init` reads), in input-sequence numbering with model chain
+    ids (A, B, ... in input order, copies counted: in A2B1C1, chain B is the second copy of A), **each with the source
+    that puts the partner there**. These become the structural gates at selection (`residudes gate`): in CASP17, gates
+    first and confidence second beat every confidence rule on the same pool;
+  - `stoichiometry_evidence` (the n-sweep, the family and homolog priors, seq2symm);
+  - QA results and `gates`.
+- **When deciding**, name those keys: `residudes decide T --type <type> --chose "..." --evidence <key> <key> --alt "..."`.
+  Every decision lists the evidence keys it rests on and the alternatives it rejected. `residudes report T` then
+  shows each decision next to its priors.
+- **Record findings as fields, not as sentences.** The report's front sections read specific names - `organism`,
+  `family`, `domains` with their ranges, `depth` per database, one `templates` field per search naming the entry
+  and its identity - and a site recorded as `{chain, residues: [...]}` or a `select` string is read as structure,
+  while the same residues written only in prose are re-read from the text, where a native numbering quoted in the
+  same sentence can win. Per chain for a complex.
+- **Absence is not evidence.** A missing precedent, template or homolog does not argue against a stoichiometry.
+  The same copy number coming out of several predictors does argue for it.
+
+## Report as slides, with structures
+
+The analysis is also a slide deck, `report/report.pdf`, built with `residudes slides T` from the dossier. It covers:
+- the target and its priors;
+- the pool's confidence per stoichiometry and predictor, as a heat table;
+- the decisions and the priors they rest on;
+- the checkpoint conversations and the first-results review;
+- pictures of the slate, or of the best model per stoichiometry before there is one, by chain and by pLDDT;
+- the agent's cost.
+
+Rebuild it before every checkpoint and when you propose the slate, and point the person to it in the brief.
+- **Add what the standard deck does not show** as your own slides in `report/agent.typ`, in touying syntax: a
+  `== Title` line starts a slide, and pictures go in with `#image("figs/x.jpg", height: 70%)` (the render writes a JPEG next to every PNG; with molterm's flat-shaded figures the two embed within about 10% of each other, so either works). Examples: an interface
+  close-up, two architectures side by side, a template against a model.
+- **Write the scene for molterm** in `report/mt/<name>.mt`: one command per line, absolute model paths, writing
+  `figs/<name>.png`. Render it with `molterm --no-tui --script report/mt/<name>.mt` from `report/` and **check the
+  exit code** - molterm carries on after a failed command, so a screenshot taken after a failed `color` is written
+  with the old colouring. For report quality, open `report/scenes.mt` and copy its `set` block: it raises the
+  level-of-detail thresholds (the default drops to reduced geometry above 5,000 atoms, and every complex here is
+  bigger), fixes a white background, and renders at 300 dpi. This runs in seconds and needs no job.
+- **PyMOL** remains for a scene molterm cannot draw. Write it in `report/pml/<name>.pml`, render with
+  `residudes render T --pml report/pml/<name>.pml`, which goes through sbatch; never run PyMOL on the login node.
+- Then run `residudes slides T --no-render` to compile.
+
+## Commands
+
+```sh
+residudes target show T | residudes next T | residudes report T        # read
+residudes consult T --kind plan|results --brief FILE --ask "..."   # open a checkpoint with a person
+residudes reply T C1 "..." | residudes checkpoints T C1              # the conversation
+residudes review T [--add "name: why"]                             # first-results checks
+residudes slides T | residudes render T --pml report/pml/x.pml       # the slide report (molterm); a PyMOL scene (sbatch)
+residudes evidence T KEY JSON | residudes note T "..." | residudes decide T --type ... --evidence ... --alt ...
+residudes stage T NEXT_STAGE                                       # when the stage's goal is met
+residudes msa T --depth | --crawl --family PF… | --plm             # MSA depth; deepen a thin MSA (family crawl, OTalign)
+residudes structures T [--identity 0.5] [--chain B]                # public structures of each chain -> public_structures
+residudes structures T --foldseek model.cif | --read-foldseek t.tsv  # the structural half (sbatch), then read it back
+residudes relax T [--sc-fc N] [--models K,..] | --read              # GROMACS+Rosetta on chosen models (sbatch); repair, not ranking
+residudes structures T --hhsearch [--chain B] | --read-hhsearch f.hhr  # profile against profile, before any model
+residudes pool T                                                   # import a residudes-engine layout pool
+residudes qa T --sto A3 --what interface|cluster [--mode ab ...]  # residudes-qa through sbatch (ab: antibody)
+residudes jobs T                                                   # refresh recorded jobs
+residudes gate T --init --sto A3                                   # draft a spec from the site evidence
+residudes gate T --spec gates.json --sto A3 [--name N]             # structural gates + site census (sbatch)
+residudes gate T --show --sto A3 [--name N]                        # pass counts, census -> evidence gates
+residudes slate T --sto A3 | --sto A2:3,A1:2 [--site S]            # proposal: gated models; af3 leads, predictors alternate
+residudes slate T --models M1,M2,M3,M4,M5                          # the five you chose after review
+residudes package T --server|--human [--check-only]               # after approval: checks + CASP files (a person submits)
+residudes run-record T --job ID --what "..." --scheduler slurm|pueue
+```
+
+residudes-engine builds inputs and runs predictions (`residudes-engine msa --source plmmsa|colabfold|mmseqs2|af3`,
+`residudes-engine inputs`, `residudes-engine predict`); residudes-qa scores,
+clusters and plots the pool. Both sit next to this folder in the RESIDUDES repo.
+
+## Rules
+
+- **People's notes.** Notes that start with `OPERATOR:`, and any note whose actor is not `agent` or `residudes`, come
+  from the person running the campaign. Follow them, latest first. Read the whole log before asking: the answer may
+  already be there.
+- **Asking a person.** If you need a person (approval, credentials, a choice the evidence cannot settle), write
+  `residudes note T "NEEDS HUMAN: ..."` and stop. That pauses the target until someone answers. For something a
+  person should see that does not stop you, write `FYI: ...` and carry on.
+- **Heavy compute** goes through `sbatch` or the pueue queues that residudes-engine knows, never on the login node. Submit
+  long jobs, record them with `run-record`, and end the step; the next step picks up when they finish.
+- **Reading about the target is part of the work, not a detour.** Use the harness's web search and fetch, and the
+  Europe PMC, RCSB and UniProt REST endpoints, which answer from this cluster (`residudes-intake` has the calls). The
+  team's own PDFs per target are under `target_notes/<T>/papers/`. Record each claim with its source. If the harness
+  has no web access, say so in the plan brief and ask the person for the papers rather than guessing.
+- **Never:**
+  - delete recursively (move to a trash folder instead);
+  - scan shared storage (`find`, `du` or `ls -R` on `/`, `/gpfs` or `/store`);
+  - poll faster than once a minute;
+  - cancel other people's jobs;
+  - force-push.
+- **Never act outward.** Do not submit to CASP, do not run `residudes approve` or `residudes resolve`, and do not
+  change `RESIDUDES_ACTOR`. A
+  person approves the slate and submits it. In the SDK runner a guard enforces this. In Claude Code,
+  `.claude/settings.json` sets `RESIDUDES_ACTOR=agent` and denies `approve`.
+- **Record as you go.** A step ends when its USD budget runs out, wherever it has got to. Write each finding with
+  `residudes evidence` when you make it: a step that ends early is normal, a finding that was never recorded is lost.
+- **A path in the dossier is absolute, and checked.** Evidence, notes and references are read later from another
+  working directory, so a relative path silently stops resolving: on H2338 the agent recorded two PDFs it had read
+  as `target_notes/…`, could not find them a step later, and wrote them off as never having existed. Record the
+  absolute path, and only after confirming the file is there and is the size a real file would be (a refused
+  download leaves a few hundred bytes of error page).
+- **Edit the dossier only through `residudes` commands.** Never edit `dossier.json` by hand. For long JSON, write it to a
+  file in the dossier directory and pass `residudes evidence T KEY @file.json`. A long command full of quotes can be
+  declined, or quoted wrongly. If a command is declined, read the reason, make it simpler, and try again; do not stop.
+- **Replays.** The skills quote CASP17 outcomes by target name. When you replay one of those targets, its lines
+  are hindsight. Say so in an `FYI:` note, and do not let them drive a decision: cite the evidence you collected.
+- **Results scored against an unreleased native stay internal.** `residudes export` leaves them out unless given
+  `--with-retro`.
+
+## Skills
+
+| skill | use it at |
+|---|---|
+| `residudes-setup` | first run on a machine: resources, databases, config, skill links |
+| `residudes-intake` | NEW and HYPOTHESES: construct, identity, the literature on the target and each partner, public structures, MSA depth, input variants |
+| `residudes-stoichiometry` | IDENTIFIED, a stage-2 reissue, or predictors disagreeing on the oligomeric state |
+| `residudes-consult` | PLAN_REVIEW and RESULTS_REVIEW, and whenever a person replied in a checkpoint |
+| `residudes-modeller` | HYPOTHESES or RESULTS_REVIEW, when the complex or a homolog's assembly is public: MODELLER model of the whole assembly on the target's sequences as an AF3 multimer template (a homolog's cage; a released complex with gaps) |
+| `residudes-selection` | POOL_READY, RESULTS_REVIEW (the slate) and APPROVED: residudes-qa, structural gates and site census (`residudes gate`), slate |
+| `residudes-ops-safety` | whenever you submit, watch or pull jobs |
+| `residudes-structure-view` | whenever the conversation turns on a shape: show it with molterm rather than describing it |
+
+
+# prompt
+Target H1388 is at stage PLAN_REVIEW. This step: talk the prediction plan through with a person: build the slide report (`residudes slides T`, add your own slides in report/agent.typ), write the brief (analysis, the priors behind each decision, the plan, the open questions with options and your recommendation, a pointer to report/report.pdf) and open `residudes consult H1388 --kind plan --brief FILE --ask ...`; then stop. Use the `residudes-consult` skill. Budget: 2.0 USD of agent time; GPU budget 400.0 h for the target. Record each finding with `residudes evidence` as you make it, not at the end: the step stops when the budget runs out, and a step that ends early is normal, while a finding that was never recorded is lost.
+
+[Skill] {'skill': 'residudes-consult'}
+[Bash] {'command': 'residudes target show H1388 2>&1 | head -200; residudes next H1388 2>&1 | head -40', 'description': 'Read dossier and next step'}
+[Bash] {'command': 'residudes report H1388 2>&1 | head -150; ls; ls report 2>/dev/null', 'description': 'Read full report and list files'}
+[Bash] {'command': 'timeout 600 residudes slides H1388 2>&1 | tail -15; ls report report/figs; ls report/mt 2>/dev/null; ls dl dl/pdb | head', 'description': 'Build slide report', 'timeout': 620000}
+[Bash] {'command': 'ls <WORK>/targets/H1388/dl/pdb; ls <WORK>/targets/*/report/scenes.mt 2>/dev/null | head -2; ls <WORK>/targets/*/report/mt/*.mt 2>/dev/null | head -3', 'description': 'Find example molterm scenes'}
+[Bash] {'command': 'cd <RESIDUDES>/residudes && grep -rl "molterm" --include=*.md . | head; grep -rn "set lod\\|^set \\|screenshot" --include=*.mt --include=*.md --include=*.py . | head -20', 'description': 'Look for molterm scene syntax'}
+The slide deck is built. Next I'm finding the molterm scene syntax so I can add a figure of the binding pocket.
+[Grep] {'pattern': 'screenshot', 'path': '<RESIDUDES>/residudes', 'output_mode': 'content', 'head_limit': 20}
+[Read] {'file_path': '<RESIDUDES>/residudes/skills/residudes-structure-view/SKILL.md', 'offset': 25, 'limit': 60}
+[Read] {'file_path': '<RESIDUDES>/residudes/src/residudes/slides.py', 'offset': 150, 'limit': 40}
+[Bash] {'command': 'cd <WORK>/targets/H1388 && grep -E "^(COMPND|SEQRES)" dl/pdb/6S9K.pdb | head -12; grep HETATM dl/pdb/6S9K.pdb | awk \'{print $4,$5}\' | sort -u | head', 'description': 'Inspect 6S9K chains'}
+[Bash] {'command': 'grep -E "^SEQADV|^SEQRES   1 B|^SEQRES   2 B" dl/pdb/6S9K.pdb | head', 'description': 'Check 6S9K mutations and peptide sequence'}
+[Bash] {'command': "cd <WORK>/targets/H1388/report && mkdir -p mt && cat > mt/pocket_6s9k.mt <<'EOF'\nset lod_medium 400000\nset lod_low 400000\nset bg white\nset sm relative\nset csd 24\nset outline on\nload <WORK>/targets/H1388/dl/pdb/6S9K.pdb\nshow cartoon\ncolor chain\ncolor #A0A0A0 chain A\nshow spacefill chain B\ncolor #D55E00 chain B\nshow sticks chain A and resi 50+57+132+133\ncolor #0072B2 chain A and resi 50+57+132+133\norient chain B\nscreenshot figs/pocket_6s9k.png 1800 1350 300\nEOF\nmolterm --no-tui --script mt/pocket_6s9k.mt; echo EXIT $?; ls -la figs | grep pocket", 'description': 'Render 6S9K pocket scene with molterm'}
+[Read] {'file_path': '<WORK>/targets/H1388/report/figs/pocket_6s9k.png'}
+I'm adjusting the 6S9K pocket figure so the whole groove is in view, then I'll write the brief.
+[Bash] {'command': "sed -i 's/^orient chain B$/orient/' mt/pocket_6s9k.mt && molterm --no-tui --script mt/pocket_6s9k.mt >/dev/null 2>&1; echo EXIT $?", 'description': 'Re-render pocket figure with full orient'}
+[Read] {'file_path': '<WORK>/targets/H1388/report/figs/pocket_6s9k.png'}
+That works as a figure. Now I'll record the 6S9K peptide finding and add the slide.
+[Bash] {'command': 'cd <WORK>/targets/H1388 && cat > dl/ev_analog.json <<\'EOF\'\n{"entry": "6S9K", "chain_receptor": "A (14-3-3 gamma)", "chain_peptide": "B (caspase-2)", "peptide_seqres_start": "DYDL(SEP)LPFPVCESCPLYKKLRLSTDT", "core_match": "6S9K caspase-2 pS139-L-P and LARP1 pS548-L-P (input A7-L8-P9) share pS, +1 Leu and +2 Pro; -1 is Leu in caspase-2 and Ala in LARP1", "use": "the closest public pS-L-P pose in 14-3-3 gamma; register prior for the gate and the pinned template (D4)", "source": "<WORK>/targets/H1388/dl/pdb/6S9K.pdb SEQRES, as counted here", "figure": "<WORK>/targets/H1388/report/figs/pocket_6s9k.png"}\nEOF\nresidudes evidence H1388 peptide_analog @dl/ev_analog.json 2>&1 | tail -2\ncat > report/agent.typ <<\'E
+[Bash] {'command': 'residudes target show H1388 | grep -c peptide_analog', 'description': 'Confirm evidence recorded'}
+The evidence is recorded and the deck rebuilt. Now I'm writing the brief and opening the checkpoint.
+[Write] {'file_path': '<WORK>/targets/H1388/brief_plan.md', 'content': "# H1388 plan review\n\nDeck: `<WORK>/targets/H1388/report/report.pdf`. My own slide is the last one: the 6S9K pocket.\n\n## 1. The target in three lines\n- **Chain A.** An 11-mer, `PKGLSASLPDL`: human LARP1 542–552 (Q6PKG0), with `input = native − 541`.\n- **Chain B.** Human 14-3-3 gamma (P61981 3–234) with an N-terminal S. The C-terminal tail 235–247 is absent.\n- **Stoichiometry.** A1B1, as declared.\n- **The question.** This is a phosphopeptide-in-groove problem. Everything turns on the peptide's register and direction in the amphipathic groove.\n\n## 2. What we know\n- **Chemistry** (`chemistry`, `motif`).\n  - UniProt records LARP1 S548 (= A7) as a phosphoserine.\n  - A7 is th
+[Bash] {'command': 'timeout 600 residudes consult H1388 --kind plan --brief brief_plan.md \\\n --ask "Q1 pocket gate: (a) pS7 phosphate within 4 A of B56/B131/B132 [recommended: 6S9K contacts these, not K49] (b) require B49 too" \\\n --ask "Q2 dimer: (a) A1B1 only as declared [recommended] (b) add 5 af3 A2B2 seeds as a geometry check, ~+1 GPU-h, not submitted" \\\n --ask "Q3 template: (a) pin 6S9K chain A in af3 lead arm, unpinned control alongside [recommended: pS-L-P analog, 1.6 A] (b) no pinned template" \\\n --ask "Q4 unmodified arm: (a) eligible for the slate only if it passes the pocket gate [recommended] (b) slate from SEP models only" 2>&1 | tail -8', 'description': 'Open plan checkpoint', 'timeout': 620000}
+I opened the plan checkpoint **C1** for H1388 and stopped there, as the step asked. No answer has been given and nothing is resolved yet.
+
+**Files**
+- **Brief:** `brief_plan.md`, filed as `checkpoints/C1_plan.md`.
+- **Slide report:** `report/report.pdf`. I added one slide, a picture of 6S9K (14-3-3 gamma with a caspase-2 phosphopeptide). The pocket residues are shown in blue. The scene is `report/mt/pocket_6s9k.mt` and it rendered without errors.
+
+**New finding (recorded as `peptide_analog`):** the peptide in 6S9K reads DL‑pS‑L‑P‑F, and the LARP1 peptide reads SA‑pS‑L‑P‑D. They share the phosphoserine, the leucine after it and the proline two after it. That makes 6S9K the best guide for where the LARP1 peptide sits and which way it runs in the groove. It also supports pinning 6S9K as a template, as the plan already proposed.
+
+**The four questions in C1, with my recommendation:**
+1. **Pocket gate:** require the phosphate on peptide residue 7 to be within 4 Å of B56, B131 and B132 (native R57, R132, Y133). Leave out B49 (K50), because it does not touch the phosphate in 6S9K and would reject correct poses. The plan as recorded earlier listed all four, so this answer changes it.
+2. **Dimer:** model one peptide on one 14-3-3 (A1B1), as declared. The alternative is 5 extra seeds of the two-copy complex (A2B2) as a geometry check, about 1 GPU-h, not submitted.
+3. **Template:** pin 6S9K in the lead AlphaFold3 run, with an unpinned AlphaFold3 run alongside as a control.
+4. **Unphosphorylated runs:** their models can go into the final five only if they pass the pocket gate.
+
+The literature on this pair is thin. I found no paper on 14-3-3 binding LARP1 at Ser548, and I read only the abstracts of the two papers cited. I also don't have the organisers' description, so I can't confirm the peptide was phosphorylated in the experiment.
+
+If nobody answers before the deadline, the brief says I take every recommended option and run the plan as written. That is about 300 models for roughly 5 GPU-h, capped at 20 of the 400 h budget.
+
+# result
+{'subtype': 'success', 'cost_usd': 0.6350567, 'is_error': False, 'turns': 21, 'session': '3b06d892-ffe3-4db4-964c-860f4b4466ce', 'result': "nd stopped there, as the step asked. No answer has been given and nothing is resolved yet.\n\n**Files**\n- **Brief:** `brief_plan.md`, filed as `checkpoints/C1_plan.md`.\n- **Slide report:** `report/report.pdf`. I added one slide, a picture of 6S9K (14-3-3 gamma with a caspase-2 phosphopeptide). The pocket residues are shown in blue. The scene is `report/mt/pocket_6s9k.mt` and it rendered without errors.\n\n**New finding (recorded as `peptide_analog`):** the peptide in 6S9K reads DL‑pS‑L‑P‑F, and the LARP1 peptide reads SA‑pS‑L‑P‑D. They share the phosphoserine, the leucine after it and the proline two after it. That makes 6S9K the best guide for where the LARP1 peptide sits and which way it runs in the groove. It also supports pinning 6S9K as a template, as the plan already proposed.\n\n**The four questions in C1, with my recommendation:**\n1. **Pocket gate:** require the phosphate on peptide residue 7 to be within 4 Å of B56, B131 and B132 (native R57, R132, Y133). Leave out B49 (K50), because it does not touch the phosphate in 6S9K and would reject correct poses. The plan as recorded earlier listed all four, so this answer changes it.\n2. **Dimer:** model one peptide on one 14-3-3 (A1B1), as declared. The alternative is 5 extra seeds of the two-copy complex (A2B2) as a geometry check, about 1 GPU-h, not submitted.\n3. **Template:** pin 6S9K in the lead AlphaFold3 run, with an unpinned AlphaFold3 run alongside as a control.\n4. **Unphosphorylated runs:** their models can go into the final five only if they pass the pocket gate.\n\nThe literature on this pair is thin. I found no paper on 14-3-3 binding LARP1 at Ser548, and I read only the abstracts of the two papers cited. I also don't have the organisers' description, so I can't confirm the peptide was phosphorylated in the experiment.\n\nIf nobody answers before the deadline, the brief says I take every recommended option and run the plan as written. That is about 300 models for roughly 5 GPU-h, capped at 20 of the 400 h budget.", 'log': '<WORK>/targets/H1388/agent_logs/20261126-015810_PLAN_REVIEW.log'}

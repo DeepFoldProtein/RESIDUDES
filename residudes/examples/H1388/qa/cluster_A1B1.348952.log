@@ -1,0 +1,58 @@
+target=H1388  base=complex  sto=A1B1  variants=['base', 'sep']  method=tm
+  pooled N=300 across 2 variants:
+    base: N=50 (af3:50)
+    sep: N=250 (af3:100, bt2:50, of3:50, pt2:50)
+  shape ok: every structure has chains A=11, B=233
+  computing tm matrix on GPU 0 (N=300) ...
+
+Loading structures (8w):   0%|          | 0/300 [00:00<?, ?it/s]
+Loading structures (8w):  43%|████▎     | 129/300 [00:00<00:00, 1239.96it/s]
+Loading structures (8w): 100%|██████████| 300/300 [00:00<00:00, 2111.57it/s]
+
+Computing TM-scores:   0%|          | 0/22 [00:00<?, ?it/s]
+Computing TM-scores:   5%|▍         | 1/22 [00:01<00:21,  1.02s/it]
+Computing TM-scores:  55%|█████▍    | 12/22 [00:01<00:00, 14.29it/s]
+Computing TM-scores: 100%|██████████| 22/22 [00:01<00:00, 18.06it/s]
+    done in 1.5s, shape=(300, 300)
+  ranking.csv: 300 rows -> <WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/ranking.csv
+  $ <RESIDUDES>/residudes-qa/.venv/bin/python -m residudes_qa.cluster.cli comprehensive --matrix tm:<WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/matrices/tm_matrix.npy --names <WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/matrices/structure_names.npy --output <WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/results --target H1388_A1B1_tm --method fuzzy --ranking <WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/ranking.csv
+
+============================================================
+  MassiveClustering - Comprehensive Analysis
+  Target: H1388_A1B1_tm
+============================================================
+
+--- Metric: tm ---
+  Matrix: (300, 300)
+  Auto K = 12
+  Note: BIC suggests K=35
+  K diagnostic plot saved
+  K selection scores saved
+  Clusters: 12, Silhouette: 0.218
+
+Generating comprehensive visualization...
+  Best predicted (largest cluster medoid): af3_seed19_sample4__sep.pdb
+  Cluster dendrogram saved
+
+Generating cluster summary table...
+  Saved: <WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/results/H1388_A1B1_tm_cluster_summary.png
+  Saved: <WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/results/H1388_A1B1_tm_cluster_summary.csv
+
+Running provenance analysis...
+  Provenance: 18 features across 12 clusters
+
+Running score analysis...
+  Ranking data: 300 entries
+  Scores: 12 clusters analyzed
+
+============================================================
+  Results saved to: <WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/results
+============================================================
+      confidence dist: H1388_A1B1_tm_confidence_dist.png
+      variant×cluster: H1388_A1B1_tm_variant_cluster.png
+      msa×template×model: H1388_A1B1_tm_msa_template_model.png
+[medoid_faces] skipping: _pdb_view not found at <WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/_pdb_view
+      network report: network/report.png
+
+done. results: <WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/results
+      matrices: <WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/matrices

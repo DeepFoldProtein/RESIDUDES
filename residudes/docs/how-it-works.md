@@ -65,7 +65,7 @@ what it is (organism, family and fold with their Pfam or InterPro ids, the const
 the sequence counted chain by chain, how deep the MSAs are per chain and per database, the structures the searches
 returned with the identity and coverage they reported, and the slate with residudes-qa's predicted DockQ beside each
 predictor's own confidence. It draws a map of each chain carrying the residues a gate would use, and links the
-coverage plot. [`examples/H1388`](../examples/H1388/) is a run from the first command to the plan checkpoint, and its
+coverage plot. [`examples/H1388`](../examples/H1388/) is a run from the first command to a packaged slate, and its
 [`analysis.md`](../examples/H1388/analysis.md) is what the document looks like.
 
 ## What this does not show

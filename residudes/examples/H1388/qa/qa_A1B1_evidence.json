@@ -1,0 +1,9 @@
+{"sto":"A1B1",
+ "interface":{"job":348948,"file":"<WORK>/targets/H1388/qa/interface_A1B1/xgb_dockq.csv","n":300,
+  "per_arm_xgb_dockq_median_max_iptm_median":{
+   "af3_sep":[0.753,0.811,0.917],"pt2_sep":[0.728,0.766,0.905],"bt2_sep":[0.695,0.767,0.883],
+   "af3_base":[0.475,0.567,0.552],"of3_sep":[0.450,0.565,0.473]},
+  "reading":"SEP arms of af3/pt2/bt2 give confident interfaces (ipTM ~0.9, xgb-DockQ ~0.7-0.8); unmodified af3 control and of3 are weak (ipTM ~0.5): phosphate drives confidence, as D1 expected; of3 likely did not carry SEP or is weaker on peptides"},
+ "cluster":{"job":348952,"dir":"<WORK>/targets/H1388/qa/cluster_A1B1/A1B1/pool-c14948db/tm/results","metric":"TM (whole complex)","n_clusters":12,
+  "largest":[["C6",39,"pt2_seed3_sample0__sep"],["C2",34,"af3_seed4_sample2__sep"],["C7",31,"of3_seed6_sample4__sep"],["C1",30,"af3_seed10_sample2__base"]],
+  "reading":"clusters split mostly by predictor/variant, intra-TM >=0.976; whole-complex TM is dominated by the 233-res receptor, so peptide register is judged by the gates, not the clusters"}}

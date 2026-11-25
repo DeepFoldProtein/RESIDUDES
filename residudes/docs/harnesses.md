@@ -34,7 +34,8 @@ Live checks so far:
   - Earlier: a reviewer brief that flagged the unchecked gates, with the `approve` attempt blocked ($0.33); the
     read-only CLI with `--allowedTools` ($0.12).
 - **The Agent SDK runner** took five CASP17 replays through the stages. Two reached a proposed slate and three wait at
-  a checkpoint; [`examples/H1388`](../examples/H1388/) is the one that ships (below).
+  a checkpoint. Under the full-automation default it then took H1388 from `target add` to a packaged slate, both
+  checkpoints answered by the agent; [`examples/H1388`](../examples/H1388/) is that run.
 - **Codex and Antigravity** are not installed on the cluster. They are covered by the spec tests above until someone
   runs [`docs/harness_check.md`](harness_check.md) in them: the same question and expected answer, for every
   harness.

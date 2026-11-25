@@ -1,21 +1,40 @@
-# Provenance: post-run edits and withheld material
+# Provenance: post-run edits, what the run could see, and one fix mid-run
 
 ## What was edited after the run
 
-One thing, everywhere it appears (logs, `analysis.md`, `notes/target.md`, `dossier.json`): the path of the
-checkout the run used is written as `<RESIDUDES>`. Campaign paths under `/gpfs/deepfold/casp/casp17/` are left as
-they were, because the write-up's counts are checkable against those files and a sanitised path would not be.
-Nothing else in the transcripts was changed — including the names. The run predates the rename of `lantern`,
-`lantern-engine` and `lantern-qa` to `residudes`, `residudes-engine` and `residudes-qa`, so the logs, the dossier
-and the figures drawn from them still say the old ones: those are the commands that ran. This page uses the
-current names, so `residudes target add` here is `lantern target add` in the log beside it.
+Paths, everywhere they appear (logs, `dossier.json`, `analysis.md`, notes, inputs, QA tables), are written as
+placeholders so that no one site's layout ships with the example:
 
-## What it was not allowed to use
+| placeholder | what it stood for |
+|---|---|
+| `<WORK>` | the run's work root (dossiers under `<WORK>/targets/`) |
+| `<RESIDUDES>` | the checkout the run used |
+| `<AF3_DB>` · `<COLABFOLD_DB>` · `<FOLDSEEK_DB>` · `<FOLDSEEK_PDB_2026>` | the sequence and structure databases |
+| `<CHECKPOINTS>` · `<ENGINES>` | model weights and the TensorRT engines |
+| `<CONTAINERS>` · `<CASP17_UTILS>` · `<RELAX>` · `<PYMOL>` · `<KALIGN>` · `<CONDA>` | tools |
+| `<SABDAB>` · `<CASP17>` · `<SITE>` · `<STORE>` · `~` | other site paths |
 
-The operator note barred the team's own submission and any native structure until RETROSPECTIVE, so the analysis
-here is what the agent found from the target files and the literature. One thing it could not be shielded from: the
-`residudes-intake` skill quotes this target family as a worked case, and the agent said so in a note rather than
-using it quietly.
+`analysis.md` and the figures were then regenerated from the edited dossier, so the example reproduces itself.
+Not shipped: the 300 model files and the MSAs (1.2 GB; `pool.csv` lists every model with its scores), the
+templates' coordinate files, and duplicate tables (parquet beside csv, the TM matrix).
 
-The team's CASP17 answer, for comparison after the fact: the phosphosite was the target's lever, and adding it took
-AF3's median DockQ from 0.24 to 0.82 ([`casp17_cases.md`](../../../docs/casp17_cases.md)).
+## What the run was given, and what it could not be shielded from
+
+The configuration named the databases and tools and nothing else: no existing predictions (`targets_root` empty,
+so every model was predicted for this run) and not the team's CASP17 tree, which holds the old analysis and the
+submission. Nothing told the agent to avoid anything; it was simply not pointed at it.
+
+What no configuration can remove: the `residudes-intake` skill was written after CASP17 and quotes this target's
+lesson as a worked case. The agent said so in its first step, and twice later that it had not used the line as
+evidence. How much that shaped the plan is in [`retrospective.md`](retrospective.md).
+
+## One fix, mid-run
+
+The run stopped at its first checkpoint. The agent answered C1 under the mandate, ran `residudes resolve`, and was
+refused by the command guard and the project settings, both of which blocked approve and resolve without looking
+at the mandate. It wrote NEEDS HUMAN, as it should, and the daemon stepped it twice more before stopping - a second
+bug, since fixed: an open checkpoint used to override the note.
+
+Both were fixed in the code, a person's note on the dossier said so (02:07, by `deepfold`), and the daemon was
+restarted. The agent resolved C1 itself on its next step; its answer from before the refusal stood. Steps 5 to 7
+in [`steps.json`](../steps.json), $0.74, are the cost of that.

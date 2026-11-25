@@ -1,0 +1,19 @@
+{
+  "fasta": "<WORK>/H1388.fasta",
+  "stoichiometry": "A1B1",
+  "msa": {
+    "dir": "<WORK>/targets/H1388/msas/colabfold/msa",
+    "source": "colabfold"
+  },
+  "templates": {
+    "B": {
+      "type": "search",
+      "n": 4,
+      "pinned": "6s9k:A"
+    }
+  },
+  "ligands": [],
+  "glycans": [],
+  "contacts": [],
+  "generated": "2026-11-26T02:09:03"
+}
