@@ -264,10 +264,13 @@ if [ "$ALL" = 1 ] && [ -f "$IMAGES/residudes-relax.sif" ]; then
     done
     [ -z "$missing" ] && ok "AmberTools: tleap antechamber parmchk2 reduce" || bad "AmberTools missing:$missing"
     # the pipeline itself is not in the image, by design - say where it has to come from
-    if [ -x "${MINIMIZATION:-/data/casp17/gromacs/relax/minimization.sh}" ]; then
-        ok "pipeline present to mount: ${MINIMIZATION:-/data/casp17/gromacs/relax/minimization.sh}"
+    # the pipeline is a site's own, so ask the configuration rather than guessing a path
+    pipeline=${MINIMIZATION:-$(sed -n 's/^minimization *= *"\(.*\)"/\1/p' \
+        "${RESIDUDES_CONFIG:-$REPO/residudes/residudes.toml}" 2>/dev/null | head -1)}
+    if [ -n "$pipeline" ] && [ -x "$pipeline" ]; then
+        ok "pipeline present to mount: $pipeline"
     else
-        note "relax pipeline not on this host (mount it, or set [tools] minimization)"
+        note "relax pipeline not configured here (set [tools] minimization in residudes.toml)"
     fi
 fi
 
