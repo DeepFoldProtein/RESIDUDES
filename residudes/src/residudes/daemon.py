@@ -92,6 +92,9 @@ def _round_target(cfg: Config, d: Dossier, budget: float | None, max_idle_steps:
     if _waiting_on_jobs(cfg, d.target):
         return f"{d.target}: waiting on jobs"
     before = d.stage
+    # A step runs for minutes, and the round's lines are printed when it ends; without this a fresh daemon.log
+    # stays empty long enough to look like a dead daemon.
+    print(time.strftime("%H:%M:%S"), f"{d.target}: step at {d.stage} started", flush=True)
     res = step(cfg, d.target, budget=budget, verbose=False)
     after = Dossier.load(cfg.targets_dir, d.target).stage
     if res.get("subtype") in ("busy", "skipped"):              # nothing ran: not an idle step

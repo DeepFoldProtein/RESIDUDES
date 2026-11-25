@@ -44,8 +44,15 @@ export UV_NO_CACHE=1
 
 if [ "$stage" = all ] || [ "$stage" = sync ]; then
     cd /opt/jaxenv                              # only this stage needs the lockfile beside it
-    UV_PROJECT_ENVIRONMENT=/opt/venv uv sync --frozen --no-install-project --python /usr/bin/python3.12
+    # --no-editable: openfold3 is an editable path dependency, which here would point at /opt/models, a
+    # tree the final stage does not copy; installed, it lives in site-packages with everything else.
+    UV_PROJECT_ENVIRONMENT=/opt/venv uv sync --frozen --no-install-project --no-editable --python /usr/bin/python3.12
     rm -rf /root/.cache/uv
+    # AlphaFold 3 reads two CCD-derived pickles at import time, built from the components.cif its libcifpp
+    # build installed (core/jaxenv/build.sh does the same for the self-built venv). Without them the image
+    # passed its import check and failed on the first prediction:
+    #   FileNotFoundError: .../alphafold3/constants/converters/chemical_component_sets.pickle
+    /opt/venv/bin/build_data
 fi
 
 # The venv is ~9 GB. As one layer that does not survive every network: measured, a 9 GB blob dies
@@ -95,4 +102,13 @@ print("jax-triton ok")
 import alphafold3
 from alphafold3.cpp import cif_dict                 # the compiled extension, not just the python
 print("alphafold3 + compiled cpp ok")
+from pathlib import Path
+conv = Path(alphafold3.__file__).parent / "constants" / "converters"
+for pk in ("ccd.pickle", "chemical_component_sets.pickle"):  # read at import by the model, not by `import alphafold3`
+    assert (conv / pk).is_file(), f"missing {pk}"
+from alphafold3.constants import chemical_component_sets    # the module that failed in a prediction
+print("CCD tables ok")
+import openfold3
+assert "site-packages" in openfold3.__file__, openfold3.__file__
+print("openfold3 installed")
 EOF

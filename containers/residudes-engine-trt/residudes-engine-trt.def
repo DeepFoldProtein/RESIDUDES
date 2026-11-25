@@ -13,6 +13,7 @@ Stage: final
 %files
     ../../residudes-engine/core/pyproject.toml /opt/core/pyproject.toml
     ../../residudes-engine/core/uv.lock /opt/core/uv.lock
+    ../../residudes-engine/core/models/openfold-3 /opt/core/models/openfold-3
     install.sh /opt/trt-install.sh
 
 %post

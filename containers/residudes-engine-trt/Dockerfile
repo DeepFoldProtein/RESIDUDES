@@ -11,6 +11,7 @@ FROM nvidia/cuda:13.0.3-runtime-ubuntu24.04 AS builder
 
 COPY --from=uv /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock /opt/core/
+COPY models/openfold-3 /opt/core/models/openfold-3
 COPY install.sh /tmp/install.sh
 RUN sh /tmp/install.sh system
 RUN sh /tmp/install.sh sync

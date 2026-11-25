@@ -31,7 +31,12 @@ fi
 # and each pass is verified against the lockfile rather than hand-pinned.
 if [ "$stage" = all ] || [ "$stage" = sync ]; then
     cd /opt/core                              # only this stage needs the lockfile beside it
-    UV_PROJECT_ENVIRONMENT=/opt/venv uv sync --frozen --no-install-project --python /usr/bin/python3.12
+    # The same extras `residudes-engine setup venv` builds with (scripts/slurm/setup_venv.sbatch): without
+    # boltz and openfold3 this image ran pt2 and nothing else, and bt2 / of3 failed at import on the first
+    # prediction. --no-editable: openfold3 is a path dependency installed editable, which in an image points
+    # at a source tree the final stage does not have; installed, it is in site-packages like the rest.
+    UV_PROJECT_ENVIRONMENT=/opt/venv uv sync --frozen --no-install-project --no-editable \
+        --extra cu13 --extra boltz --extra openfold3 --python /usr/bin/python3.12
     rm -rf /root/.cache/uv
 fi
 
@@ -79,4 +84,6 @@ import tensorrt
 print("tensorrt", tensorrt.__version__)
 import cuequivariance_torch                      # the fused kernels the engines were built with
 print("cuequivariance-torch ok")
+import boltz, openfold3                          # bt2 and of3: imports are what failed, so import them
+print("boltz", boltz.__file__.split("site-packages")[0][-12:], "| openfold3 installed:", "site-packages" in openfold3.__file__)
 EOF
