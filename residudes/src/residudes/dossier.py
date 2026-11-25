@@ -36,7 +36,10 @@ PLAYBOOK = {
             "residudes-intake"),
     "IDENTIFIED": ("form stoichiometry hypotheses with evidence", "residudes-stoichiometry"),
     "HYPOTHESES": ("design input variants (MSA, templates, PTMs, ligands) and the sampling plan (seeds, GPU hours) as decisions; then move to PLAN_REVIEW", "residudes-intake"),
-    "INPUTS_READY": ("build the agreed inputs and submit the prediction runs with residudes-engine (within the GPU budget); if predictions already exist under targets_root, import them with `residudes pool T` instead and move on", "residudes-ops-safety"),
+    "INPUTS_READY": ("build the agreed inputs and submit the prediction runs with residudes-engine (within the GPU budget), each "
+                     "into the layout `residudes pool` reads: `--out results/<sto>/<variant>/<runner>` (e.g. results/A1B1/sep/af3), "
+                     "which makes seed_<N>/sample_<M> under it; if predictions already exist under targets_root, import them with "
+                     "`residudes pool T` instead and move on", "residudes-ops-safety"),
     "RUNNING": ("check `residudes jobs T`; when every run is finished, `residudes pool T` to import the models and verify the counts per predictor", "residudes-ops-safety"),
     "POOL_READY": ("`residudes qa T --sto S --what interface` and `--what cluster`; draft the structural gates with `residudes gate T --init "
                    "--sto S` (site gates from the evidence), check and edit the draft against what the analysis supports (sites, "
