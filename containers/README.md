@@ -32,6 +32,14 @@ One OCI image serves both: Apptainer converts it to a SIF on the way in, which i
 published twice. `containers/verify.sh` asks the registry about each image and builds locally
 whatever it cannot pull.
 
+**The two engine images are one large layer each**, because `install.sh` runs as a single build
+step: 9.1 GB for TensorRT and 11.5 GB for JAX, against about 3 GB for every other image. A blob
+that size does not survive every network — measured here, the pull dies partway with
+`PROTOCOL_ERROR` over HTTP/2 and `unexpected EOF` over HTTP/1.1, while the 3 GB images pull
+cleanly on the same link. `verify.sh` therefore retries over HTTP/1.1 and then builds the image
+locally, which fetches many small wheels instead of one huge layer and is how these two were
+verified in the first place. Expect that fallback on a slow or proxied connection.
+
 Sizes refer to the Apptainer `.sif` files produced on the reference hardware. Each recipe consists
 of three files: `install.sh`, which contains the installation steps and the rationale for them, and
 a `Dockerfile` and an Apptainer `.def` file that both execute it. The two container formats

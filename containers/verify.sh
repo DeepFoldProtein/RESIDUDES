@@ -141,12 +141,29 @@ for name in $SET; do
         log=$(mktemp)
         if apptainer build --force "$sif" "docker://$REGISTRY/$name:$TAG" >"$log" 2>&1; then
             ok "$name.sif  pulled from $REGISTRY  $(du -hL "$sif" | cut -f1)"
+        # The large images are one big layer each, and a multi-GB blob over HTTP/2 can die with
+        #   conveyor failed to get: error writing layer: stream error: ... PROTOCOL_ERROR
+        # which is the transport, not the image. Go disables HTTP/2 with this variable, so the
+        # retry asks for HTTP/1.1 rather than simply trying the same thing again.
+        elif grep -q 'PROTOCOL_ERROR\|stream error\|unexpected EOF\|connection reset' "$log" &&
+             printf '  ..    %s\n' "retrying $name over HTTP/1.1" &&
+             GODEBUG=http2client=0 apptainer build --force "$sif" "docker://$REGISTRY/$name:$TAG" >>"$log" 2>&1; then
+            ok "$name.sif  pulled over HTTP/1.1  $(du -hL "$sif" | cut -f1)"
         else
-            bad "$name.sif  could not pull $REGISTRY/$name:$TAG"
-            sed -n '$p' "$log" | sed 's/^/          /'
-            printf '          full log: %s\n' "$log"
+            # A pull that cannot finish is not a reason to have no image: the recipe is here, and
+            # building fetches many small wheels instead of one 9-11 GB layer, which is what fails.
+            note "$name could not be pulled ($(sed -n '$p' "$log" | tail -c 60)); building it instead"
+            printf '  ..    building %s\n' "$name"
+            if (cd "$REPO/containers/$name" && apptainer build --force "$sif" "$name.def" >>"$log" 2>&1); then
+                ok "$name.sif  built after the pull failed  $(du -hL "$sif" | cut -f1)"
+            else
+                bad "$name.sif  neither pulled nor built"
+                sed -n '$p' "$log" | sed 's/^/          /'
+                printf '          full log: %s\n' "$log"
+                log=""                             # keep it: the message above points at it
+            fi
         fi
-        rm -f "$log" 2>/dev/null || true
+        [ -n "$log" ] && rm -f "$log" 2>/dev/null || true
     elif [ "$BUILD" = 1 ] || [ "${BUILD_ONE:-0}" = 1 ]; then
         printf '  ..    building %s\n' "$name"
         blog=$(mktemp)
