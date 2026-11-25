@@ -224,10 +224,17 @@ PDB
         else
             bad "molterm did not render in the image: $(tail -1 "$work/mt.log" 2>/dev/null)"
         fi
-        if apptainer exec "$AGENT" sh -c 'command -v typst && command -v tmux' >/dev/null 2>&1; then
+        if apptainer exec "$AGENT" sh -c 'command -v typst >/dev/null && command -v tmux >/dev/null' 2>/dev/null; then
             ok "typst and tmux in the image (the deck, and the chat sessions)"
         else
             bad "typst or tmux missing from the agent image"
+        fi
+        # Every molterm superposition shells out to USalign, and a missing one does not stop the script: the
+        # overlay is then drawn from unaligned models and looks exactly like an aligned one.
+        if apptainer exec "$AGENT" sh -c 'USalign -h >/dev/null 2>&1'; then
+            ok "USalign in the image (molterm superposes through it)"
+        else
+            bad "USalign missing: molterm's align/super/alignto all fail, and overlays are drawn unaligned"
         fi
         rm -rf "$work"
     fi

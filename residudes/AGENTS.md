@@ -92,7 +92,7 @@ The analysis is also a slide deck, `report/report.pdf`, built with `residudes sl
 
 Rebuild it before every checkpoint and when you propose the slate, and point the person to it in the brief.
 - **Add what the standard deck does not show** as your own slides in `report/agent.typ`, in touying syntax: a
-  `== Title` line starts a slide, and pictures go in with `#image("figs/x.jpg", height: 70%)` (the render job writes a JPEG next to every PNG; a PNG makes the PDF about 4 times bigger). Examples: an interface
+  `== Title` line starts a slide, and pictures go in with `#image("figs/x.jpg", height: 70%)` (the render writes a JPEG next to every PNG; with molterm's flat-shaded figures the two embed within about 10% of each other, so either works). Examples: an interface
   close-up, two architectures side by side, a template against a model.
 - **Write the scene for molterm** in `report/mt/<name>.mt`: one command per line, absolute model paths, writing
   `figs/<name>.png`. Render it with `molterm --no-tui --script report/mt/<name>.mt` from `report/` and **check the

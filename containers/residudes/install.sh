@@ -45,6 +45,7 @@ mv /tmp/typst-x86_64-unknown-linux-musl/typst /usr/local/bin/typst
 rm -rf /tmp/typst-x86_64-unknown-linux-musl
 
 node --version
-molterm --version 2>/dev/null | head -1 || echo "molterm: binary not fetched for this platform"
+molterm --version 2>&1 | head -1
+USalign -h >/dev/null && echo "USalign ok (molterm superposes through it)"
 typst --version
 "$PY" -c "import gemmi, claude_agent_sdk; print('gemmi', gemmi.__version__)"

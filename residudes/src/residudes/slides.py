@@ -246,12 +246,17 @@ def render_mt(cfg, d: Dossier, scene: Path, actor: str) -> str:
     (rep / "figs").mkdir(parents=True, exist_ok=True)
     r = subprocess.run([mt, "--no-tui", "--script", str(scene)], cwd=rep, capture_output=True, text=True, timeout=3600)
     figs = sorted((rep / "figs").glob("*.png"))
-    if r.returncode != 0:
-        # molterm carries on after a failed command, so a non-zero exit means some figure was drawn in a state
-        # nobody asked for. Say which line failed rather than hand back a figure-shaped file.
-        bad = [ln for ln in (r.stderr or r.stdout).splitlines() if ".mt:" in ln][:3]
-        d.note(actor, f"render {scene.name}: molterm exit {r.returncode}" + (f" ({bad[0]})" if bad else ""))
-        return f"molterm failed (exit {r.returncode}): " + ("; ".join(bad) if bad else "see the output above")
+    out = (r.stdout or "") + (r.stderr or "")
+    # Do not trust the exit code alone: molterm 0.53 exits 1 when a command fails and 0.50 exits 0, while both
+    # print the failing line and a tally. A failed `color` or `align` leaves the previous state and the script
+    # carries on, so what comes back is a figure of something nobody asked for - an unaligned overlay looks
+    # exactly like an aligned one until you read the numbers. Treat either signal as failure.
+    failed = [ln for ln in out.splitlines() if f"{scene.name}:" in ln or "command(s) failed" in ln]
+    if r.returncode != 0 or failed:
+        bad = [ln for ln in failed if f"{scene.name}:" in ln][:3]
+        d.note(actor, f"render {scene.name}: molterm failed" + (f" ({bad[0]})" if bad else f" (exit {r.returncode})"))
+        return ("molterm failed, so the figures are not trustworthy: "
+                + ("; ".join(bad) if bad else f"exit {r.returncode}"))
     _to_jpeg(rep / "figs")
     aligned = [ln for ln in r.stdout.splitlines() if "aligned" in ln.lower()]
     d.runs.append({"time": now(), "by": actor, "scheduler": "local", "what": f"render: {scene.name}",
@@ -261,7 +266,11 @@ def render_mt(cfg, d: Dossier, scene: Path, actor: str) -> str:
 
 
 def _to_jpeg(figs: Path) -> None:
-    """Typst embeds JPEG as given and re-encodes PNG, which grew one deck about fourfold; convert when PIL is here."""
+    """A JPEG beside every PNG, because the deck and AGENTS.md both name `figs/<x>.jpg`.
+
+    It is not the saving it once was: ray-traced PyMOL figures were far heavier as PNG, while molterm's
+    flat-shaded ones embed within about 10% either way (measured: 1.0 MB of PDF against 1.1 MB). Kept for the
+    convention, and skipped without PIL rather than made a dependency."""
     try:
         from PIL import Image
     except ImportError:

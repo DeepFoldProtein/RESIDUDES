@@ -3,6 +3,20 @@ From: node:22-slim
 Stage: node
 
 # ---------------------------------------------------------------------------------------------
+# molterm delegates every superposition to USalign, and without it the overlay figure is drawn
+# from unaligned models. Its licence permits redistribution provided the notice travels with it.
+Bootstrap: docker
+From: gcc:14-bookworm
+Stage: usalign
+
+%post
+    curl -fsSL "https://github.com/pylelab/USalign/archive/refs/tags/20260527.tar.gz" | tar -xz -C /tmp
+    cd /tmp/USalign-20260527
+    g++ -O3 -ffast-math -lm -o /usr/local/bin/USalign USalign.cpp
+    install -D LICENSE /usr/local/share/USalign/LICENSE
+    /usr/local/bin/USalign -h >/dev/null
+
+# ---------------------------------------------------------------------------------------------
 Bootstrap: docker
 From: python:3.12-slim
 Stage: final
@@ -10,6 +24,10 @@ Stage: final
 %files from node
     /usr/local/bin/node /usr/local/bin/node
     /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
+
+%files from usalign
+    /usr/local/bin/USalign /usr/local/bin/USalign
+    /usr/local/share/USalign/LICENSE /usr/local/share/USalign/LICENSE
 
 %files
     # not /tmp: apptainer bind-mounts the host's /tmp over it before %post runs
