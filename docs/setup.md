@@ -39,9 +39,14 @@ The images live at `ghcr.io/deepfoldprotein/<name>:latest` and are pulled by eit
 that one address:
 
 ```sh
-apptainer build residudes.sif docker://ghcr.io/deepfoldprotein/residudes:latest
+GODEBUG=http2client=0 apptainer pull --disable-cache residudes.sif docker://ghcr.io/deepfoldprotein/residudes:latest
 docker pull ghcr.io/deepfoldprotein/residudes:latest
 ```
+
+`GODEBUG=http2client=0` asks Apptainer's Go registry client for HTTP/1.1: its HTTP/2 transport is known to
+drop multi-GB layers partway (`PROTOCOL_ERROR`, `unexpected EOF`), which is what the two engine images
+used to hit. `--disable-cache` keeps the layers out of `~/.apptainer/cache`, which on a shared `/home` is
+the disk that fills. Neither matters for the small images; both matter for the engines.
 
 Eight images, split so a login node never pulls a GPU stack. The four small ones are published
 on every push to `main`; the large ones on a release tag.

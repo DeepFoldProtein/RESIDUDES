@@ -139,16 +139,22 @@ for name in $SET; do
         # keep the output: a failed pull used to print nothing but "could not pull", which says
         # neither whether the registry refused it nor whether the disk or the cache is at fault
         log=$(mktemp)
-        if apptainer build --force "$sif" "docker://$REGISTRY/$name:$TAG" >"$log" 2>&1; then
+        # Apptainer pulls through Go's registry client, whose HTTP/2 transport is known to die on
+        # multi-GB blobs (PROTOCOL_ERROR, unexpected EOF; sylabs/singularity#2854). Asking Go for
+        # HTTP/1.1 from the start costs nothing on the small images and spares the large ones a
+        # first attempt that fails after downloading gigabytes. `pull --disable-cache` writes the
+        # layers into the SIF only, not also into ~/.apptainer/cache, which on a shared /home is
+        # the disk that fills; the build's temporary space goes beside the images, which by
+        # definition has room for them.
+        export APPTAINER_TMPDIR="${APPTAINER_TMPDIR:-$IMAGES/.tmp}"
+        mkdir -p "$APPTAINER_TMPDIR"
+        if GODEBUG=http2client=0 apptainer pull --force --disable-cache "$sif" "docker://$REGISTRY/$name:$TAG" >"$log" 2>&1; then
             ok "$name.sif  pulled from $REGISTRY  $(du -hL "$sif" | cut -f1)"
-        # The large images are one big layer each, and a multi-GB blob over HTTP/2 can die with
-        #   conveyor failed to get: error writing layer: stream error: ... PROTOCOL_ERROR
-        # which is the transport, not the image. Go disables HTTP/2 with this variable, so the
-        # retry asks for HTTP/1.1 rather than simply trying the same thing again.
-        elif grep -q 'PROTOCOL_ERROR\|stream error\|unexpected EOF\|connection reset' "$log" &&
-             printf '  ..    %s\n' "retrying $name over HTTP/1.1" &&
-             GODEBUG=http2client=0 apptainer build --force "$sif" "docker://$REGISTRY/$name:$TAG" >>"$log" 2>&1; then
-            ok "$name.sif  pulled over HTTP/1.1  $(du -hL "$sif" | cut -f1)"
+        # one more attempt for a transport that dropped: the network, not the image
+        elif grep -q 'stream error\|unexpected EOF\|connection reset\|timeout' "$log" &&
+             printf '  ..    %s\n' "retrying $name once" &&
+             GODEBUG=http2client=0 apptainer pull --force --disable-cache "$sif" "docker://$REGISTRY/$name:$TAG" >>"$log" 2>&1; then
+            ok "$name.sif  pulled on the second attempt  $(du -hL "$sif" | cut -f1)"
         else
             # A pull that cannot finish is not a reason to have no image: the recipe is here, and
             # building fetches many small wheels instead of one 9-11 GB layer, which is what fails.

@@ -24,9 +24,14 @@ All eight are published as `ghcr.io/deepfoldprotein/<name>:latest`. A public one
 no credentials, by either runtime:
 
 ```sh
-apptainer build residudes.sif docker://ghcr.io/deepfoldprotein/residudes:latest   # no root, no daemon
+GODEBUG=http2client=0 apptainer pull --disable-cache residudes.sif docker://ghcr.io/deepfoldprotein/residudes:latest   # no root, no daemon
 docker pull ghcr.io/deepfoldprotein/residudes:latest
 ```
+
+`GODEBUG=http2client=0` asks Apptainer's Go registry client for HTTP/1.1: its HTTP/2 transport is known to
+drop multi-GB layers partway (`PROTOCOL_ERROR`, `unexpected EOF`), which is what the two engine images
+used to hit. `--disable-cache` keeps the layers out of `~/.apptainer/cache`, which on a shared `/home` is
+the disk that fills. Neither matters for the small images; both matter for the engines.
 
 One OCI image serves both: Apptainer converts it to a SIF on the way in, which is why nothing is
 published twice. `containers/verify.sh` asks the registry about each image and builds locally
@@ -75,7 +80,7 @@ anything else is built locally. The three routes can also be taken directly:
 
 ```sh
 # on a cluster: pull the image published by CI (no daemon or root privileges required)
-apptainer build residudes.sif docker://ghcr.io/deepfoldprotein/residudes:latest
+GODEBUG=http2client=0 apptainer pull --disable-cache residudes.sif docker://ghcr.io/deepfoldprotein/residudes:latest
 containers/verify.sh --pull                      # pull the core images, then verify them
 
 # or build locally from the definition file
