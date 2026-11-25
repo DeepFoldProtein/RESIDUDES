@@ -222,6 +222,13 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("--casp-id", help="the CASP target id when the dossier name differs (e.g. T1416 for T1416-replay)")
     p.add_argument("--mmcif", action="store_true", help="CASP mmCIF instead of PDB (very large targets)")
     p.add_argument("--check-only", action="store_true", help="the geometry checks only, at any stage")
+    p = sub.add_parser("chat", help="talk to the agent about a target in its own session (tmux); no target lists them")
+    p.add_argument("target", nargs="?")
+    p.add_argument("--harness", choices=("claude", "codex", "ag", "gemini"),
+                   help="which agent CLI to start (default: the first one on PATH)")
+
+    p = sub.add_parser("sessions", help="the target conversations running on this machine")
+
     p = sub.add_parser("consult", help="open a checkpoint: talk the plan or the first results through with a person")
     p.add_argument("target")
     p.add_argument("--kind", required=True, choices=["plan", "results", "other"])
@@ -427,6 +434,9 @@ def _main(argv: list[str] | None = None) -> int:
             d.runs.append({"time": now(), "by": _actor(), "job": args.job, "scheduler": args.scheduler, "what": args.what,
                            "state": args.state or "submitted"})
         return _with(cfg, args.target, rec)
+    if args.cmd in ("chat", "sessions"):
+        from residudes import chat
+        return chat.chat_cmd(cfg, getattr(args, "target", None), getattr(args, "harness", None))
     if args.cmd == "automate":
         if args.show or not (args.on or args.off):
             d = Dossier.load(cfg.targets_dir, args.target)
