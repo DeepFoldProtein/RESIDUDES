@@ -23,8 +23,6 @@ if [ "$stage" = all ] || [ "$stage" = system ]; then
     rm -rf /var/lib/apt/lists/*
 fi
 
-cd /opt/core
-
 # The venv is 9 GB, and one `uv sync` makes one layer that size - which does not survive every
 # network: measured, a 9 GB blob dies partway with PROTOCOL_ERROR or unexpected EOF while the 3 GB
 # images pull cleanly on the same link. So the sync is done in passes, each its own RUN in the
@@ -32,6 +30,7 @@ cd /opt/core
 # the project's indexes are used (torch comes from the PyTorch index, as a +cu128 local version)
 # and each pass is verified against the lockfile rather than hand-pinned.
 if [ "$stage" = all ] || [ "$stage" = sync ]; then
+    cd /opt/core                              # only this stage needs the lockfile beside it
     UV_PROJECT_ENVIRONMENT=/opt/venv uv sync --frozen --no-install-project --python /usr/bin/python3.12
     rm -rf /root/.cache/uv
 fi
