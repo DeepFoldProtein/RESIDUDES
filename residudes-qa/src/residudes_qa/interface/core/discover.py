@@ -87,7 +87,7 @@ def discover_cifs(
     ----------
     target_dir
         Root directory for the CASP target, e.g.
-        ``/gpfs/deepfold/casp/casp17/targets/H1335``.
+        ``/data/casp17/targets/H1335``.
     sto
         Stoichiometry tag (the second path level under ``results/``), e.g.
         ``"A1B1C1D1E1"`` for H1335.

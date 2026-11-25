@@ -52,7 +52,8 @@ def _component(root: str, exe: str) -> dict:
 
 
 def report(cfg: Config) -> dict:
-    paths = [cfg.work_root, cfg.targets_root, str(RESIDUDES_DIR), "/gpfs/deepfold", "/store/deepfold"]
+    paths = [cfg.work_root, cfg.targets_root, str(RESIDUDES_DIR),
+             *(d for d in os.environ.get("RESIDUDES_WORK_ROOTS", "").split(":") if d)]
     r = resources.detect(paths)
     return {"resources": r, "recommendations": resources.recommendations(r, cfg.work_root),
             "catalog": catalog.check_all(paths=cfg.extra.get("databases") or {}),
@@ -194,7 +195,7 @@ def run_setup(cfg_path: str | None, yes: bool, as_json: bool, project: str | Non
         print("   " + dim("shared dossier directories on this machine: " + ", ".join(others)))
     cfg.work_root = _ask("   where should target dossiers live (work_root)", suggested, yes)
     cfg.targets_root = _ask("   existing predictions tree (residudes-engine layout), empty if none", cfg.targets_root
-                            or ("/gpfs/deepfold/casp/casp17/targets" if Path("/gpfs/deepfold/casp/casp17/targets").exists() else ""), yes)
+                            or "", yes)
     cfg.agent_usd_per_step = float(_ask("   agent budget per step (USD)", str(cfg.agent_usd_per_step), yes))
     cfg.gpu_hours_per_target = float(_ask("   GPU hours per target before asking", str(cfg.gpu_hours_per_target), yes))
     if not p.exists() or _confirm(f"   overwrite {p}?", yes):

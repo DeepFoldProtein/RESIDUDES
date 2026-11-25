@@ -35,15 +35,25 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-# Site defaults: where these things are on the DeepFold cluster. Every one of them is a fallback - `residudes.toml`
-# wins ([msa] for the databases, [tools] for the binaries and the plmMSA client), and a binary that is on PATH
-# wins over a path here that does not exist. Running elsewhere means editing that file, not this one.
-DBS = {"uniref90": "/gpfs/database/af3/uniref90_2022_05.fa", "mgnify": "/gpfs/database/af3/mgy_clusters_2022_05.fa",
-       "uniprot": "/gpfs/database/af3/uniprot_all_2021_04.fa"}
-TOOLS = {"hmmsearch": "/gpfs/deepfold/.local/homebrew/bin/hmmsearch", "hmmalign": "/gpfs/deepfold/.local/homebrew/bin/hmmalign",
-         "mmseqs": "/gpfs/deepfold/others/mmseqs/bin/mmseqs", "hhfilter": "/home/deepfold/bin/hhfilter"}
+# Where the databases and binaries are is a property of a machine, so it lives in residudes.toml:
+# [msa] for the databases, [tools] for the binaries and the plmMSA client. The file names below are
+# the ones AlphaFold 3 distributes; they are resolved under [databases] af3_db when that is set,
+# and a binary on PATH is used when nothing is configured. `residudes doctor` says which are missing.
+AF3_DB_FILES = {"uniref90": "uniref90_2022_05.fa", "mgnify": "mgy_clusters_2022_05.fa",
+                "uniprot": "uniprot_all_2021_04.fa"}
+TOOLS: dict[str, str] = {}
 UA = {"User-Agent": "residudes-msa/1.0"}
-PLMMSA = "/gpfs/deepfold/casp/casp17/msas/plmmsa/submit_target.sh"
+PLMMSA = ""                       # [tools] plmmsa in residudes.toml: a site's submit script
+
+
+def db_path(cfg, db: str) -> str | None:
+    """[msa] <db> if set, else <af3_db>/<the file AlphaFold 3 ships>, else nothing."""
+    named = (cfg.extra.get("msa", {}) if cfg else {}).get(db)
+    if named:
+        return named
+    root = (cfg.extra.get("databases", {}) if cfg else {}).get("af3_db")
+    name = AF3_DB_FILES.get(db)
+    return str(Path(root) / name) if root and name else None
 
 
 def tool(cfg, name: str) -> str | None:
@@ -296,7 +306,7 @@ def crawl_cmd(cfg, d, families: list[str], dbs: list[str], max_members: int, act
     jobs = []
     (out / "hits").mkdir(exist_ok=True)
     for db in dbs or ["uniref90", "mgnify"]:
-        path = (cfg.extra.get("msa", {}) or {}).get(db, DBS.get(db))
+        path = db_path(cfg, db)
         if not path or not Path(path).exists():
             raise FileNotFoundError(f"database {db}: {path} not found")
         cmd = " && ".join(f"{hs} --cpu 8 --noali -o /dev/null -E 1e-3 --domE 1e-3 --incE 1e-3 --incdomE 1e-3 "

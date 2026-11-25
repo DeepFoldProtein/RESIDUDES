@@ -5,9 +5,9 @@ missing. Spawns its own ProcessPoolExecutor for parallel CIF processing.
 
 The wrapper needs:
   - biopython 1.81 + ANARCI on PATH (this is what .venv-cdr provides)
-  - the Pierce binary at /gpfs/deepfold/casp/casp17/target_notes/_tcr_tools/
+  - the Pierce binary under $RESIDUDES_QA_TCR_TOOLS
                                  tcr_docking_angle/tcr_docking_angle
-  - the tcr3d_pierce wrapper at /gpfs/deepfold/casp/casp17/target_notes/_tcr_tools/
+  - the tcr3d_pierce wrapper under $RESIDUDES_QA_TCR_TOOLS
 
 Usage:
     .venv-cdr/bin/python _pierce_worker.py \\
@@ -27,11 +27,11 @@ from pathlib import Path
 
 # Ensure both the Pierce wrapper and its ANARCI binary are reachable.
 # residudes-qa: optional, needs the external Pierce binary; override with $RESIDUDES_QA_TCR_TOOLS.
-_TCR_TOOLS = os.environ.get("RESIDUDES_QA_TCR_TOOLS", "/gpfs/deepfold/casp/casp17/target_notes/_tcr_tools")
+_TCR_TOOLS = os.environ.get("RESIDUDES_QA_TCR_TOOLS", "")
 sys.path.insert(0, _TCR_TOOLS)
 
 # The wrapper looks for ANARCI on PATH; default it to .venv-cdr's bin.
-_VENV_CDR_BIN = os.environ.get("RESIDUDES_QA_CDR_BIN", "/gpfs/deepfold/casp/casp17/analysis/.venv-cdr/bin")
+_VENV_CDR_BIN = os.environ.get("RESIDUDES_QA_CDR_BIN", "")
 if _VENV_CDR_BIN not in os.environ.get("PATH", ""):
     os.environ["PATH"] = f"{_VENV_CDR_BIN}:{os.environ.get('PATH', '')}"
 
@@ -58,11 +58,11 @@ tcr3d_pierce.subprocess.run = _patched_run
 tcr3d_pierce.ANARCI_BIN_DIR = _VENV_CDR_BIN
 # Point at the patched renumber_tcr.py (two-pass id reassignment for
 # biopython 1.81 sibling-uniqueness collisions). Original at
-# /gpfs/deepfold/casp/casp17/target_notes/_tcr_tools/.../renumber_tcr.py
+# $RESIDUDES_QA_TCR_TOOLS/.../renumber_tcr.py
 # is read-only; the patched copy lives in playground.
 _PATCHED_RENUMBER = Path(os.environ.get(
     "RESIDUDES_QA_TCR_RENUMBER",
-    "/gpfs/deepfold/casp/casp17/playground/gunwoong_analysis/_tcr_tools_patched/scripts/renumber_tcr.py"))
+    ""))                      # $RESIDUDES_QA_RENUMBER_TCR: a patched copy, when a site has one
 if _PATCHED_RENUMBER.is_file():
     tcr3d_pierce.RENUMBER_SCRIPT = _PATCHED_RENUMBER
 

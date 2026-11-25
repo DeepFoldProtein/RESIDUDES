@@ -50,7 +50,7 @@ def _pct_better(vals: list[float], v: float, higher_is_better: bool = True) -> f
 
 
 # site default; `residudes.toml` [tools] ost_sif wins
-OST_SIF = "/gpfs/deepfold/containers/openstructure.sif"
+OST_SIF = ""                                  # [tools] openstructure in residudes.toml
 
 
 def _latest_slate(d: Dossier) -> dict:

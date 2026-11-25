@@ -25,7 +25,7 @@ from pathlib import Path
 
 # the team's CASP submission tooling, which is not public: `residudes.toml` [tools] casp17_utils or
 # $CASP17_UTILS points at it, and without it `residudes package` stops after the geometry checks
-UTILS_CANDIDATES = ("/gpfs/deepfold/casp/casp17/casp17-utils",)
+UTILS_CANDIDATES: tuple[str, ...] = ()        # [tools] casp17_utils in residudes.toml
 
 
 def utils_dir(cfg) -> Path | None:

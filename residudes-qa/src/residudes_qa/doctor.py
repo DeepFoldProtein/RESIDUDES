@@ -67,11 +67,11 @@ def run(as_json: bool = False) -> int:
     add("ok" if not bad_env else "warn", "env", ", ".join(f"{k}={p}" for k, p in env.items() if k in bad_env)
         or "EMA_* / RESIDUDES_QA_* point at existing paths")
 
-    cdr_bin = os.environ.get("RESIDUDES_QA_CDR_BIN", "/gpfs/deepfold/casp/casp17/analysis/.venv-cdr/bin")
+    cdr_bin = os.environ.get("RESIDUDES_QA_CDR_BIN", "")
     has_anarci = Path(cdr_bin, "ANARCI").exists() or shutil.which("ANARCI")
     add("ok" if has_anarci else "warn", "optional: ANARCI", cdr_bin if has_anarci else
         "not found: antibody CDR masking / aADARS features unavailable (set RESIDUDES_QA_CDR_BIN)")
-    tcr = os.environ.get("RESIDUDES_QA_TCR_TOOLS", "/gpfs/deepfold/casp/casp17/target_notes/_tcr_tools")
+    tcr = os.environ.get("RESIDUDES_QA_TCR_TOOLS", "")
     add("ok" if Path(tcr, "tcr3d_pierce.py").exists() else "warn", "optional: TCR Pierce angles",
         tcr if Path(tcr, "tcr3d_pierce.py").exists() else "not found (set RESIDUDES_QA_TCR_TOOLS); only --method tcr-angle needs it")
 

@@ -41,7 +41,7 @@ import numpy as np
 # Default venv that has biopython 1.81 + ANARCI for Pierce.
 # residudes-qa: optional CDR env (ANARCI + biopython 1.81); override with $RESIDUDES_QA_CDR_BIN.
 _DEFAULT_VENV_CDR_PYTHON = __import__("os").path.join(
-    __import__("os").environ.get("RESIDUDES_QA_CDR_BIN", "/gpfs/deepfold/casp/casp17/analysis/.venv-cdr/bin"), "python")
+    __import__("os").environ.get("RESIDUDES_QA_CDR_BIN", ""), "python")
 
 
 def load_angles_csv(

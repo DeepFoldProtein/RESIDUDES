@@ -24,7 +24,7 @@ import pandas as pd
 
 
 # Model files ship inside the tool (XGBDimerScorer_tool/models/) so the tool is
-# portable across nodes — /gpfs/deepfold is mounted everywhere, /store may not.
+# portable across nodes: a shared filesystem is mounted everywhere, a local disk is not.
 # No runtime /store dependency: if a model is absent we fall back to the bundled
 # previous version (also under models/), never to /store.
 from residudes_qa.paths import xgb_models_dir

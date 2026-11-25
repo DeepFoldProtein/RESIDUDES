@@ -22,3 +22,18 @@ colabfold_db = "/data/databases/colabfold"
 containers = "/data/containers"            # OpenStructure and other .sif files
 campaign = "/data/casp17"                  # an existing campaign tree: targets, analysis, esm
 sabdab = "/data/databases/sabdab"
+
+# Programs and scripts this machine has. A key left out means "look on PATH", and anything still
+# missing is reported by `residudes doctor` rather than failing in the middle of a campaign.
+[tools]
+minimization = "/data/casp17/gromacs/relax/minimization.sh"   # the GROMACS+Rosetta relax pipeline
+casp17_utils = "/data/casp17/casp17-utils"                    # writes CASP submission files
+openstructure = "/data/containers/openstructure.sif"
+pymol = ""                                                    # empty: use PATH
+plmmsa = ""                                                   # a site's plmMSA submit script
+
+# AlphaFold 3's genetic databases, if they are not under [databases] af3_db.
+[msa]
+uniref90 = "/data/databases/af3/uniref90_2022_05.fa"
+mgnify = "/data/databases/af3/mgy_clusters_2022_05.fa"
+uniprot = "/data/databases/af3/uniprot_all_2021_04.fa"

@@ -3,7 +3,7 @@
 Adapted from H1335 ``25_h1335_aadars.py``.  ANARCI is required for CDR
 annotation; this means the worker process must have HMMER on PATH.  In the
 H1335 workflow this is achieved by running the wrapper script with
-``PATH=/gpfs/deepfold/casp/casp17/analysis/.venv-cdr/bin:$PATH``.  No code
+``PATH=$RESIDUDES_QA_CDR_BIN:$PATH``.  No code
 changes here — :func:`AADARSv3Scorer` will surface a helpful error if HMMER is
 missing.
 

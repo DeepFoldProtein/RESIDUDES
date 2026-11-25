@@ -27,7 +27,7 @@ from pathlib import Path
 
 VARIANTS = ("gromacs", "gromacs-rosetta", "rosetta", "rosetta-gromacs")
 # site default: the campaign's pipeline. [tools] minimization in residudes.toml points elsewhere.
-MINIMIZATION = "/gpfs/deepfold/casp/casp17/gromacs/relax/minimization.sh"
+MINIMIZATION = ""                             # [tools] minimization in residudes.toml
 
 
 def script(cfg) -> str:

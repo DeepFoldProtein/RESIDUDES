@@ -28,7 +28,7 @@ from residudes import report
 from residudes.dossier import Dossier, chain_letter, now
 
 # site default; `residudes.toml` [tools] pymol wins, and a pymol on PATH is used before this one
-PYMOL_CANDIDATES = ["/gpfs/deepfold/casp/casp17/target_notes/E2450/.venv-pymol/bin/pymol"]
+PYMOL_CANDIDATES: list[str] = []              # [tools] pymol in residudes.toml, else PATH
 SLOT_COLOURS = ["0x0072B2", "0xD55E00", "0x009E73", "0xCC79A7", "0xE69F00"]
 
 
