@@ -208,3 +208,39 @@ class Af3DataPipeline(unittest.TestCase):
             self.assertIn("no such database", str(ctx.exception))
             self.assertTrue((out / "msa" / "_af3" / "pipeline.log").is_file()
                             or (out / "_af3" / "pipeline.log").is_file())
+
+
+class ModificationsReachEveryRunner(unittest.TestCase):
+    """A phosphoserine in the canonical AF3 input has to reach Protenix, OpenFold3 and Boltz-2 too. None of the three
+    converters passed modifications on, so H1388's "phosphorylated" pt2/bt2/of3 runs wrote SER at the site."""
+
+    def setUp(self) -> None:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "core" / "scripts"))
+        import af3_input_adapter
+        self.a = af3_input_adapter
+        self.af3 = {"name": "t", "modelSeeds": [1], "sequences": [
+            {"protein": {"id": "A", "sequence": "PKGLSASLPDL", "modifications": [{"ptmType": "SEP", "ptmPosition": 7}]}},
+            {"protein": {"id": "B", "sequence": "MSDREQLVQK"}}]}
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def test_protenix(self) -> None:
+        job = self.a.af3_to_pt2(self.af3, self.tmp)
+        chains = [s["proteinChain"] for s in job[0]["sequences"]]
+        self.assertEqual(chains[0]["modifications"], [{"ptmPosition": 7, "ptmType": "CCD_SEP"}])
+        self.assertNotIn("modifications", chains[1])
+
+    def test_openfold3(self) -> None:
+        q = self.a.af3_to_of3(self.af3, self.tmp, pairing_mode="precomputed")
+        chains = next(iter(q["queries"].values()))["chains"]
+        self.assertEqual(chains[0]["non_canonical_residues"], {7: "SEP"})
+        self.assertNotIn("non_canonical_residues", chains[1])
+
+    def test_boltz2(self) -> None:
+        y = self.a.af3_to_bt2_yaml(self.af3, self.tmp)
+        self.assertIn("modifications:\n        - position: 7\n          ccd: SEP", y)
+        self.assertEqual(y.count("modifications:"), 1)
+
+    def test_a_ccd_prefix_is_not_doubled(self) -> None:
+        self.af3["sequences"][0]["protein"]["modifications"] = [{"ptmType": "CCD_SEP", "ptmPosition": 7}]
+        job = self.a.af3_to_pt2(self.af3, self.tmp)
+        self.assertEqual(job[0]["sequences"][0]["proteinChain"]["modifications"][0]["ptmType"], "CCD_SEP")

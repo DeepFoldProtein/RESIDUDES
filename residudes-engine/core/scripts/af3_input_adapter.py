@@ -281,6 +281,24 @@ def _af3_bonds(af3: dict):
         yield (str(c1), int(r1), str(a1)), (str(c2), int(r2), str(a2))
 
 
+def _af3_modifications(prot: dict) -> list[tuple[int, str]]:
+    """AF3 protein modifications as (1-based position, CCD code), the one reading all three converters share.
+
+    Every native format takes them, 1-indexed: Protenix as `{"ptmPosition", "ptmType": "CCD_<code>"}`, OpenFold3 as
+    `non_canonical_residues: {position: code}`, Boltz-2 as `modifications: [{position, ccd}]`. None of the three
+    converters passed them on, so a phosphoserine in the canonical input reached AF3 and nobody else - H1388's
+    Protenix, Boltz-2 and OpenFold3 "phosphorylated" runs wrote SER at the site, and only the agent's own results
+    review noticed."""
+    out = []
+    for m in prot.get("modifications") or []:
+        code, pos = m.get("ptmType"), m.get("ptmPosition")
+        if not code or pos is None:
+            continue
+        code = code[4:] if code.startswith("CCD_") else code
+        out.append((int(pos), code))
+    return out
+
+
 def af3_to_pt2(af3: dict, sidecar_dir: Optional[Path] = None) -> list:
     """Convert AF3 input.json to Protenix native (list-of-jobs) format.
 
@@ -315,6 +333,8 @@ def af3_to_pt2(af3: dict, sidecar_dir: Optional[Path] = None) -> list:
                 proteinChain["unpairedMsaPath"] = prot["unpairedMsaPath"]
             if prot.get("pairedMsaPath"):
                 proteinChain["pairedMsaPath"] = prot["pairedMsaPath"]
+            if mods := _af3_modifications(prot):
+                proteinChain["modifications"] = [{"ptmPosition": p, "ptmType": f"CCD_{c}"} for p, c in mods]
 
             # Templates → hmmsearch a3m sidecar.
             tpls = prot.get("templates") or []
@@ -507,6 +527,8 @@ def af3_to_of3(af3: dict, sidecar_dir: Optional[Path] = None,
             "chain_ids": cid,
             "sequence": sequence,
         }
+        if mods := _af3_modifications(prot):
+            chain["non_canonical_residues"] = {p: c for p, c in mods}
         chain_tag = cid[0] if cid else f"c{sidx}"
 
         unp_path = prot.get("unpairedMsaPath")
@@ -767,6 +789,10 @@ def af3_to_bt2_yaml(af3: dict, sidecar_dir: Optional[Path] = None) -> str:
             f'      sequence: "{seq}"',
             f"      msa: {msa_ref}",
         ]
+        if mods := _af3_modifications(prot):
+            lines.append("      modifications:")
+            for p, c in mods:
+                lines += [f"        - position: {p}", f"          ccd: {c}"]
         for t in (prot.get("templates") or []):
             cif_path = t.get("mmcifPath")
             if cif_path:
