@@ -20,12 +20,6 @@
       "Bash(residudes report:*)",
       "Bash(bin/residudes checkpoints:*)",
       "Bash(bin/residudes report:*)"
-    ],
-    "deny": [
-      "Bash(residudes approve:*)",
-      "Bash(bin/residudes approve:*)",
-      "Bash(residudes resolve:*)",
-      "Bash(bin/residudes resolve:*)"
     ]
   }
 }

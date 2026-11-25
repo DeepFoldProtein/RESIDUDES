@@ -68,8 +68,10 @@ def test_claude_md_imports_agents_md():
 def test_claude_code_settings_keep_the_session_an_agent():
     s = json.loads((ROOT / ".claude" / "settings.json").read_text())
     assert s["env"]["RESIDUDES_ACTOR"] == "agent"
-    deny = " ".join(s["permissions"]["deny"])
-    assert "residudes approve" in deny and "residudes resolve" in deny
+    # No static deny of approve/resolve: it cannot know a target's mandate, and under the default (full
+    # automation) approving and resolving is the agent's job. Without a mandate the CLI refuses them itself.
+    deny = " ".join(s["permissions"].get("deny", []))
+    assert "residudes approve" not in deny and "residudes resolve" not in deny
 
 
 def test_sdk_runner_uses_agents_md():

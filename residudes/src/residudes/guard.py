@@ -146,10 +146,17 @@ def _watch(cmd: str) -> str | None:
     return None
 
 
-def check(cmd: str) -> str | None:
-    """Return a reason to block the command, or None to let it run."""
-    for _, rx, why in RULES:
+def check(cmd: str, mandate_for: str | None = None) -> str | None:
+    """Return a reason to block the command, or None to let it run.
+
+    `mandate_for` names the target whose automation mandate covers the current step. The approve/resolve rule
+    is a seatbelt for a target without one, where the CLI would refuse anyway; for that target, under its
+    mandate, approving the slate and resolving a checkpoint is the job, and blocking it here stopped full
+    automation at the first checkpoint (H1388: the agent answered C1, `resolve` was refused, NEEDS HUMAN)."""
+    for name, rx, why in RULES:
         if rx.search(cmd):
+            if name == "approve" and mandate_for and re.search(rf"\b{re.escape(mandate_for)}\b", cmd):
+                continue
             return why
     for toks in _segments(cmd):
         prog = os.path.basename(toks[0])
@@ -162,12 +169,17 @@ def check(cmd: str) -> str | None:
     return _watch(cmd)
 
 
-async def pre_tool_use(input_data: dict, tool_use_id, context) -> dict:
-    """Claude Agent SDK PreToolUse hook for Bash."""
-    if input_data.get("tool_name") != "Bash":
-        return {}
-    why = check(str(input_data.get("tool_input", {}).get("command", "")))
-    if not why:
-        return {}
-    return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
-                                   "permissionDecisionReason": f"residudes guard: {why}"}}
+def hook(mandate_for: str | None = None):
+    """A Claude Agent SDK PreToolUse hook for Bash, for one step on one target."""
+    async def pre_tool_use(input_data: dict, tool_use_id, context) -> dict:
+        if input_data.get("tool_name") != "Bash":
+            return {}
+        why = check(str(input_data.get("tool_input", {}).get("command", "")), mandate_for)
+        if not why:
+            return {}
+        return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                       "permissionDecisionReason": f"residudes guard: {why}"}}
+    return pre_tool_use
+
+
+pre_tool_use = hook()                                   # no mandate: the seatbelt stays on

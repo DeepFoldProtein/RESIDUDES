@@ -91,7 +91,7 @@ async def _step(d: Dossier, cfg: Config, budget: float, max_turns: int, model: s
         setting_sources=["project"],
         skills="all",
         allowed_tools=ALLOWED_TOOLS,
-        hooks={"PreToolUse": [HookMatcher(matcher="Bash", hooks=[guard.pre_tool_use]),
+        hooks={"PreToolUse": [HookMatcher(matcher="Bash", hooks=[guard.hook(d.target if d.automation_allows(d.stage) else None)]),
                               HookMatcher(matcher="Write|Edit", hooks=[_write_hook(tdir)])]},
         max_turns=max_turns,
         max_budget_usd=budget,

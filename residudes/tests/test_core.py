@@ -236,6 +236,16 @@ def test_guard_blocks_resolve():
     assert guard.check("residudes resolve T1437 C1 --outcome proceed")
 
 
+def test_guard_lets_the_mandated_target_resolve_and_only_that_one():
+    """H1388, full automation: the agent answered C1 and the guard refused its `resolve`. Under the mandate for
+    a target the seatbelt lifts for that target's approve/resolve, and stays on for every other target."""
+    assert guard.check("residudes resolve H1388 C1 --outcome proceed", mandate_for="H1388") is None
+    assert guard.check('residudes approve H1388 "these five"', mandate_for="H1388") is None
+    assert guard.check("residudes resolve T1437 C1 --outcome proceed", mandate_for="H1388")
+    assert guard.check("residudes automate H1388 --off", mandate_for="H1388")     # the mandate itself: never
+    assert guard.check("rm -rf /store/x", mandate_for="H1388")                    # nor the other rules
+
+
 def test_daemon_waits_at_checkpoint_until_a_person_replies(tmp_path, monkeypatch):
     from residudes import daemon
     from residudes.config import Config
