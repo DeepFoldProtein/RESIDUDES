@@ -603,3 +603,26 @@ def test_render_mt_distrusts_a_script_that_had_a_failed_command(tmp_path, monkey
 
     monkeypatch.setattr(sp, "run", lambda *a, **k: sp.CompletedProcess(a[0], 0, "Saved 1800x1350 to figs/a.png\n", ""))
     assert "not trustworthy" not in slides.render_mt(Cfg(), d, scene, "t")
+
+
+def test_qa_cluster_names_the_targets_own_variants(tmp_path, monkeypatch):
+    """residudes-qa cluster defaults to the CASP17 variant name `af3_msa`; H1388's layout was results/A1B1/{base,sep}
+    and the first cluster job failed. Without --variants, the ones on disk are passed."""
+    from residudes import ops
+    from residudes.dossier import Dossier
+
+    root = tmp_path / "T1"
+    for v in ("sep", "base"):
+        (root / "results" / "A1B1" / v).mkdir(parents=True)
+    d = Dossier(target="T1")
+    d.sequence["source_dir"] = str(root)
+
+    class Cfg:
+        residudes_qa = str(tmp_path / "qa")
+        targets_dir = tmp_path / "targets"
+
+    (tmp_path / "targets" / "T1").mkdir(parents=True)
+    sent = {}
+    monkeypatch.setattr(ops, "_sbatch", lambda cmd, *a, **k: sent.setdefault("cmd", cmd) and "1")
+    ops.qa_cmd(Cfg(), d, "A1B1", "cluster", None, "agent")
+    assert "--variants base,sep" in sent["cmd"]

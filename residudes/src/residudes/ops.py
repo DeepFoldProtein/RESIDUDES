@@ -97,6 +97,12 @@ def qa_cmd(cfg: Config, d: Dossier, sto: str, what: str, variants: str | None, a
     elif what == "cluster":
         out = qa / f"cluster_{sto}"
         cmd = f"{lqa} cluster {shlex.quote(str(root))} --sto {sto} --method tm --gpu 0 --no-medoid-pdbs --output-base {out}"
+        # residudes-qa's cluster defaults to the variant `af3_msa`, the CASP17 campaign's name for its main input;
+        # any other layout failed on the first try (H1388: results/A1B1/{base,sep}, "default variant af3_msa
+        # absent"). Without --variants, name the ones this target actually has.
+        if not variants:
+            found = root / "results" / sto
+            variants = ",".join(sorted(x.name for x in found.iterdir() if x.is_dir())) if found.is_dir() else None
         if variants:
             cmd += f" --variants {variants}"
     else:
