@@ -5,10 +5,8 @@ a decision that has to be on the record but not for "what are you doing right no
 here is an agent CLI running in the target's dossier directory, so the conversation keeps its
 context between visits: attach, ask, leave it running, come back.
 
-Persistence comes from a terminal multiplexer when the machine has one - tmux, else screen - so a
-session survives a closed terminal and can be re-attached over ssh from somewhere else. Neither is
-required: with no multiplexer the conversation runs in the foreground instead, which costs the
-detaching rather than the conversation.
+Persistence comes from tmux: a session survives a closed terminal and can be re-attached over ssh
+from another machine. tmux is required rather than reimplemented - see have_tmux().
 """
 from __future__ import annotations
 
@@ -19,64 +17,35 @@ import subprocess
 from pathlib import Path
 
 from residudes.config import Config
-from residudes import session
 from residudes.dossier import Dossier
 from residudes.setup import available_harness, bold, dim, green, yellow
 
 PREFIX = "residudes-"
-LEAVE = "ctrl-\\"             # what detaches from one of our own sessions
+LEAVE = "ctrl-b d"             # tmux's own detach key, not one we invented
 
 
-def backend(prefer: str | None = None) -> str:
-    """Which session mechanism to use: our own by default, a multiplexer when asked for one."""
-    if prefer in ("tmux", "screen") and shutil.which(prefer):
-        return prefer
-    if prefer == "builtin" or prefer is None:
-        return "builtin"
-    return "builtin"
+def have_tmux() -> bool:
+    """tmux is required rather than reimplemented: a terminal application needs resizing,
+    scrollback and repainting handled correctly, and a half-written multiplexer gets those
+    wrong in ways that show up as a garbled screen."""
+    return bool(shutil.which("tmux"))
+
+
+def _no_tmux() -> int:
+    print("`residudes chat` needs tmux, which is not on this machine.")
+    print(dim("  debian/ubuntu: sudo apt install tmux      rhel/rocky: sudo dnf install tmux"))
+    print(dim("  without root:  conda install -c conda-forge tmux"))
+    return 1
 
 
 def _tmux(*args: str, capture: bool = True) -> subprocess.CompletedProcess:
     return subprocess.run(["tmux", *args], capture_output=capture, text=True)
 
 
-def _screen_sessions() -> list[dict]:
-    r = subprocess.run(["screen", "-ls"], capture_output=True, text=True)
-    out = []
-    for line in r.stdout.splitlines():            # "\t12345.residudes-T1234\t(Detached)"
-        parts = line.strip().split("\t")
-        if not parts or "." not in parts[0]:
-            continue
-        name = parts[0].split(".", 1)[1]
-        if name.startswith(PREFIX):
-            out.append({"target": name[len(PREFIX):], "name": name, "created": "",
-                        "attached": "Attached" in line, "windows": "1"})
-    return out
-
-
-def builtin_sessions(cfg) -> list[dict]:
-    """Our own sessions: one directory per target under the work root."""
-    out = []
-    root = Path(cfg.targets_dir)
-    if not root.is_dir():
-        return out
-    for ddir in sorted(root.iterdir()):
-        pid = session.running(ddir) if ddir.is_dir() else None
-        if pid:
-            p = session.paths(ddir)
-            started = p["started"].read_text().strip() if p["started"].exists() else ""
-            out.append({"target": ddir.name, "name": ddir.name, "created": started,
-                        "attached": False, "windows": "1", "pid": pid})
-    return out
-
-
 def sessions(cfg=None, prefer: str | None = None) -> list[dict]:
-    """The target sessions running on this machine."""
-    mux = backend(prefer)
-    if mux == "builtin":
-        return builtin_sessions(cfg) if cfg else []
-    if mux == "screen":
-        return _screen_sessions()
+    """The target conversations tmux is holding."""
+    if not have_tmux():
+        return []
     r = _tmux("list-sessions", "-F", "#{session_name}\t#{session_created}\t#{session_attached}\t#{session_windows}")
     if r.returncode != 0:
         return []                                  # no server running: no sessions, not an error
@@ -215,59 +184,37 @@ def _banner(cfg: Config, target: str, new: bool) -> None:
 def chat_cmd(cfg: Config, target: str | None, harness: str | None, prefer: str | None = None,
              stop: bool = False) -> int:
     if target is None:
-        return list_cmd(cfg, prefer)
-    mux = backend(prefer)
+        return list_cmd(cfg)
+    if not have_tmux():
+        return _no_tmux()
+    name = PREFIX + target
     ddir = Path(cfg.targets_dir) / target
     if stop:
-        if mux == "builtin":
-            ok_ = session.stop(ddir) == 0
-        else:
-            ok_ = _tmux("kill-session", "-t", PREFIX + target).returncode == 0
-        print(f"{target}: conversation ended" if ok_ else f"{target}: no conversation to end")
-        return 0 if ok_ else 1
+        ended = _tmux("kill-session", "-t", name).returncode == 0
+        print(f"{target}: conversation ended" if ended else f"{target}: no conversation to end")
+        return 0 if ended else 1
     if not ddir.is_dir():
         print(f"no dossier for {target} at {ddir} (create it with `residudes target add {target}`)")
         return 1
 
-    if mux == "builtin":
-        _banner(cfg, target, new=session.running(ddir) is None)
-        if session.running(ddir) is None:
-            found = available_harness(harness)
-            if not found:
-                print("no agent CLI on PATH (claude, codex, ag, gemini); `residudes chat` needs one")
-                return 1
-            cmd, agent_name, argv = found
-            print(f"starting {green(agent_name)} for {bold(target)} {dim('(' + LEAVE + ' leaves it running)')}")
-            session.start(ddir, argv(BRIEF.format(target=target, ddir=ddir)))
-        else:
-            print(f"joining {bold(target)}  {dim('(' + LEAVE + ' leaves it running)')}")
-        rc = session.attach(ddir)
-        try:                                   # on leaving, say where the target stands now
-            d = Dossier.load(cfg.targets_dir, target)
-            print(f"{bold(target)} is at {d.stage}" +
-                  (f", {yellow(d.open_checkpoint()['id'] + ' open')}" if d.open_checkpoint() else ""))
-        except Exception:
-            pass
-        return rc
-
-    name = PREFIX + target
-    exists = any(s["name"] == name for s in sessions(cfg, prefer))
-    inside = bool(os.environ.get("TMUX"))
+    exists = any(s["name"] == name for s in sessions())
+    _banner(cfg, target, new=not exists)
     if not exists:
         found = available_harness(harness)
         if not found:
             print("no agent CLI on PATH (claude, codex, ag, gemini); `residudes chat` needs one")
             return 1
-        cmd, agent_name, argv = found
-        print(f"starting {green(agent_name)} for {bold(target)} in {dim(str(ddir))}")
-        cmdline = argv(BRIEF.format(target=target, ddir=ddir))
-        if mux == "tmux":
-            _tmux("new-session", "-d", "-s", name, "-c", str(ddir), *cmdline, capture=False)
-        else:
-            subprocess.run(["screen", "-dmS", name, *cmdline], cwd=str(ddir))
-    else:
-        leave = "ctrl-b d" if mux == "tmux" else "ctrl-a d"
-        print(f"attaching to {bold(target)}  {dim('(' + leave + ' to leave it running)')}")
-    if mux == "tmux":
-        return _tmux("switch-client" if inside else "attach-session", "-t", name, capture=False).returncode
-    return subprocess.call(["screen", "-r", name])
+        _cmd, agent_name, argv = found
+        print(f"starting {green(agent_name)} in {dim(str(ddir))}")
+        _tmux("new-session", "-d", "-s", name, "-c", str(ddir),
+              *argv(BRIEF.format(target=target, ddir=ddir)), capture=False)
+    inside = bool(os.environ.get("TMUX"))          # switch-client inside tmux, attach outside it
+    rc = _tmux("switch-client" if inside else "attach-session", "-t", name, capture=False).returncode
+    try:                                           # on leaving, say where the target stands now
+        d = Dossier.load(cfg.targets_dir, target)
+        c = d.open_checkpoint()
+        print(f"{bold(target)} is at {d.stage}" + (f", {yellow(c['id'] + ' open')}" if c else "")
+              + dim(f" · rejoin with `residudes chat {target}`"))
+    except Exception:
+        pass
+    return rc

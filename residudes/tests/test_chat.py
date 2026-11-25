@@ -9,10 +9,10 @@ def test_the_brief_names_the_target_and_the_dossier():
     assert "never approve" in text                      # the rules hold inside a conversation too
 
 
-def test_every_backend_name_resolves():
-    assert chat.backend("builtin") == "builtin"
-    assert chat.backend(None) == "builtin"              # ours by default: nothing to install
-    assert chat.backend("tmux") in ("tmux", "builtin")  # tmux when it is installed
+def test_sessions_are_named_for_their_target():
+    """`residudes chat T` and `tmux attach -t residudes-T` have to mean the same session."""
+    assert chat.PREFIX + "T1234" == "residudes-T1234"
+    assert chat.LEAVE == "ctrl-b d"                     # tmux's own key, not one we invented
 
 
 def test_ago_reads_a_session_timestamp():

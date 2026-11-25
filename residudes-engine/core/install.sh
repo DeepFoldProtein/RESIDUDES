@@ -1,36 +1,49 @@
 #!/bin/sh
-# The prediction runtime: Protenix v2, OpenFold 3 and Boltz-2 on PyTorch or TensorRT.
+# AlphaFold 3 and the JAX backends, from core/jaxenv/uv.lock - the same file
+# `residudes-engine setup venv` builds the site's JAX environment from.
 #
-# Everything comes from core/uv.lock, the same file `residudes-engine setup venv` uses, so the
-# image and a site venv are the same environment. It already pins tensorrt 10.16 and the
-# nvidia-* wheels, so the CUDA runtime base only has to supply the driver-adjacent pieces.
-#
-# Not in here, by necessity: the model weights, and the TensorRT engines, which are built on the
-# card they run on (`residudes-engine engines build`) and belong to that machine, not to an image.
+# jax[cuda13] brings its own CUDA libraries as wheels, so the base only supplies the system
+# pieces around them. AlphaFold 3's parameters are licensed per user and are never in an image:
+# they are bind-mounted and pointed at with [site] af3_weights.
 set -eu
 
 export DEBIAN_FRONTEND=noninteractive
-# No wheel cache: for the CUDA stacks it is 8-10 GB sitting on disk beside the venv it
-# produced, which is what exhausts a CI runner during the build rather than the image size.
-export UV_NO_CACHE=1
 stage=${1:-all}
 
 if [ "$stage" = all ] || [ "$stage" = system ]; then
+apt-get update
+apt-get install -y --no-install-recommends \
+    ca-certificates curl git python3.12 python3.12-venv libpython3.12 \
+    libgomp1 libstdc++6 zstd
+rm -rf /var/lib/apt/lists/*
+fi
+
+# jaxenv's lock has two path dependencies, so the lockfile alone is not enough:
+#   alphafold3   ../models/alphafold3   non-editable, scikit-build-core - a C++ extension gets
+#                                       compiled here, which is work the image exists to save
+#   openfold3    ../models/openfold-3   editable, so it resolves to whatever is mounted
+# Both source trees are copied in at the paths the lock names; `uv sync` fails otherwise with
+# "Distribution not found at: file:///opt/models/alphafold3".
+# The compiler toolchain belongs to the build and not to the image, so it is installed in the
+# stage that compiles and never reaches the final one.
+#   python3.12-dev because alphafold3's CMakeLists does
+#     find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
+#   and the Development component is the headers, which python3.12-venv does not carry; zlib for
+#   libcifpp. The five FetchContent repositories (abseil, pybind11, pybind11_abseil, libcifpp,
+#   dssp) are cloned during the configure step, so this build needs network.
+if [ "$stage" = all ] || [ "$stage" = sync ]; then
     apt-get update
     apt-get install -y --no-install-recommends \
-        ca-certificates curl git python3.12 python3.12-venv libpython3.12 \
-        libgomp1 libstdc++6
+        build-essential cmake ninja-build python3.12-dev zlib1g-dev
     rm -rf /var/lib/apt/lists/*
 fi
 
-# The venv is 9 GB, and one `uv sync` makes one layer that size - which does not survive every
-# network: measured, a 9 GB blob dies partway with PROTOCOL_ERROR or unexpected EOF while the 3 GB
-# images pull cleanly on the same link. So the sync is done in passes, each its own RUN in the
-# Dockerfile, holding the heaviest packages back until last. Every pass is `uv sync --frozen`, so
-# the project's indexes are used (torch comes from the PyTorch index, as a +cu128 local version)
-# and each pass is verified against the lockfile rather than hand-pinned.
+# No wheel cache: for the CUDA stacks it is 8-10 GB sitting on disk beside the venv it
+# produced, which is what exhausts a CI runner during the build rather than the image size.
+export UV_NO_CACHE=1
+
 if [ "$stage" = all ] || [ "$stage" = sync ]; then
-    cd /opt/core                              # only this stage needs the lockfile beside it
+    cd /opt/jaxenv                              # only this stage needs the lockfile beside it
     UV_PROJECT_ENVIRONMENT=/opt/venv uv sync --frozen --no-install-project --python /usr/bin/python3.12
     rm -rf /root/.cache/uv
 fi
@@ -73,10 +86,13 @@ fi
 [ "$stage" = all ] || [ "$stage" = check ] || exit 0
 
 /opt/venv/bin/python - <<'EOF'
-import torch
-print("torch", torch.__version__, "built for cuda", torch.version.cuda)
-import tensorrt
-print("tensorrt", tensorrt.__version__)
-import cuequivariance_torch                      # the fused kernels the engines were built with
-print("cuequivariance-torch ok")
+import jax
+print("jax", jax.__version__)
+import haiku
+print("dm-haiku ok")
+import jax_triton                                  # tokamax calls triton_call(out_type=...)
+print("jax-triton ok")
+import alphafold3
+from alphafold3.cpp import cif_dict                 # the compiled extension, not just the python
+print("alphafold3 + compiled cpp ok")
 EOF

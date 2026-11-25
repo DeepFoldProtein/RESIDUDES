@@ -228,12 +228,9 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("target", nargs="?")
     p.add_argument("--harness", choices=("claude", "codex", "ag", "gemini"),
                    help="which agent CLI to start (default: the first one on PATH)")
-    p.add_argument("--backend", choices=("builtin", "tmux", "screen"),
-                   help="how to hold the session open (default: builtin, which needs nothing installed)")
     p.add_argument("--stop", action="store_true", help="end the conversation instead of joining it")
 
     p = sub.add_parser("sessions", help="the target conversations running on this machine")
-    p.add_argument("--backend", choices=("builtin", "tmux", "screen"))
 
     p = sub.add_parser("consult", help="open a checkpoint: talk the plan or the first results through with a person")
     p.add_argument("target")
@@ -446,7 +443,7 @@ def _main(argv: list[str] | None = None) -> int:
     if args.cmd in ("chat", "sessions"):
         from residudes import chat
         return chat.chat_cmd(cfg, getattr(args, "target", None), getattr(args, "harness", None),
-                             getattr(args, "backend", None), getattr(args, "stop", False))
+                             None, getattr(args, "stop", False))
     if args.cmd == "automate":
         if args.show or not (args.on or args.off):
             d = Dossier.load(cfg.targets_dir, args.target)
