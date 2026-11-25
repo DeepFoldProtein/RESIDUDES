@@ -33,3 +33,17 @@ def test_the_daemon_works_through_the_target_window(monkeypatch):
     assert sent["target"] == "T1234"
     assert "T1234" in sent["text"] and "dossier" in sent["text"]
     assert "asked" in out
+
+
+def test_help_shows_a_person_the_short_list(capsys):
+    """`-h` is for a person: the agent's recording commands stay out of it but keep working."""
+    from residudes import cli
+    try:
+        cli._main(["-h"])
+    except SystemExit:
+        pass
+    out = capsys.readouterr().out
+    assert "residudes chat T1234" in out and "waiting for you" in out
+    for hidden in ("evidence", "run-record", "gate"):
+        assert f"    {hidden} " not in out            # not listed
+    assert "residudes help --all" in out              # but findable

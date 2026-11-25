@@ -217,15 +217,38 @@ def _dress_session() -> None:
         _tmux("set-option", "-t", SESSION, option, value)
 
 
+def archive_window(cfg: Config, target: str) -> Path | None:
+    """Keep what was said. A conversation is the reasoning behind what the dossier records, so
+    ending one without saving it throws away the only account of how the target got here."""
+    if not any(s["target"] == target for s in sessions()):
+        return None
+    r = _tmux("capture-pane", "-p", "-S", "-", "-t", f"{SESSION}:{target}")
+    if r.returncode != 0 or not r.stdout.strip():
+        return None
+    out = Path(cfg.targets_dir) / target / "chat"
+    out.mkdir(parents=True, exist_ok=True)
+    path = out / (dt.datetime.now().strftime("%Y%m%d-%H%M") + ".log")
+    path.write_text(r.stdout)
+    return path
+
+
 def chat_cmd(cfg: Config, target: str | None, harness: str | None, prefer: str | None = None,
-             stop: bool = False) -> int:
+             stop: bool = False, archive: bool = False) -> int:
     if target is None:
         return list_cmd(cfg)
     if not have_tmux():
         return _no_tmux()
     where = f"{SESSION}:{target}"
     ddir = Path(cfg.targets_dir) / target
-    if stop:
+    if stop or archive:
+        saved = archive_window(cfg, target)
+        if saved:
+            print(f"{target}: conversation saved to {dim(str(saved))}")
+        elif archive:
+            print(f"{target}: no conversation to save")
+            return 1
+        if not stop:
+            return 0
         ended = _tmux("kill-window", "-t", where).returncode == 0
         print(f"{target}: conversation ended" if ended else f"{target}: no conversation to end")
         return 0 if ended else 1

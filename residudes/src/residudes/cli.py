@@ -1,47 +1,20 @@
-"""residudes command line.
+"""residudes - a structure-prediction campaign, one dossier per target.
 
-  residudes setup [--yes] [--project DIR]     first run, together with the user: resources, databases, config, skills
-  residudes doctor                            re-check resources, databases and components
-  residudes target add T [--fasta F] [--stoich A3] [--deadline-server ISO]
-  residudes target show T | target list
-  residudes next T                            the next step for T and the skill that covers it
-  residudes report T [-o analysis.md]         the target analysis: priors, decisions, which priors each decision rests on
-  residudes msa T --depth | --crawl --family PF… | --plm   MSA depth/coverage; deepen a thin MSA (T1331 recipe)
-  residudes structures T [--identity 0.5]     public structures of each chain's sequence (evidence: public_structures)
-  residudes structures T --foldseek MODEL     the structural half (sbatch); then --read-foldseek TSV
-  residudes structures T --hhsearch           profile against profile when there is no model yet (sbatch)
-  residudes relax T [--sc-fc N] | --read      GROMACS + Rosetta on the slate's models, under restraints (sbatch)
-  residudes slides T                          the same as Typst slides with PyMOL pictures -> report/report.pdf
-  residudes render T --pml FILE               render your own PyMOL scenes through sbatch -> report/figs/
-  residudes agent step T                      let the agent do that step (Claude Agent SDK)
-  residudes daemon --target T.. | --all [--once] [--interval 300]  scheduler: steps every target that can make progress, skips jobs / people
+  residudes                          what is in flight, and what is waiting for you
+  residudes setup                    install and check this machine, with an agent
+  residudes target add T1234 --fasta T1234.fasta --stoich A3
+  residudes chat T1234               talk to the agent about a target (ctrl-b d leaves it running)
+  residudes daemon --all             keep every target moving; it stops where a person is needed
 
-  pool and QA:
-  residudes pool T [--dir DIR]                import an existing prediction pool (residudes-engine layout) -> pool.csv
-  residudes qa T --sto A3 --what interface    residudes-qa through sbatch (interface | cluster); `residudes jobs T`
-  residudes gate T --init --sto A3           draft structural gates from the dossier's site evidence
-  residudes gate T --spec F --sto A3 | --show   evaluate gates over the pool (sbatch) / record the result
-  residudes slate T --sto A3 | A2:3,A1:2     propose 5 from the models that pass (af3 leads, predictors alternate)
-  residudes slate T --models M1,...,M5       record the slate chosen after review (then decide --type selection)
-  residudes package T --server|--human       after approval: geometry checks, CASP files via casp17-utils (never submits)
-  residudes retro T --native PDB              once the native is out: score the slate models (sbatch, OpenStructure)
-  residudes retro T [--scores CSV]            write retro.md from those scores (+ a pool-wide scored table)
-  residudes export T DIR                      dossier, step costs, logs, slate, retro, QA summaries -> DIR
+when a target is waiting for you:
+  residudes checkpoints T1234        the brief and the conversation so far
+  residudes reply T1234 C1 "..."     answer in that thread
+  residudes resolve T1234 C1 --outcome proceed | loop:HYPOTHESES
+  residudes approve T1234 --what "slate v1"
+  residudes package T1234 --server   the CASP files; you submit them
 
-  working with a person (checkpoints: PLAN_REVIEW after the analysis, RESULTS_REVIEW after the first round):
-  residudes consult T --kind plan|results --ask "question (options; recommendation)" [--brief FILE]
-  residudes reply T C1 "text"                 either side of the conversation
-  residudes resolve T C1 --outcome proceed|loop:RUNNING|loop:HYPOTHESES      people only
-  residudes checkpoints T [C1]                list, or show one conversation
-  residudes review T [--add "name: why"]      first-results checks -> triggers (a trigger means a results checkpoint)
-
-  dossier writes (used by the agent and by people):
-  residudes note T "text"                     free-form log line ("NEEDS HUMAN: ..." asks for a person)
-  residudes evidence T KEY VALUE | @file.json   append a finding (VALUE may be JSON; @file for long JSON)
-  residudes decide T --type stoichiometry --chose A3 --evidence "..." [--alt A1 ...] [--confidence high]
-  residudes run-record T --job ID --what "af3 seeds 1-128 on af3_msa" [--scheduler slurm|pueue|other] [--state done]
-  residudes stage T STAGE [--why "..."]
-  residudes approve T --what "slate v1"       people only: lets the target past SLATE_PROPOSED
+The agent records evidence, runs jobs and scores pools with commands of its own.
+They are not hidden, only kept out of the way: `residudes help --all`.
 """
 from __future__ import annotations
 
@@ -102,13 +75,73 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
 
+FULL_HELP = """residudes command line.
+
+  residudes setup [--yes] [--project DIR]     first run, together with the user: resources, databases, config, skills
+  residudes doctor                            re-check resources, databases and components
+  residudes target add T [--fasta F] [--stoich A3] [--deadline-server ISO]
+  residudes target show T | target list
+  residudes next T                            the next step for T and the skill that covers it
+  residudes report T [-o analysis.md]         the target analysis: priors, decisions, which priors each decision rests on
+  residudes msa T --depth | --crawl --family PF… | --plm   MSA depth/coverage; deepen a thin MSA (T1331 recipe)
+  residudes structures T [--identity 0.5]     public structures of each chain's sequence (evidence: public_structures)
+  residudes structures T --foldseek MODEL     the structural half (sbatch); then --read-foldseek TSV
+  residudes structures T --hhsearch           profile against profile when there is no model yet (sbatch)
+  residudes relax T [--sc-fc N] | --read      GROMACS + Rosetta on the slate's models, under restraints (sbatch)
+  residudes slides T                          the same as Typst slides with PyMOL pictures -> report/report.pdf
+  residudes render T --pml FILE               render your own PyMOL scenes through sbatch -> report/figs/
+  residudes agent step T                      let the agent do that step (Claude Agent SDK)
+  residudes daemon --target T.. | --all [--once] [--interval 300]  scheduler: steps every target that can make progress, skips jobs / people
+
+  pool and QA:
+  residudes pool T [--dir DIR]                import an existing prediction pool (residudes-engine layout) -> pool.csv
+  residudes qa T --sto A3 --what interface    residudes-qa through sbatch (interface | cluster); `residudes jobs T`
+  residudes gate T --init --sto A3           draft structural gates from the dossier's site evidence
+  residudes gate T --spec F --sto A3 | --show   evaluate gates over the pool (sbatch) / record the result
+  residudes slate T --sto A3 | A2:3,A1:2     propose 5 from the models that pass (af3 leads, predictors alternate)
+  residudes slate T --models M1,...,M5       record the slate chosen after review (then decide --type selection)
+  residudes package T --server|--human       after approval: geometry checks, CASP files via casp17-utils (never submits)
+  residudes retro T --native PDB              once the native is out: score the slate models (sbatch, OpenStructure)
+  residudes retro T [--scores CSV]            write retro.md from those scores (+ a pool-wide scored table)
+  residudes export T DIR                      dossier, step costs, logs, slate, retro, QA summaries -> DIR
+
+  working with a person (checkpoints: PLAN_REVIEW after the analysis, RESULTS_REVIEW after the first round):
+  residudes consult T --kind plan|results --ask "question (options; recommendation)" [--brief FILE]
+  residudes reply T C1 "text"                 either side of the conversation
+  residudes resolve T C1 --outcome proceed|loop:RUNNING|loop:HYPOTHESES      people only
+  residudes checkpoints T [C1]                list, or show one conversation
+  residudes review T [--add "name: why"]      first-results checks -> triggers (a trigger means a results checkpoint)
+
+  dossier writes (used by the agent and by people):
+  residudes note T "text"                     free-form log line ("NEEDS HUMAN: ..." asks for a person)
+  residudes evidence T KEY VALUE | @file.json   append a finding (VALUE may be JSON; @file for long JSON)
+  residudes decide T --type stoichiometry --chose A3 --evidence "..." [--alt A1 ...] [--confidence high]
+  residudes run-record T --job ID --what "af3 seeds 1-128 on af3_msa" [--scheduler slurm|pueue|other] [--state done]
+  residudes stage T STAGE [--why "..."]
+  residudes approve T --what "slate v1"       people only: lets the target past SLATE_PROPOSED
+"""
+
+
+class _Help(argparse.RawDescriptionHelpFormatter):
+    """Leave the agent's own commands out of `-h`.
+
+    argparse formats sub-commands without checking help is SUPPRESS - the check only guards
+    top-level actions - so a suppressed sub-command prints "==SUPPRESS==" instead of vanishing.
+    This drops them, and `residudes help --all` lists everything.
+    """
+
+    def _format_action(self, action):
+        return "" if action.help is argparse.SUPPRESS else super()._format_action(action)
+
+
 def _main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="residudes", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(prog="residudes", description=__doc__, formatter_class=_Help)
     ap.add_argument("--version", action="version", version=f"residudes {__version__}")
     ap.add_argument("--config", help="residudes.toml (default: $RESIDUDES_CONFIG or residudes/residudes.toml)")
     # `residudes` with no command shows the conversations running here, because that is the
     # question someone has when they sit down: what is in flight, and what is waiting for me.
-    sub = ap.add_subparsers(dest="cmd", required=False)
+    # the usage line is built from every choice, which is the wall this is trying to avoid
+    sub = ap.add_subparsers(dest="cmd", required=False, metavar="<command>")
 
     p = sub.add_parser("setup", help="first-run onboarding, with an agent by default")
     p.add_argument("--manual", action="store_true",
@@ -120,6 +153,9 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("--project", help="link the skills into this project's .claude/skills and .agents/skills")
     p.add_argument("--copy-skills", action="store_true",
                    help="copy the skills instead of symlinking them (a harness that does not follow symlinks); rerun to refresh")
+    p = sub.add_parser("help", help="every command, including the agent's own")
+    p.add_argument("--all", action="store_true", default=True, help=argparse.SUPPRESS)
+
     p = sub.add_parser("doctor", help="re-check resources, databases, components")
     p.add_argument("--json", action="store_true")
 
@@ -137,14 +173,14 @@ def _main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("next", help="the next step for a target")
     p.add_argument("target")
-    p = sub.add_parser("note")
+    p = sub.add_parser("note", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("text")
-    p = sub.add_parser("evidence")
+    p = sub.add_parser("evidence", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("key")
     p.add_argument("value")
-    p = sub.add_parser("decide")
+    p = sub.add_parser("decide", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--type", required=True, choices=DECISION_TYPES)
     p.add_argument("--chose", required=True)
@@ -152,14 +188,14 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("--alt", nargs="*", default=[])
     p.add_argument("--confidence", default="medium", choices=["low", "medium", "high"])
     p.add_argument("--until", help="reversible until (ISO time), e.g. the server deadline")
-    p = sub.add_parser("run-record", help="record a submitted prediction / QA job")
+    p = sub.add_parser("run-record", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--job", required=True)
     p.add_argument("--what", help="what the job runs (required for a new job)")
     p.add_argument("--scheduler", choices=["slurm", "pueue", "other"], default="slurm",
                    help="slurm jobs are polled with squeue/sacct, pueue tasks with the local pueue; other is never polled")
     p.add_argument("--state", help="submitted (default for a new job), or done/failed to close a job residudes cannot poll")
-    p = sub.add_parser("stage")
+    p = sub.add_parser("stage", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("stage", choices=STAGES)
     p.add_argument("--why", default="")
@@ -176,12 +212,12 @@ def _main(argv: list[str] | None = None) -> int:
                    help="the last stage the mandate covers (default PACKAGED; SUBMITTED is never allowed)")
     p.add_argument("--note", default="", help="why, for the record")
 
-    p = sub.add_parser("pool", help="import an existing residudes-engine layout prediction pool into the dossier")
+    p = sub.add_parser("pool", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--dir", help="prediction directory (default <targets_root>/<target>)")
     p.add_argument("--refresh", action="store_true", help="re-read the pool even if it was imported before")
     p.add_argument("--threads", type=int, default=8, help="parallel reads (default 8; modest on a shared login node)")
-    p = sub.add_parser("qa", help="submit residudes-qa (interface scores / clustering) through sbatch")
+    p = sub.add_parser("qa", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--sto", help="stoichiometry, e.g. A3 (default: the one given at `target add --stoich`)")
     p.add_argument("--what", required=True, choices=["interface", "cluster"])
@@ -190,21 +226,21 @@ def _main(argv: list[str] | None = None) -> int:
                    help="interface: ppi (protein-protein, default) or ab (antibody-antigen: give --ab-chains and --ag-chains)")
     p.add_argument("--ab-chains", help="ab mode: antibody chain ids, e.g. CD")
     p.add_argument("--ag-chains", help="ab mode: antigen chain ids, e.g. AB")
-    p = sub.add_parser("jobs", help="refresh the state of recorded Slurm jobs")
+    p = sub.add_parser("jobs", help=argparse.SUPPRESS)
     p.add_argument("target")
-    p = sub.add_parser("retro", help="score the slate against the native structure")
+    p = sub.add_parser("retro", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--scores", help="CSV of pool models scored against the native")
     p.add_argument("--native", help="native structure: submit an OpenStructure job on the slate models")
     p.add_argument("--mode", choices=["mono", "oligo"], help="scoring mode for --native (default: from its chain count)")
-    p = sub.add_parser("slate", help="propose 5 models from pool.csv (+ residudes-qa outputs)")
+    p = sub.add_parser("slate", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--sto", help="A3, or a hedge like A2:3,A1:2 (slots in that order); default: the given stoichiometry")
     p.add_argument("--models", help="record a chosen slate: five names from a proposal, comma-separated, slot order")
     p.add_argument("--no-interface", action="store_true", help="ignore interface scores (e.g. antibody-antigen)")
     p.add_argument("--gates", help="gate result to use (its --name); default: the most recent for the stoichiometry; none: confidence only")
     p.add_argument("--site", help="keep only models whose census label is this site (e.g. the literature's pocket)")
-    p = sub.add_parser("gate", help="structural gates and a site census over the pool (sbatch); the slate keeps the models that pass")
+    p = sub.add_parser("gate", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--spec", help="gates JSON (see `python -m residudes.gate --help` / skill residudes-selection)")
     p.add_argument("--sto", help="stoichiometry, e.g. A3 (default: the one given at `target add --stoich`)")
@@ -228,11 +264,14 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("target", nargs="?")
     p.add_argument("--harness", choices=("claude", "codex", "ag", "gemini"),
                    help="which agent CLI to start (default: the first one on PATH)")
-    p.add_argument("--stop", action="store_true", help="end the conversation instead of joining it")
+    p.add_argument("--stop", action="store_true",
+                   help="save the conversation into the dossier and end it")
+    p.add_argument("--archive", action="store_true",
+                   help="save the conversation into the dossier and leave it running")
 
     p = sub.add_parser("sessions", help="the target conversations running on this machine")
 
-    p = sub.add_parser("consult", help="open a checkpoint: talk the plan or the first results through with a person")
+    p = sub.add_parser("consult", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--kind", required=True, choices=["plan", "results", "other"])
     p.add_argument("--ask", action="append", default=[], help="a question with its options and your recommendation (repeat)")
@@ -249,10 +288,10 @@ def _main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("checkpoints", help="list checkpoints, or show one conversation")
     p.add_argument("target")
     p.add_argument("checkpoint", nargs="?")
-    p = sub.add_parser("review", help="the first-results checks (confidence, n-sweep, pLDDT, clashes, missing models, architectures)")
+    p = sub.add_parser("review", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--add", action="append", default=[], help="a trigger you see yourself: \"name: why\" (repeat)")
-    p = sub.add_parser("msa", help="MSA depth and coverage; deepen a thin MSA (family crawl or plmMSA)")
+    p = sub.add_parser("msa", help=argparse.SUPPRESS)
     p.add_argument("target")
     g = p.add_mutually_exclusive_group(required=True)
     g.add_argument("--depth", nargs="*", metavar="A3M", help="depth/coverage of these a3m files (default: the target's MSAs)")
@@ -263,7 +302,7 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("--max-members", type=int, default=20000, help="UniProt members per family (cap)")
     p.add_argument("--aligner", default="otalign", choices=["otalign", "plmalign", "plm_blast", "hmm"],
                    help="--plm: the plmMSA aligner; --crawl: otalign (default) or hmm (offline, weaker for remote families)")
-    p = sub.add_parser("structures", help="the public-structure sweep: PDB entries of each chain's sequence")
+    p = sub.add_parser("structures", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--identity", type=float, default=0.9, help="identity cutoff of the search (default 0.9)")
     p.add_argument("--chain", help="one chain letter (default: every chain)")
@@ -274,7 +313,7 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("--hhsearch", action="store_true", help="profile-profile search of one chain instead (sbatch)")
     p.add_argument("--read-hhsearch", metavar="HHR", help="read a finished hhsearch .hhr into the dossier")
     p.add_argument("--db", help="--foldseek: the database prefix or directory (default: [databases] in residudes.toml)")
-    p = sub.add_parser("relax", help="relax chosen models with GROMACS and Rosetta (sbatch); repair, never ranking")
+    p = sub.add_parser("relax", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--models", help="comma list of model keys (default: the slate's)")
     p.add_argument("--ssbond", default="auto", help="SSBOND file, or auto to find disulfides by distance (default auto)")
@@ -283,18 +322,18 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("--dstres", help="distance restraints file (GROMACS leg)")
     p.add_argument("--ligand", action="store_true", help="ligand-aware route (AmberTools topology) instead of protein-only")
     p.add_argument("--read", action="store_true", help="read the finished runs: geometry before and after, how far it moved")
-    p = sub.add_parser("slides", help="the target report as Typst slides with PyMOL structure pictures (report/report.pdf)")
+    p = sub.add_parser("slides", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--no-render", action="store_true", help="do not submit the PyMOL render job")
     p.add_argument("--with-retro", action="store_true")
-    p = sub.add_parser("render", help="render a PyMOL script through sbatch into report/figs/")
+    p = sub.add_parser("render", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--pml", required=True)
-    p = sub.add_parser("report", help="the target analysis: priors, decisions and which priors each decision rests on")
+    p = sub.add_parser("report", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("-o", "--out", help="write analysis.md here (default: print)")
     p.add_argument("--with-retro", action="store_true", help="include native-derived results")
-    p = sub.add_parser("export", help="copy a target's dossier, steps, logs, slate and retro into a folder")
+    p = sub.add_parser("export", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("dest")
     p.add_argument("--with-retro", action="store_true", help="include scores against the native (check it is public first)")
@@ -440,10 +479,13 @@ def _main(argv: list[str] | None = None) -> int:
     if args.cmd is None:
         from residudes import chat
         return chat.list_cmd(cfg)
+    if args.cmd == "help":
+        print(FULL_HELP)
+        return 0
     if args.cmd in ("chat", "sessions"):
         from residudes import chat
         return chat.chat_cmd(cfg, getattr(args, "target", None), getattr(args, "harness", None),
-                             None, getattr(args, "stop", False))
+                             None, getattr(args, "stop", False), getattr(args, "archive", False))
     if args.cmd == "automate":
         if args.show or not (args.on or args.off):
             d = Dossier.load(cfg.targets_dir, args.target)
