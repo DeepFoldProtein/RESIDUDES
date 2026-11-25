@@ -174,6 +174,22 @@ def list_cmd(cfg: Config, prefer: str | None = None) -> int:
     return 0
 
 
+BRIEF = """You are the RESIDUDES campaign agent, in a conversation about {target} with the person who
+started this session. Your memory is the dossier: read it first with `residudes target show {target}`,
+and `residudes next {target}` for what the stage machine expects next.
+
+This is a conversation, not a batch step. Answer what they ask, explain what you are doing, and do
+the work they agree to - recording it the usual way (`residudes note|evidence|decide|run-record`),
+because the dossier is what survives this session. If a decision belongs on the record for a person
+to answer, open a checkpoint (`residudes consult`) rather than deciding it here.
+
+You never approve a slate, resolve a checkpoint or submit anything: those are the person's, and the
+stage machine refuses them from you.
+
+Dossier directory (your working directory): {ddir}
+"""
+
+
 def _banner(cfg: Config, target: str, new: bool) -> None:
     """What someone needs on arriving: which target, where it stands, what it is waiting for."""
     try:
