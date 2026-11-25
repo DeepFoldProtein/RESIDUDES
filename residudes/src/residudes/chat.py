@@ -105,35 +105,73 @@ def _state(cfg: Config, target: str) -> str:
     return " · ".join(bits)
 
 
+def _ago(stamp: str) -> str:
+    """'2026-11-25 22:07' -> '18m', '2h', '3d'; a conversation's age is more use than its date."""
+    try:
+        then = dt.datetime.strptime(stamp.strip(), "%Y-%m-%d %H:%M")
+    except (ValueError, AttributeError):
+        return ""
+    mins = int((dt.datetime.now() - then).total_seconds() // 60)
+    if mins < 60:
+        return f"{max(mins, 0)}m"
+    if mins < 60 * 48:
+        return f"{mins // 60}h"
+    return f"{mins // 1440}d"
+
+
+def _rows(cfg: Config, prefer: str | None) -> list[dict]:
+    """Every target with a dossier, and whether a conversation is running for it."""
+    live = {s["target"]: s for s in sessions(cfg, prefer)}
+    root = Path(cfg.targets_dir)
+    out = []
+    for ddir in sorted(root.iterdir()) if root.is_dir() else []:
+        if not (ddir / "dossier.json").exists():
+            continue
+        try:
+            d = Dossier.load(cfg.targets_dir, ddir.name)
+        except Exception:
+            continue
+        c = d.open_checkpoint()
+        waiting = ""
+        if c and not d.agents_turn(c):
+            waiting = f"you ({c['id']})"
+        elif c:
+            waiting = f"agent ({c['id']})"
+        s = live.get(ddir.name)
+        out.append({"target": ddir.name, "stage": d.stage, "waiting": waiting,
+                    "live": bool(s), "age": _ago(s["created"]) if s else ""})
+    return out
+
+
 def list_cmd(cfg: Config, prefer: str | None = None) -> int:
-    rows = sessions(cfg, prefer)
+    rows = _rows(cfg, prefer)
     if not rows:
-        print("no conversations running. " + dim("start one with `residudes chat <target>`"))
+        print(dim(f"no targets under {cfg.targets_dir}"))
+        print("start one with " + bold("residudes target add T1234 --fasta T1234.fasta"))
         return 0
-    print(bold("conversations"))
-    for s in rows:
-        where = green("attached") if s.get("attached") else dim("running")
-        print(f"  {s['target']:12s} {where:20s} {_state(cfg, s['target'])}")
-        if s.get("created"):
-            print(f"               {dim('since ' + s['created'])}")
-    print("\n" + dim("join one with `residudes chat <target>`; " + LEAVE + " leaves it running"))
+    live = sum(r["live"] for r in rows)
+    yours = [r["target"] for r in rows if r["waiting"].startswith("you")]
+    print()
+    print("  " + bold("RESIDUDES") + dim(f" · {len(rows)} targets · {live} in conversation"))
+    print()
+    w = max(8, max(len(r["target"]) for r in rows))
+    # pad first, colour second: an escape sequence has width in the format spec but not on screen
+    print("  " + dim(f"{'':2}{'target':{w}}  {'stage':16}  {'waiting on':14}  since"))
+    print("  " + dim("─" * (w + 42)))
+    for r in rows:
+        dot = green("●") if r["live"] else dim("·")
+        name = bold(f"{r['target']:{w}}")
+        stage = f"{r['stage']:16}"
+        wait_text = f"{r['waiting'] or '—':14}"
+        wait = yellow(wait_text) if r["waiting"].startswith("you") else dim(wait_text)
+        print(f"  {dot} {name}  {stage}  {wait}  {dim(r['age'])}")
+    print()
+    if yours:
+        print("  " + yellow("waiting on you: ") + ", ".join(yours))
+    print("  " + dim("join: ") + "residudes chat <target>" + dim("    leave: ") + LEAVE
+          + dim("    end: ") + "--stop")
+    print()
     return 0
-
-
-BRIEF = """You are the RESIDUDES campaign agent, in a conversation about {target} with the person who
-started this session. Your memory is the dossier: read it first with `residudes target show {target}`,
-and `residudes next {target}` for what the stage machine expects next.
-
-This is a conversation, not a batch step. Answer what they ask, explain what you are doing, and do
-the work they agree to - recording it the usual way (`residudes note|evidence|decide|run-record`),
-because the dossier is what survives this session. If a decision belongs on the record for a person
-to answer, open a checkpoint (`residudes consult`) rather than deciding it here.
-
-You never approve a slate, resolve a checkpoint or submit anything: those are the person's, and the
-stage machine refuses them from you.
-
-Dossier directory (your working directory): {ddir}
-"""
 
 
 def _banner(cfg: Config, target: str, new: bool) -> None:
