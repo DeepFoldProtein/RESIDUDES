@@ -312,6 +312,50 @@ if [ "$GPU" = 1 ] || [ "$ALL" = 1 ]; then
         run_gpu residudes-engine-trt python 'import torch,tensorrt as trt; assert torch.cuda.is_available(); print("tensorrt", trt.__version__, "| builder", trt.Builder(trt.Logger(trt.Logger.ERROR)) is not None)'
         run_gpu residudes-engine-jax /opt/venv/bin/python 'import jax; d=jax.devices(); print("jax", jax.__version__, "| devices", [x.platform for x in d])'
         run_gpu residudes-ef2 /opt/venv/bin/python 'import torch; from transformers.models.esmfold2.modeling_esmfold2 import ESMFold2Model; print("torch", torch.__version__, "| cuda", torch.cuda.is_available(), "| ESMFold2Model ok")'
+
+        # The checks above import; they passed for images that could not predict. In November 2026 the trt image ran
+        # pt2 and nothing else and the jax image's AF3 died at its first prediction - five defects (missing extras,
+        # an editable install pointing nowhere, AF3's CCD tables, no C compiler for Triton, no libXrender for RDKit),
+        # none of them reachable by an import. So each model predicts once inside its image, with the image's own
+        # interpreter: a 20-residue chain, no MSA, one recycle, one sample.
+        binds=$(python3 - "$REPO/residudes-engine/sites" <<'PY'
+import fnmatch, socket, sys, tomllib
+from pathlib import Path
+host = socket.gethostname().split(".")[0]
+for f in sorted(Path(sys.argv[1]).glob("*.toml")):
+    s = tomllib.loads(f.read_text())
+    if not any(fnmatch.fnmatch(host, h) for h in s.get("site", {}).get("hosts", [])):
+        continue
+    paths = []
+    for sec in ("site", "msa"):
+        for v in s.get(sec, {}).values():
+            for x in (v if isinstance(v, list) else [v]):
+                if isinstance(x, str) and x.startswith("/"):
+                    paths.append("/" + x.split("/")[1])
+    print(",".join(sorted(set(paths))))
+    break
+PY
+)
+        if [ -z "$binds" ]; then
+            note "no residudes-engine site file names this host: the engines were not made to predict"
+        else
+            tiny=$(mktemp -d)
+            printf '%s\n' '{"name":"verify","dialect":"alphafold3","version":3,"modelSeeds":[1],"sequences":[{"protein":{"id":"A","sequence":"NLYIQWLKDGGPSSGRPPPS","unpairedMsa":">q\nNLYIQWLKDGGPSSGRPPPS\n","pairedMsa":">q\nNLYIQWLKDGGPSSGRPPPS\n","templates":[]}}]}' > "$tiny/in.json"
+            for pair in residudes-engine-trt:pt2 residudes-engine-trt:bt2 residudes-engine-trt:of3 residudes-engine-jax:af3; do
+                img=${pair%%:*}; m=${pair##*:}
+                [ -f "$IMAGES/$img.sif" ] || { note "$img.sif not here: $m not made to predict"; continue; }
+                if apptainer run --nv -B "$binds" -B "$REPO/residudes-engine:/opt/residudes-engine" \
+                       --env RESIDUDES_ENGINE_VENV=/opt/venv,RESIDUDES_ENGINE_VENV_JAX=/opt/venv \
+                       "$IMAGES/$img.sif" predict --model "$m" --input "$tiny/in.json" --out "$tiny/$m" --seed 1 \
+                       --num-recycles 1 --diffusion-samples 1 >"$tiny/$m.log" 2>&1 \
+                   && [ -s "$tiny/$m/sample_0/model.cif" ]; then
+                    ok "$img predicts with $m"
+                else
+                    bad "$img: $m did not predict: $(grep -m1 -E 'Error|error:|Cannot|No module|not found' "$tiny/$m.log" | cut -c1-100)"
+                fi
+            done
+            rm -rf "$tiny"
+        fi
     fi
 fi
 
