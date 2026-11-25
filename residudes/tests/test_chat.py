@@ -47,3 +47,13 @@ def test_help_shows_a_person_the_short_list(capsys):
     for hidden in ("evidence", "run-record", "gate"):
         assert f"    {hidden} " not in out            # not listed
     assert "residudes help --all" in out              # but findable
+
+
+def test_a_session_brings_the_structure_tools(tmp_path):
+    """A conversation about a shape needs to be able to show it."""
+    import json
+    path = chat.write_mcp_config(tmp_path)
+    assert path and path.name == ".mcp.json"
+    cfg = json.loads(path.read_text())
+    assert "molterm" in cfg["mcpServers"]
+    assert chat.write_mcp_config(tmp_path) is None          # someone else's file is left alone

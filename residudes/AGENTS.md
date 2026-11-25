@@ -181,3 +181,4 @@ clusters and plots the pool. Both sit next to this folder in the RESIDUDES repo.
 | `residudes-modeller` | HYPOTHESES or RESULTS_REVIEW, when the complex or a homolog's assembly is public: MODELLER model of the whole assembly on the target's sequences as an AF3 multimer template (a homolog's cage; a released complex with gaps) |
 | `residudes-selection` | POOL_READY, RESULTS_REVIEW (the slate) and APPROVED: residudes-qa, structural gates and site census (`residudes gate`), slate |
 | `residudes-ops-safety` | whenever you submit, watch or pull jobs |
+| `residudes-structure-view` | whenever the conversation turns on a shape: show it with molterm rather than describing it |

@@ -184,6 +184,25 @@ def _banner(cfg: Config, target: str, new: bool) -> None:
     print(dim("─" * width))
 
 
+MCP_CONFIG = {"mcpServers": {"molterm": {"command": "npx", "args": ["-y", "molterm-mcp"]}}}
+
+
+def write_mcp_config(ddir: Path) -> Path | None:
+    """Give the session molterm's tools: fetch, screenshot, select, measure, align, dssp.
+
+    A conversation about a target is mostly about shapes, and an agent that can only describe
+    one in prose is working with a hand tied. MCP-aware CLIs read .mcp.json from the directory
+    they start in, which is this target's dossier. An existing file is left alone - someone may
+    have put their own servers there.
+    """
+    import json
+    path = Path(ddir) / ".mcp.json"
+    if path.exists():
+        return None
+    path.write_text(json.dumps(MCP_CONFIG, indent=1) + "\n")
+    return path
+
+
 def ensure(cfg: Config, target: str, harness: str | None = None) -> bool:
     """The target's window, opened if it is not there. One window per target: the agent that works
     on it and the conversation a person joins are the same agent, with the same context."""
@@ -196,6 +215,7 @@ def ensure(cfg: Config, target: str, harness: str | None = None) -> bool:
     if not ddir.is_dir() or not found:
         return False
     _cmd, _name, argv = found
+    write_mcp_config(ddir)
     cmdline = argv(BRIEF.format(target=target, ddir=ddir))
     if _tmux("has-session", "-t", SESSION).returncode != 0:
         return _tmux("new-session", "-d", "-s", SESSION, "-n", target, "-c", str(ddir),

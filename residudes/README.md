@@ -74,6 +74,7 @@ Each skill in `skills/` is a `SKILL.md` procedure derived from the team's CASP17
 | `residudes-modeller` | HYPOTHESES, RESULTS_REVIEW | a homolog's assembly, or a released complex with gaps, rebuilt on the target's sequences (MODELLER) as an AF3 multimer template; T2461o DockQ 0.46 → 0.88, H2422 0.35 → 0.94 |
 | `residudes-selection` | POOL_READY, RESULTS_REVIEW, APPROVED | `residudes gate`: structural gates and a site census first (M2415 ligand 51.8 → 8.8 Å; H2321 is the case where the record is missing), then confidence within a predictor; residudes-qa; slate hedging; packaging checks |
 | `residudes-ops-safety` | INPUTS_READY, RUNNING | sbatch / pueue, one watcher, unique tags, silent AF3 deaths, storage |
+| `residudes-structure-view` | any conversation | show the shape instead of describing it: molterm's MCP tools for models, interfaces, gate sites and ligands, and when a picture is worth taking |
 
 ## Operational safeguards
 

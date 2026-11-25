@@ -21,6 +21,13 @@ rm -rf /var/lib/apt/lists/*
 
 # `residudes agent step` drives the Claude Code CLI through the SDK
 npm install -g --no-fund --no-audit @anthropic-ai/claude-code
+
+# molterm renders structures in the terminal, and its MCP server gives the agent tools for it:
+# fetch, screenshot, select, measure, align, dssp. A conversation about a target is mostly about
+# shapes, and describing one in prose when it could be shown is a poor trade. The npm install
+# pulls the prebuilt molterm binary for this platform.
+npm install -g --no-fund --no-audit molterm-mcp
+
 npm cache clean --force
 
 # `residudes slides` compiles the report with typst (a .tar.xz release, hence xz-utils)
@@ -30,5 +37,6 @@ mv /tmp/typst-x86_64-unknown-linux-musl/typst /usr/local/bin/typst
 rm -rf /tmp/typst-x86_64-unknown-linux-musl
 
 node --version
+molterm --version 2>/dev/null | head -1 || echo "molterm: binary not fetched for this platform"
 typst --version
 "$PY" -c "import gemmi, claude_agent_sdk; print('gemmi', gemmi.__version__)"
