@@ -255,8 +255,8 @@ if [ "$ALL" = 1 ] && [ -f "$IMAGES/residudes-relax.sif" ]; then
     done
     [ -z "$missing" ] && ok "AmberTools: tleap antechamber parmchk2 reduce" || bad "AmberTools missing:$missing"
     # the pipeline itself is not in the image, by design - say where it has to come from
-    if [ -x "${MINIMIZATION:-/gpfs/deepfold/casp/casp17/gromacs/relax/minimization.sh}" ]; then
-        ok "pipeline present to mount: ${MINIMIZATION:-/gpfs/deepfold/casp/casp17/gromacs/relax/minimization.sh}"
+    if [ -x "${MINIMIZATION:-/data/casp17/gromacs/relax/minimization.sh}" ]; then
+        ok "pipeline present to mount: ${MINIMIZATION:-/data/casp17/gromacs/relax/minimization.sh}"
     else
         skip "relax pipeline not on this host (mount it, or set [tools] minimization)"
     fi

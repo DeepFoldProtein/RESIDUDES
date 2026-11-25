@@ -21,7 +21,7 @@ def _to_slate(d):
 
 
 @pytest.mark.parametrize("cmd", [
-    "rm -rf /store/deepfold/x", "cd a && rm -fr b", "rm --recursive old", "find / -name x", "find /gpfs -name '*.cif'",
+    "rm -rf /data/x", "cd a && rm -fr b", "rm --recursive old", "find / -name x", "find /gpfs -name '*.cif'",
     "du -sh /store", "scancel -u deepfold", "pueue clean", "pueue kill --all", "git push -f origin main",
     "casp17 submit model_1.pdb", "curl https://predictioncenter.org/casp17/submit",
     "while true; do squeue -u me; sleep 5; done",
@@ -39,9 +39,9 @@ def test_guard_blocks(cmd):
 
 @pytest.mark.parametrize("cmd", [
     "rm model.cif", "find targets/T1417/results -name model.cif", "du -sh targets/T1417", "scancel 12345",
-    "pueue status", "git push origin feat/x", "sbatch run.sh", "ls -la /gpfs/deepfold/casp", "mv old /store/deepfold/trash/",
-    "residudes target show T1417", "residudes slate T1417 --sto A3", "du -sh /gpfs/deepfold/casp/casp17/targets/T1417",
-    "until ! squeue -h -j 1 | grep -q .; do sleep 60; done", "ls /gpfs/deepfold/casp/casp17/targets/T1417/",
+    "pueue status", "git push origin feat/x", "sbatch run.sh", "ls -la /data/casp", "mv old /data/trash/",
+    "residudes target show T1417", "residudes slate T1417 --sto A3", "du -sh /data/casp17/targets/T1417",
+    "until ! squeue -h -j 1 | grep -q .; do sleep 60; done", "ls /data/casp17/targets/T1417/",
     "rm -f qa/tmp.csv", "grep -r approve skills/",
 ])
 def test_guard_allows(cmd):

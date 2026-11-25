@@ -108,8 +108,8 @@ live on the DeepFold cluster. What exists, and where:
 | claim | data | code |
 |---|---|---|
 | selection: gates vs confidence (56 targets, 37 complexes) | `RESIDUDES/talk/selection_vs_confidence/tables/*.csv`, 344 kB: one row per target per rule, with the field z-scores | `…/scripts/selection_vs_confidence.py` and `…_headline.py` |
-| the slate's order (53 complexes, 31 monomers) | `/store/deepfold/lantern/ci/slate_policy.csv`, `zpolicy.csv`: model 1 per target under each rule | `/store/deepfold/lantern/ci/slate_policy.py`, `z_by_variant.py` |
-| the gate audits (generic gates hurt) | `/store/deepfold/lantern/ci/generic_gates*.csv`, 1.4 MB: one row per model with each gate's value | `…/generic_gates*.py` |
+| the slate's order (53 complexes, 31 monomers) | `$WORK_ROOT/ci/slate_policy.csv`, `zpolicy.csv`: model 1 per target under each rule | `$WORK_ROOT/ci/slate_policy.py`, `z_by_variant.py` |
+| the gate audits (generic gates hurt) | `$WORK_ROOT/ci/generic_gates*.csv`, 1.4 MB: one row per model with each gate's value | `…/generic_gates*.py` |
 | per-target scores behind every case | `gt_analysis/all/pool_scores.csv`, 67 MB: every scored pool model | `gt_analysis/` (OpenStructure, sbatch) |
 | engine speed-ups | [`residudes-engine/docs/benchmark/results.csv`](../../residudes-engine/docs/benchmark/results.csv), 18 kB, **in this repository** | `residudes-engine/bench/` |
 

@@ -8,7 +8,7 @@ description: First-run onboarding for residudes - walk the user through resource
 Run `residudes setup` and go through its six parts with the user. Do not rush past the findings.
 
 1. **Resources.** Read the report back in plain words: GPUs per partition, queue pressure, free space.
-   - If a filesystem is ≥ 95 % full, say so; setup prints the figure in red. The default work root is `work_root/` beside the user, and setup lists the shared dossier directories it finds — on the DeepFold cluster prefer one of those on `/store`, since `/gpfs` has been 97 % full and the per-user GPFS quota has run out before.
+   - If a filesystem is ≥ 95 % full, say so; setup prints the figure in red. The default work root is `work_root/` beside the user, and setup lists the shared dossier directories it finds — prefer one on a filesystem with room: a shared parallel filesystem has been 97 % full here before, and a per-user quota can run out mid-campaign.
 2. **Databases / weights / tools.**
    - For every STALE or MISS line, explain what it breaks. In CASP17 the 2024 foldseek PDB hid homologs that were public, so "no homolog" from a stale DB is not evidence.
    - Propose the fix line. Ask before any download.

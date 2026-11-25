@@ -31,7 +31,7 @@ DEV = "cuda"
 torch.manual_seed(0)
 rng = np.random.default_rng(0)
 N = 24
-params = Params(pathlib.Path("/gpfs/database/af3"), device=DEV)
+params = Params(pathlib.Path("/data/databases/af3"), device=DEV)
 root = params.root().child("diffuser")
 
 

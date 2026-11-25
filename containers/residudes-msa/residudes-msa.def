@@ -24,7 +24,7 @@ From: python:3.12-slim
     HMMER, MMseqs2 and kalign for MSA search. The databases are bind-mounted:
 
         apptainer run -B /path/to/repo/residudes-engine:/opt/residudes-engine \
-                      -B /gpfs/database/af3:/db \
+                      -B /data/databases/af3:/db \
             residudes-msa.sif msa --fasta q.fasta --source mmseqs2 --db /db
 
     `residudes-engine doctor` inside this image checks the tools and the databases it can see.

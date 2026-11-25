@@ -4,7 +4,7 @@
 grid attention (both orientations), triangle multiplication, pair transition, one
 full pairformer block, one MSA-stack block. Prints seconds per call.
 
-    core/.venv/bin/python core/alphafold3/tests/bench_blocks.py --n 2048 [--model-dir /gpfs/database/af3]
+    core/.venv/bin/python core/alphafold3/tests/bench_blocks.py --n 2048 [--model-dir /data/databases/af3]
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from af3torch.params import Params  # noqa: E402
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--n", type=int, default=2048)
-ap.add_argument("--model-dir", default="/gpfs/database/af3")
+ap.add_argument("--model-dir", default="/data/databases/af3")
 ap.add_argument("--reps", type=int, default=3)
 args = ap.parse_args()
 dev = "cuda"

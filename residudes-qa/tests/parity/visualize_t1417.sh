@@ -5,19 +5,19 @@
 # (the real target is never written to), runs the original analyze_target.sh and residudes-qa on it,
 # and compares the produced file sets and every CSV.
 #
-#   sbatch -p normal -c 4 --wrap "bash tests/parity/visualize_t1417.sh /store/deepfold/residudes-qa-parity/viz"
+#   sbatch -p normal -c 4 --wrap "bash tests/parity/visualize_t1417.sh /data/residudes-qa-parity/viz"
 set -uo pipefail
 LQA="${LQA_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
-WORK="${1:-/store/deepfold/residudes-qa-parity/viz}"
-SRC=/gpfs/deepfold/casp/casp17/targets/T1417/results/A3/af3_msa
+WORK="${1:-/data/residudes-qa-parity/viz}"
+SRC=/data/casp17/targets/T1417/results/A3/af3_msa
 W="$WORK/T1417"
 mkdir -p "$W/results/A3/af3_msa/af3" "$W/results/A3/af3_msa/pt2"
 for s in 1 2; do ln -sfn "$SRC/af3/seed_$s" "$W/results/A3/af3_msa/af3/seed_$s"; done
 ln -sfn "$SRC/pt2/seed_1" "$W/results/A3/af3_msa/pt2/seed_1"
 cd "$WORK"
 rm -rf "$W/visualization" "$W/visualization_orig"
-# the container binds only the target dir; the links point into /gpfs
-APPTAINER_BIND=/gpfs,/store /gpfs/deepfold/casp/casp17/visualization/analyze_target.sh --skip-msa "$W" > orig.log 2>&1
+# the container binds only the target dir; the links point outside it
+APPTAINER_BIND="${PARITY_BINDS:-/data}" /data/casp17/visualization/analyze_target.sh --skip-msa "$W" > orig.log 2>&1
 echo "orig rc=$?"
 mv "$W/visualization" "$W/visualization_orig"
 "$LQA/bin/residudes-qa" visualize --no-msa "$W" > new.log 2>&1

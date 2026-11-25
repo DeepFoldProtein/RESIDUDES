@@ -10,7 +10,7 @@ fi
 export LQA_ROOT
 VENV_PY="${RESIDUDES_QA_PYTHON:-$LQA_ROOT/.venv/bin/python}"
 export PYTHONPATH="$LQA_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
-LQA_CDR_BIN="${RESIDUDES_QA_CDR_BIN:-/gpfs/deepfold/casp/casp17/analysis/.venv-cdr/bin}"
+LQA_CDR_BIN="${RESIDUDES_QA_CDR_BIN:-$RESIDUDES_QA_CDR_BIN}"
 if [ ! -x "$VENV_PY" ]; then
     echo "residudes-qa: no venv python at $VENV_PY — run 'uv sync --extra cu130' (or cu124) in $LQA_ROOT" >&2
     return 2 2>/dev/null || exit 2

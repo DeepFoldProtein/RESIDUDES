@@ -4,7 +4,7 @@
 mode: ppi
 
 # CASP target directory + stoichiometry.
-target_dir: /gpfs/deepfold/casp/casp17/targets/T1234
+target_dir: /data/casp17/targets/T1234
 sto: A1B1
 variants: []
 methods:  []

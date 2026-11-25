@@ -20,7 +20,10 @@ import os
 import re
 import shlex
 
-SHARED_ROOTS = {"/", "/gpfs", "/gpfs/deepfold", "/store", "/store/deepfold", "/data", "/home", "/scratch"}
+# Roots that belong to everyone on a cluster: a recursive delete or a full scan here hits other
+# people's work. A site can add its own with RESIDUDES_SHARED_ROOTS (colon separated).
+SHARED_ROOTS = {"/", "/gpfs", "/store", "/data", "/home", "/scratch", "/work", "/project"} | {
+    d for d in os.environ.get("RESIDUDES_SHARED_ROOTS", "").split(":") if d}
 WRAPPERS = {"sudo", "env", "nohup", "time", "nice", "timeout", "xargs", "command", "exec", "stdbuf", "srun"}
 WRAPPER_OPTS_WITH_VALUE = {"-u", "-s", "-k", "-n", "-C", "-S", "-I", "-P"}
 GLOB = re.compile(r"[*?\[]")

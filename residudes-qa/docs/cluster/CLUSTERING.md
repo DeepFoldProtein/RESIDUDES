@@ -21,7 +21,7 @@ Same shape as `inferences/<model>/submit_inference.sh` and
 ## One-time setup
 
 Creates `analysis/.venv/` (uv-managed) and installs all dependencies. The
-venv lives on the shared `/gpfs/deepfold/casp/casp17/` mount, so it's a
+venv lives on the shared `/data/casp17/` mount, so it's a
 one-time cost shared by everybody.
 
 ```bash
@@ -33,7 +33,7 @@ bash analysis/setup.sh --with-cdr
 ```
 
 If `uv` isn't on PATH the script downloads it into `analysis/.bin/uv`.
-HMMER is symlinked from `/gpfs/deepfold/anaconda3/envs/AlphaFold/bin/`.
+HMMER is symlinked from `/opt/conda/envs/AlphaFold/bin/`.
 
 ANARCI lives in a sibling `analysis/.venv-cdr/` (Python 3.10 +
 biopython 1.81 — known-good combo for HMMER 3.3.2 output) so the main

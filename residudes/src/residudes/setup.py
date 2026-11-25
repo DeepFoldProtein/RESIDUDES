@@ -89,6 +89,11 @@ def mark(status: str) -> str:
 
 
 def _print_report(rep: dict) -> None:
+    _print_resources(rep)
+    _print_catalog_and_components(rep)
+
+
+def _print_resources(rep: dict) -> None:
     r = rep["resources"]
     h = r["host"]
     print(bold(f"\n== 1. resources on {h['host']}") + f"  ({h['cpus']} CPUs, {h['mem_gb']} GB RAM, python {h['python']})")
@@ -111,12 +116,15 @@ def _print_report(rep: dict) -> None:
     print("   tools: " + ", ".join(k if v else yellow(f"{k} (missing)") for k, v in r["tools"].items()))
     for rec in rep["recommendations"]:
         print("   " + yellow("->") + f" {rec}")
-    print(bold("\n== 2. databases, weights, tools") + " (catalog.toml)")
+
+
+def _print_catalog_and_components(rep: dict) -> None:
+    print(bold("\n== 3. databases, weights, tools") + " (catalog.toml)")
     for c in rep["catalog"]:
         print(f"   {mark(c['status'])} {c['name']:32s} {dim(c['date'] or ''):10s}  {c['note']}")
         if c["fix"]:
             print("           " + dim(f"fix: {c['fix']}"))
-    print(bold("\n== 3. components"))
+    print(bold("\n== 4. components"))
     for c in rep["components"]:
         print(f"   {mark(c['status'])} {c['name']} {dim('(' + str(c['path']) + ')')}")
         for line in c.get("doctor", [])[-8:]:
@@ -180,15 +188,48 @@ def link_skills(project: Path, copy: bool = False) -> list[str]:
     return done
 
 
+# What the catalogue asks for, in the order someone would answer it: the big, slow things first,
+# because a machine that already has 630 GB of databases should never be asked to download them,
+# and the licensed ones cannot be downloaded at all.
+DB_QUESTIONS = [
+    ("af3_db", "AlphaFold 3 databases and af3.bin (the nine genetic databases; ~630 GB)"),
+    ("colabfold_db", "ColabFold databases (the faster MSA route)"),
+    ("foldseek_db", "foldseek PDB (structure search)"),
+    ("foldseek_pdb_2026", "a newer foldseek PDB, if this machine has one"),
+    ("campaign", "an existing campaign tree (targets, analysis, esm)"),
+    ("containers", "a directory of .sif containers (OpenStructure)"),
+    ("sabdab", "SAbDab (antibody structures)"),
+]
+
+
+def ask_databases(cfg, yes: bool) -> dict:
+    """Ask what this machine already has, before anything is checked or installed."""
+    have = dict(cfg.extra.get("databases") or {})
+    if yes:
+        return have
+    print(bold("\n== 2. what this machine already has"))
+    print("   " + dim("one line each, empty if this machine does not have it; `residudes doctor` re-checks later"))
+    for key, what in DB_QUESTIONS:
+        print(f"\n   {what}")                     # the description on its own line, then the prompt
+        ans = _ask(f"     [databases] {key}", have.get(key, ""), yes)
+        if ans:
+            have[key] = ans
+        else:
+            have.pop(key, None)
+    cfg.extra["databases"] = have
+    return have
+
 def run_setup(cfg_path: str | None, yes: bool, as_json: bool, project: str | None, copy_skills: bool = False) -> int:
     cfg = load(cfg_path)
-    rep = report(cfg)
     if as_json:
-        print(json.dumps(rep, indent=1, default=str))
+        print(json.dumps(report(cfg), indent=1, default=str))
         return 0
-    _print_report(rep)
+    _print_resources(report(cfg))          # 1. what this machine is
+    ask_databases(cfg, yes)                # 2. what it already has, asked before anything is checked
+    rep = report(cfg)                      # 3-4. the catalogue and the components, with those answers
+    _print_catalog_and_components(rep)
 
-    print(bold("\n== 4. residudes.toml"))
+    print(bold("\n== 5. residudes.toml"))
     p = config_path(cfg_path)
     suggested, others = _suggest_work_root(rep, cfg.work_root)
     if others:                      # say what else is there rather than silently preferring it
@@ -203,7 +244,7 @@ def run_setup(cfg_path: str | None, yes: bool, as_json: bool, project: str | Non
         Path(cfg.work_root, "targets").mkdir(parents=True, exist_ok=True)
         print("   " + green("wrote") + f" {p}; dossiers in {cfg.work_root}/targets")
 
-    print(bold("\n== 5. skills") + " (playbooks for Claude Code, Codex and Antigravity)")
+    print(bold("\n== 6. skills") + " (playbooks for Claude Code, Codex and Antigravity)")
     proj = Path(project) if project else None
     if proj is None and not yes:
         ans = _ask("   project directory to link the skills into (empty to skip)", "", yes)
@@ -214,7 +255,7 @@ def run_setup(cfg_path: str | None, yes: bool, as_json: bool, project: str | Non
               + "; ".join(f"{k}: {v}" for k, v in HARNESS_SKILL_DIRS.items()) + ")")
     print("   inside residudes/ every harness already finds them, and AGENTS.md (CLAUDE.md imports it) holds the rules")
 
-    print(bold("\n== 6. how to start a target"))
+    print(bold("\n== 7. how to start a target"))
     print("   residudes target add T1234 --fasta T1234.fasta [--stoich A3]   # creates the dossier")
     print("   residudes next T1234                                        # what the next step is, and its skill")
     print("   residudes agent step T1234                                  # let the agent do that step (asks nothing outward)")
@@ -292,19 +333,30 @@ def available_harness(preferred: str | None = None) -> tuple[str, str, list] | N
     return None
 
 
-SETUP_BRIEF = """Set this machine up to run RESIDUDES, with me.
+SETUP_BRIEF = """Set this machine up to run RESIDUDES, with me. One step at a time: ask, wait for my
+answer, then do that step before moving on. Read {skill} first - it is the project's own setup
+procedure.
 
-Read {skill} first: it is the project's own setup procedure. Then:
+1. ASK FIRST, before checking or installing anything, what this machine already has. Most of it is
+   large or licensed, so finding it is worth more than fetching it:
+     - the AlphaFold 3 genetic databases (~630 GB) and af3.bin, which is licensed per person and
+       cannot be downloaded by you at all
+     - ColabFold databases, foldseek PDB, SAbDab
+     - model checkpoints and TensorRT engines from an earlier installation
+     - an existing campaign tree with targets in it
+     - Rosetta and a MODELLER key, if relaxation or templates are wanted
+   Take the paths I give you, write them into residudes.toml ([databases], [tools]) and move on.
+   Where I do not have something, say what it is for and what it costs to get, and let me decide.
 
-1. Run `{residudes} doctor` and read the report with me - resources, databases, components.
-2. Decide together what this machine needs. A campaign needs the agent; predictions need
-   residudes-engine with a GPU; scoring needs residudes-qa; MSA search needs the databases.
-   Published images cover every part ({containers}), and `containers/verify.sh` pulls or builds
-   them and then checks the installation end to end, databases included.
-3. Do the installing. Explain each command before running it, and stop at anything that costs
-   money, needs a licence (AlphaFold 3 parameters, Rosetta, MODELLER) or writes outside this
-   machine.
-4. Finish by running `containers/verify.sh` (add `--gpu` where there is a card, and
+2. THEN check, with `{residudes} doctor`, so the report reflects my answers rather than defaults.
+   Read it with me: what is present, what is stale, what is missing.
+
+3. THEN install what is missing, one component at a time, explaining each command before you run
+   it. The published images cover every part ({containers}); `containers/verify.sh` obtains them
+   and checks the installation. Stop at anything that costs money, needs a licence or writes
+   outside this machine.
+
+4. FINISH by running `containers/verify.sh` (add `--gpu` where there is a card, and
    `--af3-db DIR --deep` where the databases are) and show me the result.
 
 Do not submit anything anywhere, and do not change RESIDUDES_ACTOR.

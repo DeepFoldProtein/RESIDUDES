@@ -11,7 +11,7 @@ Usage::
 
     python openfold3/inference_jax.py \\
         --query examples/openfold3/ubiquitin.json \\
-        --checkpoint /gpfs/deepfold/casp/casp17/checkpoints/of3-p2-155k.pt \\
+        --checkpoint /data/casp17/checkpoints/of3-p2-155k.pt \\
         --output-dir results/of3_jax_ubiquitin
 
 JAX-specific flags (consumed before OF3's parser):

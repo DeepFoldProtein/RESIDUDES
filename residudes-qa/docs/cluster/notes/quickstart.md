@@ -134,7 +134,7 @@ analysis/.venv/bin/python -m massiveclustering.cli cluster-analysis \
     -o          out/contact_analysis -t H1335 \
     --paratope-chains D,E --epitope-chains A,B,C \
     --heavy E --light D \
-    --anarci-bin /gpfs/deepfold/casp/casp17/analysis/.venv-cdr/bin/ANARCI \
+    --anarci-bin $RESIDUDES_QA_CDR_BIN/ANARCI \
     --max-models 25      # optional subsample per cluster (speeds up the 2D pass)
 ```
 

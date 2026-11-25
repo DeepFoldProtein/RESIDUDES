@@ -13,7 +13,7 @@ import hashlib
 import sys
 from pathlib import Path
 
-A = Path("/gpfs/deepfold/casp/casp17/analysis")
+A = Path("$RESIDUDES_QA_SOURCE_TREE/analysis")
 XGB = A / "XGBDimerScorer_tool" / "models"
 EMA = A / "EMA" / "data"
 MPNN = A / "MassiveClustering_tool" / "proteinmpnn" / "run" / "model_weights"

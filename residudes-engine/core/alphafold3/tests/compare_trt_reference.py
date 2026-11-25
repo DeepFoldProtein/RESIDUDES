@@ -32,7 +32,7 @@ from af3torch.params import Params  # noqa: E402
 from trt.af3_to_openfold3 import pairformer_state_dict, token_transformer_state_dict  # noqa: E402
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--model-dir", default="/gpfs/database/af3")
+ap.add_argument("--model-dir", default="/data/databases/af3")
 ap.add_argument("--blocks", type=int, default=2)
 ap.add_argument("--n", type=int, default=32)
 args = ap.parse_args()

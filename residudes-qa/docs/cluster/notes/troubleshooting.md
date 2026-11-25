@@ -213,7 +213,7 @@ silently and the pipeline fell back to all-framework labels.
 bin dir to PATH so the bundled `hmmscan` is found:
 
 ```bash
---anarci-bin /gpfs/deepfold/casp/casp17/analysis/.venv-cdr/bin/ANARCI
+--anarci-bin $RESIDUDES_QA_CDR_BIN/ANARCI
 ```
 
 ---
@@ -239,7 +239,7 @@ xgb model JSON.
 mounted on every compute node.
 
 **Fix:** the models now ship inside the tool at
-`XGBDimerScorer_tool/models/` (on `/gpfs/deepfold`, mounted everywhere) and are
+`XGBDimerScorer_tool/models/` (on `/data`, mounted everywhere) and are
 the default. If you pinned a `/store` path explicitly, drop the override or
 point `--model-path` at the bundled copy.
 

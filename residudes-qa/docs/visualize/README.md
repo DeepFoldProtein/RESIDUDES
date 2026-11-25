@@ -11,11 +11,11 @@ environment setup required. Any account on the system can run it as-is.
 ## Usage
 
 ```bash
-/gpfs/deepfold/casp/casp17/visualization/analyze_af3_target.sh [options] <target_dir>
+/data/casp17/visualization/analyze_af3_target.sh [options] <target_dir>
 ```
 
 `<target_dir>` is the root directory of a CASP target (e.g.
-`/gpfs/deepfold/casp/casp17/targets_test/H1106`). It must contain AF3
+`/data/casp17/targets_test/H1106`). It must contain AF3
 inference results under the standard unified output schema layout:
 
 ```
@@ -48,11 +48,11 @@ an `arrays/` subdirectory with `.npy` confidence files.
 
 ```bash
 # Run on a target (output goes to <target_dir>/visualization/)
-analyze_af3_target.sh /gpfs/deepfold/casp/casp17/targets_test/H1106
+analyze_af3_target.sh /data/casp17/targets_test/H1106
 
 # CSV only (fast, no matplotlib rendering)
 analyze_af3_target.sh --no-plots \
-    /gpfs/deepfold/casp/casp17/targets_test/H1106
+    /data/casp17/targets_test/H1106
 ```
 
 ---
@@ -131,6 +131,6 @@ The container only needs to be rebuilt if Python package dependencies change.
 To rebuild (requires an admin account with Apptainer build privileges):
 
 ```bash
-cd /gpfs/deepfold/casp/casp17/visualization
+cd /data/casp17/visualization
 apptainer build af3-viz.sif af3-viz.def
 ```

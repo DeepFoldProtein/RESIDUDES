@@ -128,7 +128,7 @@ STRICT =
 from xgbdimer.filter.template_rmsd import regional_rmsd
 r = regional_rmsd(
     pred_cif='.../model.cif',
-    ref_cif='/gpfs/.../target_notes/H1335/structures/7LBE.cif',
+    ref_cif='/data/casp17/target_notes/H1335/structures/7LBE.cif',
     anchor_chain_pred='B', anchor_chain_ref='A',          # 둘 다 gH (100% identical)
     probe_chain_pred='A', probe_chain_ref='C',            # 둘 다 gO
     regions={'Nterm': (1, 80), 'core': (200, 440)},
@@ -218,4 +218,4 @@ STRICT 통과율 4.2%
 ---
 
 자세한 의사결정 사례 (H1335 5 picks 선정):
-- `/gpfs/deepfold/casp/casp17/playground/gunwoong_analysis/H1335/analysis/REPORT.md §13`
+- `/data/casp17/playground/gunwoong_analysis/H1335/analysis/REPORT.md §13`

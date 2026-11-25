@@ -12,7 +12,7 @@ Run with::
 
     python protenix/test_diffusion_module_parity.py \\
         --input_json_path examples/protenix/ubiquitin_protenix.json \\
-        --load_checkpoint_dir /home/deepfold/checkpoint \\
+        --load_checkpoint_dir $HOME/checkpoint \\
         --model_name protenix-v2 \\
         --use_msa false --enable_efficient_fusion false
 """

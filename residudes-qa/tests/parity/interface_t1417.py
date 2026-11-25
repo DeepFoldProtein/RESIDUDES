@@ -28,7 +28,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-CASP = Path("/gpfs/deepfold/casp/casp17")
+CASP = Path("/data/casp17")
 REF = CASP / "targets/T1417/xgb_trimer"
 ORIG_TOOL = CASP / "analysis/XGBDimerScorer_tool"
 ORIG_PY = CASP / "analysis/.venv/bin/python"

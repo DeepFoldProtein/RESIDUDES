@@ -84,11 +84,11 @@ checked on that target, not as a measurement.
 
 ```bash
 # 0. From any directory — the tool resolves its own paths
-TOOL=/gpfs/deepfold/casp/casp17/analysis/XGBDimerScorer_tool
+TOOL=$RESIDUDES_QA_SOURCE_TREE/analysis/XGBDimerScorer_tool
 
 # 1. Discover all model.cif under a target (5 sec for 20,000 models)
 $TOOL/run_scoring.sh discover \
-    --target-dir /gpfs/deepfold/casp/casp17/targets/H1335 \
+    --target-dir /data/casp17/targets/H1335 \
     --sto A1B1C1D1E1 \
     -o /path/to/out
 
@@ -109,7 +109,7 @@ $TOOL/run_scoring.sh score --master /path/to/out/master.parquet --mode ab -o /pa
 
 # 5. (Optional) One-shot wrapper that chains all 4 steps
 $TOOL/run_scoring.sh run-all \
-    --target-dir /gpfs/deepfold/casp/casp17/targets/H1335 \
+    --target-dir /data/casp17/targets/H1335 \
     --sto A1B1C1D1E1 --mode ab \
     --ab-chains DE --ag-chains ABC --heavy E --light D \
     -o /path/to/out
@@ -194,10 +194,10 @@ version (model is **v6**; override with `--ppi-model`).
 ### One command
 
 ```bash
-TOOL=/gpfs/deepfold/casp/casp17/analysis/XGBDimerScorer_tool
+TOOL=$RESIDUDES_QA_SOURCE_TREE/analysis/XGBDimerScorer_tool
 # preferred: unified entry (gets GPU + sharding + self-heal)
 $TOOL/run_scoring.sh run-all --mode ppi \
-    --target-dir /gpfs/deepfold/casp/casp17/targets/H1360 \
+    --target-dir /data/casp17/targets/H1360 \
     --sto A1B1C1D1E1 --variants af3_msa --methods af3 --target H1360 \
     -o /path/to/out
 # equivalent alias:
@@ -323,13 +323,13 @@ Uses the shared analysis venvs — same as MassiveClustering_tool. If
 those exist nothing to do:
 
 ```bash
-ls /gpfs/deepfold/casp/casp17/analysis/.venv/bin/python      # main venv
-ls /gpfs/deepfold/casp/casp17/analysis/.venv-cdr/bin/ANARCI  # ANARCI venv (Ab mode only)
+ls $RESIDUDES_QA_SOURCE_TREE/analysis/.venv/bin/python      # main venv
+ls $RESIDUDES_QA_CDR_BIN/ANARCI  # ANARCI venv (Ab mode only)
 ```
 
 If missing:
 ```bash
-cd /gpfs/deepfold/casp/casp17/analysis
+cd $RESIDUDES_QA_SOURCE_TREE/analysis
 bash setup.sh                    # base venv
 bash setup.sh --with-cdr         # + ANARCI venv (for --mode ab)
 ```
@@ -340,7 +340,7 @@ The wrapper script (`run_scoring.sh`) auto-detects venvs and sets
 ### Portability — sharing with teammates
 
 All scoring **code and data live inside the analysis tree**, so the tool is
-self-contained on any node where `/gpfs/deepfold` is mounted:
+self-contained on any node where `/data` is mounted:
 
 - CPU/GPU scorers are imported from `EMA/scorers/`. The two parser modules they
   depend on — `hbond_energy.py` (hbond) and `bbdep_chi_energy.py` (bbdep) — are
@@ -350,15 +350,15 @@ self-contained on any node where `/gpfs/deepfold` is mounted:
   file, in that order.
 
 **To hand off:** give a `deepfold`-group teammate the path
-`/gpfs/deepfold/casp/casp17/analysis/XGBDimerScorer_tool` — they can run
+`$RESIDUDES_QA_SOURCE_TREE/analysis/XGBDimerScorer_tool` — they can run
 `run_scoring.sh` directly, no copying or env setup.
 
 > **Caveat (venv interpreter):** `.venv`/`.venv-cdr` symlink their Python into
 > the creator's `~/.local/share/uv/python/...`. This works for `deepfold`-group
 > members (`/home` is shared across nodes and the dirs grant group-traverse),
 > but a **non-group user is blocked** by `~/.local` permissions. For a fully
-> user-independent install, recreate the venv against a shared `/gpfs`
-> interpreter (e.g. `uv venv --python /gpfs/deepfold/anaconda3/envs/AlphaFold/bin/python`)
+> user-independent install, recreate the venv against a shared filesystem
+> interpreter (e.g. `uv venv --python /opt/conda/envs/AlphaFold/bin/python`)
 > rather than re-running `setup.sh` (which lets `uv` install Python under the
 > caller's home).
 
@@ -367,13 +367,13 @@ self-contained on any node where `/gpfs/deepfold` is mounted:
 ## Sample command (verified on H1335)
 
 ```bash
-TOOL=/gpfs/deepfold/casp/casp17/analysis/XGBDimerScorer_tool
+TOOL=$RESIDUDES_QA_SOURCE_TREE/analysis/XGBDimerScorer_tool
 $TOOL/run_scoring.sh run-all \
-    --target-dir /gpfs/deepfold/casp/casp17/targets/H1335 \
+    --target-dir /data/casp17/targets/H1335 \
     --sto A1B1C1D1E1 \
     --mode ab \
     --ab-chains DE --ag-chains ABC --heavy E --light D \
-    -o /gpfs/deepfold/casp/casp17/playground/$USER/H1335_xgb_test
+    -o /data/casp17/playground/$USER/H1335_xgb_test
 ```
 
 Result: 19,356 × 131 master_with_xgb.parquet with xgb_v8 scores
@@ -520,11 +520,11 @@ After `run-all` (without `--apply-filter`), master has these column groups:
 
 ```bash
 # After run-all produced master_with_xgb.parquet:
-MC=/gpfs/deepfold/casp/casp17/analysis/MassiveClustering_tool
-PY=/gpfs/deepfold/casp/casp17/analysis/.venv/bin/python
+MC=$RESIDUDES_QA_SOURCE_TREE/analysis/MassiveClustering_tool
+PY=$RESIDUDES_QA_SOURCE_TREE/analysis/.venv/bin/python
 
 # Option A: heavy clustering (TM/iTM/dRMSD with adaptive K + Leiden)
-$MC/run_clustering.sh /gpfs/.../targets/H1335 \
+$MC/run_clustering.sh /data/casp17/targets/H1335 \
     --sto A1B1C1D1E1 --method all \
     --output-base /path/to/out_clustered
 
@@ -544,7 +544,7 @@ $PY -m massiveclustering.cli cluster-analysis \
     --master   /path/to/master_with_xgb.parquet \
     -o /path/to/contact_analysis -t H1335 \
     --paratope-chains D,E --epitope-chains A,B,C --heavy E --light D \
-    --anarci-bin /gpfs/deepfold/casp/casp17/analysis/.venv-cdr/bin/ANARCI
+    --anarci-bin $RESIDUDES_QA_CDR_BIN/ANARCI
 ```
 
 See `docs/FILTERS.md` for every QC filter, and
@@ -556,5 +556,5 @@ analysis (frequency/enrichment, CDR×epitope 2D map, geometric stability).
 ## See also
 
 - `docs/FILTERS.md` — every QC/filter concept (CDR-clean, STRICT, clash 1.7 Å, gO regional RMSD, atom integrity)
-- `/gpfs/deepfold/casp/casp17/playground/gunwoong_analysis/H1335/analysis/REPORT.md §13` — full H1335 5-pick decision (reference case study this tool generalizes)
+- `/data/casp17/playground/gunwoong_analysis/H1335/analysis/REPORT.md §13` — full H1335 5-pick decision (reference case study this tool generalizes)
 - `MassiveClustering_tool/README.md` — heavy clustering on pairwise distance matrix

@@ -8,7 +8,7 @@ import sys
 import time
 from huggingface_hub import HfApi
 
-ENGINES_ROOT = "/gpfs/deepfold/casp/casp17/engines"
+ENGINES_ROOT = "/data/casp17/engines"
 
 # (src_gpu, src_subdir, repo_id, dest_folder)
 UPLOADS = [

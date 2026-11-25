@@ -27,7 +27,7 @@ Each rule here cost the team something in CASP17.
 ## Storage and files
 
 - **Never run `find`, `du` or `ls -R` on `/`, `/gpfs`, `/store` or other shared roots.** Scope to the target directory.
-- **Check free space and quota before large writes.** GPFS has been 97 % full and the per-user quota exhausted; put new work under `/store/deepfold`.
+- **Check free space and quota before large writes.** GPFS has been 97 % full and the per-user quota exhausted; put new work under `/data`.
 - **Never delete recursively.** Move to a trash directory and tell the user.
 - **A SLURM epilog kills every process of yours on a node** when your last job there ends. Do not leave daemons on compute nodes.
 - **When a pod's pueued restarts,** source its env file first, or its state directory falls back to an unwritable home.

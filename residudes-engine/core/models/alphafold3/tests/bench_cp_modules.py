@@ -9,7 +9,7 @@ on this hardware. Runs:
   * For each ``N`` and each CP module: median forward time, CP-off vs
     CP-on, plus speedup.
 
-Use the AF3 venv (``/gpfs/deepfold/casp/casp17/alphafold3/.venv``) for
+Use the AF3 venv (``/data/casp17/alphafold3/.venv``) for
 JAX 0.9.1 + tokamax 0.0.11. The script assumes ≥4 visible GPUs.
 
 Run::

@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import adjusted_rand_score
 
-CASP = Path("/gpfs/deepfold/casp/casp17")
+CASP = Path("/data/casp17")
 SRC = CASP / "targets/T1417/results/A3/af3_msa"
 ORIG_PY = CASP / "analysis/.venv/bin/python"
 ORIG_TOOL = CASP / "analysis/MassiveClustering_tool"

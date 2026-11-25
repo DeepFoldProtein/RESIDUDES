@@ -110,7 +110,7 @@ any branch:
 ```sh
 apptainer run -B $PWD/residudes:/opt/residudes -B /store/work:/store/work residudes.sif doctor
 apptainer run --nv -B /store/work residudes-qa-cu130.sif interface run-ppi-v4 ...
-apptainer run -B /gpfs/database/af3:/db residudes-msa.sif \
+apptainer run -B /data/databases/af3:/db residudes-msa.sif \
     msa --fasta q.fasta --source af3 --af3-db /db
 ```
 

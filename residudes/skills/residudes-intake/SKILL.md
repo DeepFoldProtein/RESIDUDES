@@ -84,7 +84,7 @@ sizes, the best confidence and predicted DockQ in each). Nothing to record: it i
      snapshot URL), the team's own folder, or ask the person for the PDF at the plan checkpoint. **Never fill the
      gap from memory**: record what you could not read, and what it would have told you.
      The team's own PDFs per target are on this cluster at
-     `/gpfs/deepfold/casp/casp17/target_notes/<T>/papers/` (an absolute path; there is no `target_notes` inside the
+     `/data/casp17/target_notes/<T>/papers/` (an absolute path; there is no `target_notes` inside the
      dossier). Look there before downloading anything, and say which file a claim came from. The rest of that folder
      is the team's own analysis of the target: on a replay it is hindsight, so read only `papers/` unless the
      operator says otherwise.

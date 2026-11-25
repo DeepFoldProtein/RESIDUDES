@@ -39,7 +39,7 @@ from af3torch import nn as tnn  # noqa: E402
 from af3torch.params import Params  # noqa: E402
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--model-dir", default="/gpfs/database/af3")
+ap.add_argument("--model-dir", default="/data/databases/af3")
 ap.add_argument("--n", type=int, default=48)
 ap.add_argument("--only", default=None, help="comma-separated test names")
 args = ap.parse_args()

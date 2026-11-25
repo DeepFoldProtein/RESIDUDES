@@ -1,4 +1,4 @@
-"""Mirror all HF engine repos into /gpfs/deepfold/casp/casp17/engines/<repo-name>/.
+"""Mirror all HF engine repos into /data/casp17/engines/<repo-name>/.
 
 Structure (per repo):
     engines/<repo-name>/
@@ -23,7 +23,7 @@ REPOS = [
     "DeepFoldProtein/boltz2-cuequiv-trt",
 ]
 
-ENGINES_ROOT = Path("/gpfs/deepfold/casp/casp17/engines")
+ENGINES_ROOT = Path("/data/casp17/engines")
 
 
 def main():

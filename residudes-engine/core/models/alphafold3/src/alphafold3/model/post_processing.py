@@ -514,7 +514,7 @@ def write_distogram(
   # Vendored at alphafold3/src/alphafold3/utils/logit_codec.py — accessible
   # both at host (.../alphafold3/src/alphafold3/utils/) and inside the SIF
   # (.../app/alphafold/src/alphafold3/utils/) since the SIF binds
-  # /gpfs/.../alphafold3 → /app/alphafold. Resolve via relative path so the
+  # <checkout>/alphafold3 -> /app/alphafold. Resolve via relative path so the
   # exact same code path works in either location.
   _here = os.path.dirname(os.path.abspath(__file__))
   _utils = os.path.normpath(os.path.join(_here, '..', 'utils'))

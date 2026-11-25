@@ -3,7 +3,7 @@
 These scripts check that residudes-qa reproduces the original CASP17 tools. Each one runs the
 original tool and residudes-qa on the same inputs, on the same node, in one Slurm job, and
 compares every number. They need the DeepFold cluster: the originals live under
-`/gpfs/deepfold/casp/casp17/`.
+`/data/casp17/`.
 
 | Script | Compares | Reference |
 |---|---|---|
@@ -13,7 +13,7 @@ compares every number. They need the DeepFold cluster: the originals live under
 
 ```sh
 sbatch -p normal --gres=gpu:1 -c 8 -t 2:00:00 \
-  --wrap ".venv/bin/python tests/parity/interface_t1417.py /store/deepfold/residudes-qa-parity/interface_t1417"
+  --wrap ".venv/bin/python tests/parity/interface_t1417.py /data/residudes-qa-parity/interface_t1417"
 ```
 
 Each comparison reports the largest absolute difference per column:

@@ -6,12 +6,12 @@ the ada cluster. The copies were then changed only as listed below.
 
 | Package path | Copied from | Notes |
 |---|---|---|
-| `interface/` | `/gpfs/deepfold/casp/casp17/analysis/XGBDimerScorer_tool/xgbdimer/` (last modified 2026-06-15) | renamed from `xgbdimer` |
+| `interface/` | `$RESIDUDES_QA_SOURCE_TREE/analysis/XGBDimerScorer_tool/xgbdimer/` (last modified 2026-06-15) | renamed from `xgbdimer` |
 | `cluster/` | `.../analysis/MassiveClustering_tool/massiveclustering/` (2026-06-16) | renamed from `massiveclustering` |
 | `cluster/run_clustering.py` | `.../analysis/MassiveClustering_tool/run_clustering.py` (2026-06-20) | |
 | `ema/scorers/` | `.../analysis/EMA/scorers/{aadars_per_cdr, aadars_v3_scorer, bbdep_chi_energy, bbdep_chi_spline_v2, dfire_v2_scorer, hbond_energy, hbond_network, mpnn_iface, ndrd_scorer, proteinmpnn_score}.py` | the subset the interface features import |
 | `mpnn/run/` | `.../analysis/MassiveClustering_tool/proteinmpnn/run/` without `model_weights/` | ProteinMPNN code plus the team's `mpnn_utils.py`, `run_mpnn.py`, `generate_json.py` |
-| `visualize/` | `/gpfs/deepfold/casp/casp17/visualization/{analysis/*, analyze.py → target.py, analyze_msa.py → msa.py}` | |
+| `visualize/` | `/data/casp17/visualization/{analysis/*, analyze.py → target.py, analyze_msa.py → msa.py}` | |
 | `scripts/interface/` | `XGBDimerScorer_tool/{run_scoring.sh, run_all_worker.sh, shard_ppi.sh, shard_worker.sh, ppi_merge.py, run_scoring.py, sbatch_templates/}` | |
 | `scripts/cluster/` | `MassiveClustering_tool/{run_clustering.sh, run_clustering.sbatch}` | |
 | `tests/cluster/` | `MassiveClustering_tool/tests/` | |
@@ -43,6 +43,6 @@ the ada cluster. The copies were then changed only as listed below.
 
 ## Environment
 
-- **Pins:** dependencies are pinned to `/gpfs/deepfold/casp/casp17/analysis/.venv` as frozen on 2026-11-21 (`envs/casp17-analysis-venv.freeze.txt`).
+- **Pins:** dependencies are pinned to `$RESIDUDES_QA_SOURCE_TREE/analysis/.venv` as frozen on 2026-11-21 (`envs/casp17-analysis-venv.freeze.txt`).
 - **networkx:** the only deliberate difference, 2.2 → 3.4.2 (see README).
 - **Visualization:** the af3-viz container ran numpy 2.4.4. Here it runs on the QA pin, numpy 1.26.4.

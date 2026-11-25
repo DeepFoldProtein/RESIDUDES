@@ -4,7 +4,7 @@
 mode: ab
 
 # CASP target directory + stoichiometry.
-target_dir: /gpfs/deepfold/casp/casp17/targets/H1335
+target_dir: /data/casp17/targets/H1335
 sto: A1B1C1D1E1
 # Optional whitelists; leave empty to scan everything on disk.
 variants: []    # e.g. ['af3_msa', 'af3_selftmpl', 'af3_7lbe', 'af3_7lbe_mt']
@@ -18,7 +18,7 @@ light:    D         # Single light chain
 scfv:     null      # set when target is single-chain Fv
 
 # Reference structure for COM alignment + regional RMSD.
-ref_cif: /gpfs/deepfold/casp/casp17/target_notes/H1335/structures/7LBE.cif
+ref_cif: /data/casp17/target_notes/H1335/structures/7LBE.cif
 anchor_chains:     B           # gH on prediction (100%-identical anchor)
 anchor_chains_ref: A           # gH on reference 7LBE
 probe_chains:      A           # gO on prediction

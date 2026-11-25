@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = "==3.12.*"
 authors = [{ name = "DeepFold team" }]
 # Direct dependencies at the exact versions of the CASP17 production venv
-# (/gpfs/deepfold/casp/casp17/analysis/.venv, frozen in envs/casp17-analysis-venv.freeze.txt).
+# ($RESIDUDES_QA_SOURCE_TREE/analysis/.venv, frozen in envs/casp17-analysis-venv.freeze.txt).
 dependencies = [
     "numpy==1.26.4",
     "pandas==3.0.2",
