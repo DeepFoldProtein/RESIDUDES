@@ -136,6 +136,30 @@ def _f(x) -> float | None:
         return None
 
 
+def _missing(rows: list[dict]) -> list[str]:
+    """Runs that wrote fewer models than they were asked for, as "<sto>/<variant>/<runner> <n>/<expected>". Each run
+    is held to its own seeds: every seed_<N> directory it has on disk, times the samples its seeds carry."""
+    runs: dict = {}
+    for r in rows:
+        runs.setdefault((r["sto"], r["variant"], r["runner"]), []).append(r)
+    short = []
+    for (s, v, run), rs in sorted(runs.items()):
+        per_seed: dict = {}
+        for r in rs:
+            per_seed[str(r["seed"])] = per_seed.get(str(r["seed"]), 0) + 1
+        n_seeds = len(per_seed)
+        try:                                   # .../<runner>/seed_<N>/sample_<M>/model.cif
+            run_dir = Path(rs[0]["path"]).parents[2]
+            on_disk = [x for x in run_dir.iterdir() if x.is_dir() and x.name.startswith("seed_")]
+            n_seeds = max(n_seeds, len(on_disk))
+        except (KeyError, IndexError, OSError, TypeError):
+            pass
+        expected = n_seeds * max(per_seed.values())
+        if len(rs) < expected:
+            short.append(f"{s}/{v}/{run} {len(rs)}/{expected}")
+    return short
+
+
 def _chain_counts(by_run: dict) -> dict[str, tuple[int, int]]:
     """One model per stoichiometry x variant x runner: (polymer chains, expected). A run that lost a chain loses it in
     every model (CASP17 M2377: OpenFold3/Protenix with contact restraints, Boltz-2 JAX and OpenFold3 JAX ran without
@@ -208,12 +232,15 @@ def checks(pool_csv: Path, qa_dir: Path | None, gates_dir: Path | None = None) -
     if clash:
         trig.append("clashes: most top models clash for " + ", ".join(clash))
 
-    # missing seeds: a runner far behind the others in the same cell
+    # Missing models: what a run was asked for and did not write. Each run is held to its own seeds - every seed_<N>
+    # directory it has on disk, times the samples its seeds carry - so a job that died after creating its directory
+    # counts as missing. It used to be held to the busiest runner of its cell, which assumed equal sampling: H1388 ran
+    # AF3 at 20 seeds by plan and the others at 10, and the review reported 50 missing models for each of them.
     cells: dict = {}
     for r in rows:
         cells.setdefault((r["sto"], r["variant"]), {}).setdefault(r["runner"], 0)
         cells[(r["sto"], r["variant"])][r["runner"]] += 1
-    short = [f"{s}/{v}/{run} {n}/{max(c.values())}" for (s, v), c in cells.items() for run, n in c.items() if n < 0.8 * max(c.values())]
+    short = _missing(rows)
     num["models_per_cell"] = {f"{s}/{v}": c for (s, v), c in sorted(cells.items())}
     if short:
         trig.append("missing_models: " + ", ".join(short[:8]) + (" ..." if len(short) > 8 else ""))

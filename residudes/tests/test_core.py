@@ -221,9 +221,14 @@ def test_review_checks_find_triggers(tmp_path):
     rows = []
     for sto, base in (("A2", {"af3": 0.8, "of3": 0.5}), ("A3", {"af3": 0.5, "of3": 0.82})):
         for run, b in base.items():
-            for seed in range(5 if run == "af3" else 2):         # of3 is missing models
+            for seed in range(5):
+                d = tmp_path / "results" / sto / "v" / run / f"seed_{seed}"
+                d.mkdir(parents=True)
+                if run == "of3" and seed >= 2:                   # of3 is missing models: three jobs wrote nothing
+                    continue
                 rows.append({"sto": sto, "variant": "v", "runner": run, "seed": seed, "sample": 0, "ranking_score": b,
-                             "iptm": b, "ptm": b, "plddt": 65, "has_clash": False, "path": "x", "rs_z_runner": 0})
+                             "iptm": b, "ptm": b, "plddt": 65, "has_clash": False,
+                             "path": str(d / "sample_0" / "model.cif"), "rs_z_runner": 0})
     with open(tmp_path / "pool.csv", "w", newline="") as fh:
         w = _csv.DictWriter(fh, fieldnames=list(rows[0]))
         w.writeheader(); w.writerows(rows)
@@ -626,3 +631,26 @@ def test_qa_cluster_names_the_targets_own_variants(tmp_path, monkeypatch):
     monkeypatch.setattr(ops, "_sbatch", lambda cmd, *a, **k: sent.setdefault("cmd", cmd) and "1")
     ops.qa_cmd(Cfg(), d, "A1B1", "cluster", None, "agent")
     assert "--variants base,sep" in sent["cmd"]
+
+
+def test_review_holds_each_run_to_its_own_seeds(tmp_path):
+    """H1388 ran AF3 at 20 seeds by plan and the others at 10; the review called that 50 missing models per runner.
+    A run is now held to its own seed directories, so planned unequal sampling is fine and a dead job is not."""
+    from residudes import consult
+
+    def run(runner, seeds, samples, dead=()):
+        rows = []
+        for s in seeds:
+            d = tmp_path / "results" / "A1B1" / "sep" / runner / f"seed_{s}"
+            d.mkdir(parents=True)
+            if s in dead:
+                continue                                    # the job made its directory and wrote nothing
+            for m in range(samples):
+                rows.append({"sto": "A1B1", "variant": "sep", "runner": runner, "seed": s, "sample": m,
+                             "path": str(d / f"sample_{m}" / "model.cif")})
+        return rows
+
+    rows = run("af3", range(1, 21), 5) + run("pt2", range(1, 11), 5)
+    assert not [t for t in consult._missing(rows) if t]
+    rows += run("bt2", range(1, 11), 5, dead={4})
+    assert consult._missing(rows) == ["A1B1/sep/bt2 45/50"]
