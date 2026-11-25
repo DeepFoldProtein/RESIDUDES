@@ -143,6 +143,23 @@ Job schedulers remain outside the containers. `sbatch` and `pueue` belong to the
 agent submits to them from the host; a container provides the environment in which a submitted job
 executes.
 
+### Predicting through the engine images
+
+Set one variable where the agent (or a person) runs, and every prediction `residudes-engine submit` sends to Slurm
+runs inside the images instead of the checkout's venvs:
+
+```sh
+export RESIDUDES_ENGINE_IMAGES=/path/to/images     # holds residudes-engine-trt.sif and residudes-engine-jax.sif
+residudes-engine submit --model af3 --input input.json --out runs/af3 --seeds 1-5
+```
+
+The job wrapper picks the image by model - AlphaFold 3 in the jax image, Protenix, Boltz-2 and OpenFold3 in the trt
+image - runs it with the image's own interpreter, mounts the checkout, and binds the top-level directory of every
+absolute path in the site file and in the job's arguments (weights, engines, databases, input, output). No venv is
+built. Measured on H1388's input, the same seed and GPU type on both routes: AF3 and Boltz-2 give identical models;
+OpenFold3 varies run to run on either route by the same amount; Protenix matches on confidence, with the peptide
+about 2 Å apart in two of five samples where two self-built runs agree to 0.2 Å.
+
 ## Verification
 
 `containers/verify.sh` performs an end-to-end check of an installation: the presence of the images,
