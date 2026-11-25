@@ -1,7 +1,6 @@
 """residudes.toml: where things live, budgets and the approval policy.
 
-Looked up in this order: --config PATH, $RESIDUDES_CONFIG, <residudes>/residudes.toml, and finally a
-lantern.toml left there before the rename.
+Looked up in this order: --config PATH, $RESIDUDES_CONFIG, <residudes>/residudes.toml.
 """
 from __future__ import annotations
 
@@ -34,15 +33,12 @@ class Config:
         return Path(self.work_root) / "targets"
 
 
-LEGACY_PATH = RESIDUDES_DIR / "lantern.toml"       # what the file was called before the rename
 
 
 def config_path(explicit: str | None = None) -> Path:
     named = explicit or os.environ.get("RESIDUDES_CONFIG")
     if named:
         return Path(named)
-    if not DEFAULT_PATH.exists() and LEGACY_PATH.exists():
-        return LEGACY_PATH
     return DEFAULT_PATH
 
 
@@ -54,8 +50,7 @@ def load(explicit: str | None = None) -> Config:
     with open(p, "rb") as fh:
         d = tomllib.load(fh)
     paths, budget, agent, approval = d.get("paths", {}), d.get("budget", {}), d.get("agent", {}), d.get("approval", {})
-    for old, new in (("foldmux", "residudes_engine"), ("lantern_engine", "residudes_engine"),
-                     ("lantern_qa", "residudes_qa")):      # what these keys were called before the renames
+    for old, new in (("foldmux", "residudes_engine"),):   # the key this one was called in 2026
         if old in paths and new not in paths:
             paths[new] = paths[old]
     for k in ("work_root", "targets_root", "residudes_engine", "residudes_qa"):

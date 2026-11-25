@@ -16,7 +16,6 @@ CASP17 command lines keep working with `xgbdimer` (XGBDimerScorer) / `run_cluste
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 
 from residudes_qa import __version__
@@ -51,9 +50,6 @@ def _passthrough(name: str, argv: list[str]) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    for k, v in list(os.environ.items()):          # environments set up before the rename from lantern-qa
-        if k.startswith("LANTERN_QA_"):
-            os.environ.setdefault("RESIDUDES_QA_" + k[len("LANTERN_QA_"):], v)
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] in PASSTHROUGH:
         return _passthrough(argv[0], argv[1:])

@@ -18,7 +18,8 @@ from ..config import RESIDUDES_ENGINE_ROOT, GPU, Site, SiteError
 from ..registry import ModelSpec, engine_max_seq_len, find_engine_dir
 
 
-# The run-metadata folder in every output. Outputs written under an earlier name have ".lantern-engine" or ".foldmux".
+# The run-metadata folder in every output. Earlier releases named it differently and the folders on
+# disk keep those names, so all three are read; a prediction made in 2026 stays readable.
 META_DIR = ".residudes-engine"
 META_DIRS = (META_DIR, ".lantern-engine", ".foldmux")
 

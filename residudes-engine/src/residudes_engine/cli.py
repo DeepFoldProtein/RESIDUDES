@@ -687,10 +687,6 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    for old in ("FOLDMUX_", "LANTERN_ENGINE_", "BIO_TRT_"):   # environments set up under an earlier name
-        for k, v in list(os.environ.items()):
-            if k.startswith(old):
-                os.environ.setdefault("RESIDUDES_ENGINE_" + k[len(old):], v)
     ns = build_parser().parse_args(argv)
     try:
         return ns.fn(ns)

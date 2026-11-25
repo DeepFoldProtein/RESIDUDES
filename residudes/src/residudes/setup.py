@@ -132,7 +132,9 @@ def _suggest_work_root(rep: dict, current: str) -> tuple[str, list[str]]:
     if os.path.isabs(current) and not Path(current).resolve().is_relative_to(RESIDUDES_DIR.resolve()):
         return current, []                                     # an existing choice is left alone
     here = str(Path.cwd() / "work_root")
-    others = [d for d in ("/store/deepfold/residudes", "/store/deepfold/lantern") if Path(d).is_dir()]
+    # A site can name its shared dossier directories in RESIDUDES_WORK_ROOTS (colon separated);
+    # the ones that exist are offered beside the default instead of being hard-coded here.
+    others = [d for d in os.environ.get("RESIDUDES_WORK_ROOTS", "").split(":") if d and Path(d).is_dir()]
     return here, others
 
 

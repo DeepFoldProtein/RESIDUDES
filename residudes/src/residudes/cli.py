@@ -95,9 +95,6 @@ def _with(cfg, target: str, fn) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    for k, v in list(os.environ.items()):          # environments set up before the rename from lantern
-        if k.startswith("LANTERN_"):
-            os.environ.setdefault("RESIDUDES_" + k[len("LANTERN_"):], v)
     try:
         return _main(argv)
     except (ValueError, FileNotFoundError) as exc:      # refused transitions, missing dossiers: one line, exit 1

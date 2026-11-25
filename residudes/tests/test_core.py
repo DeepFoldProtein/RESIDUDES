@@ -1,5 +1,4 @@
 import json
-import os
 
 import pytest
 
@@ -473,39 +472,23 @@ def test_the_plan_brief_carries_the_figures_a_person_decides_from(tmp_path):
     assert "C1 open (plan)" in out
 
 
-def test_config_accepts_the_paths_keys_from_before_the_renames(tmp_path):
-    """foldmux -> lantern_engine -> residudes_engine, lantern_qa -> residudes_qa: an older config still loads."""
+def test_config_accepts_the_paths_key_this_one_was_called_in_2026(tmp_path):
+    """foldmux -> residudes_engine: a configuration written in 2026 still loads."""
     from residudes import config
     p = tmp_path / "residudes.toml"
-    p.write_text('[paths]\nlantern_engine = "/old/engine"\nlantern_qa = "/old/qa"\n')
-    cfg = config.load(str(p))
-    assert cfg.residudes_engine == "/old/engine" and cfg.residudes_qa == "/old/qa"
+    p.write_text('[paths]\nfoldmux = "/older/engine"\n')
+    assert config.load(str(p)).residudes_engine == "/older/engine"
     p.write_text('[paths]\nfoldmux = "/older/engine"\nresidudes_engine = "/new/engine"\n')
     assert config.load(str(p)).residudes_engine == "/new/engine"      # the current key wins
 
 
-def test_a_lantern_toml_left_from_before_the_rename_is_still_read(tmp_path, monkeypatch):
-    """lantern -> residudes: the file is residudes.toml now, but an installation that still has lantern.toml works."""
+def test_the_config_file_is_residudes_toml(tmp_path, monkeypatch):
     from residudes import config
     monkeypatch.setattr(config, "DEFAULT_PATH", tmp_path / "residudes.toml")
-    monkeypatch.setattr(config, "LEGACY_PATH", tmp_path / "lantern.toml")
     monkeypatch.delenv("RESIDUDES_CONFIG", raising=False)
-    assert config.config_path() == tmp_path / "residudes.toml"            # what setup writes now
-    (tmp_path / "lantern.toml").write_text('[paths]\nwork_root = "/old/work"\n')
-    assert config.config_path() == tmp_path / "lantern.toml"              # nothing new written yet
-    assert config.load().work_root == "/old/work"
+    assert config.config_path() == tmp_path / "residudes.toml"
     (tmp_path / "residudes.toml").write_text('[paths]\nwork_root = "/new/work"\n')
-    assert config.load().work_root == "/new/work"                         # the current name wins
-
-
-def test_the_environment_from_before_the_rename_still_names_the_actor(monkeypatch):
-    """LANTERN_ACTOR / LANTERN_CONFIG and friends map onto RESIDUDES_* when the CLI starts."""
-    from residudes import cli
-    monkeypatch.setenv("LANTERN_ACTOR", "agent")
-    monkeypatch.delenv("RESIDUDES_ACTOR", raising=False)
-    monkeypatch.setattr(cli, "_main", lambda argv: 0)
-    assert cli.main([]) == 0
-    assert os.environ["RESIDUDES_ACTOR"] == "agent"
+    assert config.load().work_root == "/new/work"
 
 
 def test_catalog_paths_come_from_the_site_config(tmp_path):

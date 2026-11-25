@@ -3,7 +3,7 @@
 # Override the interpreter with RESIDUDES_QA_PYTHON (e.g. a venv built elsewhere).
 set -euo pipefail
 HERE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
-PY="${RESIDUDES_QA_PYTHON:-${LANTERN_QA_PYTHON:-$HERE/.venv/bin/python}}"
+PY="${RESIDUDES_QA_PYTHON:-$HERE/.venv/bin/python}"
 if [ ! -x "$PY" ]; then
     echo "residudes-qa: no venv at $HERE/.venv — run: cd $HERE && uv sync --extra cu130   (cu124 for CUDA 12.4 drivers)" >&2
     exit 2
