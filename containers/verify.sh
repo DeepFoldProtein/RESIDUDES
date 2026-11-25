@@ -198,6 +198,38 @@ if [ -f "$AGENT" ]; then
             bad "report H1388 did not reproduce the shipped analysis.md"
         fi
         rm -rf "$work"
+
+        # The picture tools, exercised rather than looked up. `molterm-mcp` installs the viewer into its own
+        # npm vendor directory, so the MCP server found it while a shell did not, and a suite that only asked
+        # "is the package installed" passed while `residudes slides` had no renderer. So: draw something.
+        work=$(mktemp -d)
+        cat > "$work/tiny.pdb" <<'PDB'
+ATOM      1  N   ALA A   1      -0.966   0.493   1.500  1.00 80.00           N
+ATOM      2  CA  ALA A   1       0.257   0.418   0.692  1.00 80.00           C
+ATOM      3  C   ALA A   1      -0.094   0.017  -0.716  1.00 80.00           C
+ATOM      4  O   ALA A   1      -1.056  -0.682  -0.923  1.00 80.00           O
+ATOM      5  CB  ALA A   1       1.204  -0.620   1.296  1.00 80.00           C
+ATOM      6  N   ALA A   2       0.716   0.464  -1.673  1.00 80.00           N
+ATOM      7  CA  ALA A   2       0.480   0.231  -3.090  1.00 80.00           C
+ATOM      8  C   ALA A   2       1.332  -0.917  -3.605  1.00 80.00           C
+ATOM      9  O   ALA A   2       2.335  -1.278  -2.987  1.00 80.00           O
+ATOM     10  CB  ALA A   2       0.764   1.495  -3.882  1.00 80.00           C
+END
+PDB
+        printf 'show cartoon\ncolor chain\norient\nscreenshot %s\n' "/work/out.png" > "$work/v.mt"
+        if apptainer exec -B "$work:/work" "$AGENT" molterm --no-tui --script /work/v.mt /work/tiny.pdb \
+               >"$work/mt.log" 2>&1 && [ -s "$work/out.png" ] \
+           && head -c4 "$work/out.png" | grep -q PNG; then
+            ok "molterm renders a structure inside the image ($(wc -c <"$work/out.png") bytes of PNG)"
+        else
+            bad "molterm did not render in the image: $(tail -1 "$work/mt.log" 2>/dev/null)"
+        fi
+        if apptainer exec "$AGENT" sh -c 'command -v typst && command -v tmux' >/dev/null 2>&1; then
+            ok "typst and tmux in the image (the deck, and the chat sessions)"
+        else
+            bad "typst or tmux missing from the agent image"
+        fi
+        rm -rf "$work"
     fi
 else
     note "agent image missing: skipped"
