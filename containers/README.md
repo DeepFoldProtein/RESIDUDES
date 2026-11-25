@@ -11,7 +11,7 @@ publishes an official image, that image is used as the base layer rather than re
 
 | image | size | base | holds | mounted at run time |
 |---|---|---|---|---|
-| `residudes` | 0.5 GB | `python:3.12-slim` | the agent, gemmi, the Claude Agent SDK and CLI, typst, rsvg | the checkout, the work root |
+| `residudes` | 0.5 GB | `python:3.12-slim` | the agent, gemmi, the Claude Agent SDK, typst, rsvg, tmux, molterm | the checkout, the work root, **an agent CLI** |
 | `residudes-qa` | 0.7 GB | `python:3.12-slim` | the CPU dependency set from `uv.lock` — no torch | the pool, `data/files` |
 | `residudes-msa` | 0.1 GB | `python:3.12-slim` | HMMER, MMseqs2, the engine's `msa` path | **the databases** (`--af3-db`, `mmseqs_db`) |
 | `residudes-qa-cu130` | 3.8 GB | `nvidia/cuda:13.0.3-runtime` | the same QA stack plus torch 2.11+cu130 | the same, plus the GPU (`--nv`) |
@@ -53,6 +53,11 @@ Sizes refer to the Apptainer `.sif` files produced on the reference hardware. Ea
 of three files: `install.sh`, which contains the installation steps and the rationale for them, and
 a `Dockerfile` and an Apptainer `.def` file that both execute it. The two container formats
 therefore cannot diverge.
+
+No image carries an agent CLI. Claude Code, Codex and the others authenticate as a person and
+are licensed to one, so an image cannot ship a usable copy: `residudes setup` picks from what the
+machine has and says how to install one. molterm is in the agent image, because showing a
+structure is part of the job and that one is ours to ship.
 
 One image carries additional licence restrictions. `residudes-engine-jax` includes the vendored
 AlphaFold 3 source code (CC BY-NC-SA 4.0, **non-commercial**); continuous integration builds it on
