@@ -15,11 +15,15 @@ export DEBIAN_FRONTEND=noninteractive
 export UV_NO_CACHE=1
 stage=${1:-all}
 
+# gcc, libc6-dev and the Python headers: Triton compiles a small C launcher the first time a kernel runs, so
+# bt2 died mid-prediction with "Failed to find C compiler" on a runtime image that had none. libxrender1 and
+# libxext6: RDKit's drawing module, which openfold3 imports, links them; without them of3 failed at import.
 if [ "$stage" = all ] || [ "$stage" = system ]; then
     apt-get update
     apt-get install -y --no-install-recommends \
         ca-certificates curl git python3.12 python3.12-venv libpython3.12 \
-        libgomp1 libstdc++6
+        libgomp1 libstdc++6 \
+        gcc libc6-dev python3.12-dev libxrender1 libxext6
     rm -rf /var/lib/apt/lists/*
 fi
 
@@ -85,5 +89,8 @@ print("tensorrt", tensorrt.__version__)
 import cuequivariance_torch                      # the fused kernels the engines were built with
 print("cuequivariance-torch ok")
 import boltz, openfold3                          # bt2 and of3: imports are what failed, so import them
+from openfold3.entry_points.experiment_runner import InferenceExperimentRunner   # what the of3 runner imports
+import shutil
+assert shutil.which("gcc"), "no C compiler: Triton cannot build its launcher, bt2 fails mid-prediction"
 print("boltz", boltz.__file__.split("site-packages")[0][-12:], "| openfold3 installed:", "site-packages" in openfold3.__file__)
 EOF

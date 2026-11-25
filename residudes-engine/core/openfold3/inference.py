@@ -311,10 +311,14 @@ def main():
         )
         from openfold3.core.config import config_utils
     except ImportError as e:
+        # Only a missing openfold3 package is a PYTHONPATH problem. Anything else - a system library such as
+        # libXrender that RDKit links - used to be reported with the same advice, which sent the reader to the
+        # wrong place.
+        missing_pkg = isinstance(e, ModuleNotFoundError) and (e.name or "").split(".")[0] == "openfold3"
         sys.exit(
             f"Cannot import openfold3: {e}\n"
-            "Set PYTHONPATH to the OpenFold3 repo:\n"
-            "  export PYTHONPATH=/path/to/openfold-3:$PYTHONPATH"
+            + ("Set PYTHONPATH to the OpenFold3 repo:\n  export PYTHONPATH=/path/to/openfold-3:$PYTHONPATH"
+               if missing_pkg else "openfold3 is installed; a dependency of it failed to load (see the error above).")
         )
 
     _torch_gpu_setup()
