@@ -32,13 +32,22 @@ One OCI image serves both: Apptainer converts it to a SIF on the way in, which i
 published twice. `containers/verify.sh` asks the registry about each image and builds locally
 whatever it cannot pull.
 
-**The two engine images are one large layer each**, because `install.sh` runs as a single build
-step: 9.1 GB for TensorRT and 11.5 GB for JAX, against about 3 GB for every other image. A blob
-that size does not survive every network — measured here, the pull dies partway with
-`PROTOCOL_ERROR` over HTTP/2 and `unexpected EOF` over HTTP/1.1, while the 3 GB images pull
-cleanly on the same link. `verify.sh` therefore retries over HTTP/1.1 and then builds the image
-locally, which fetches many small wheels instead of one huge layer and is how these two were
-verified in the first place. Expect that fallback on a slow or proxied connection.
+**No layer is larger than 4.3 GB**, and that is deliberate. The two engine images were one layer
+each to begin with — `install.sh` ran as a single build step, giving 9.1 GB for TensorRT and
+11.5 GB for JAX against about 3 GB for every other image — and a blob that size did not survive
+the link: the pull died partway with `PROTOCOL_ERROR` over HTTP/2 and `unexpected EOF` over
+HTTP/1.1, while the 3 GB images pulled cleanly on the same connection.
+
+Splitting the installation did not help, because `uv sync` rebuilds an environment that an
+earlier pass left incomplete, and the final layer was the whole 9.9 GB again. (A sync over an
+environment that already matches the lock writes 994 B, so it is the incomplete state that
+triggers the rebuild.) So the environment is built once in a builder stage and *then* split:
+`install.sh split 4` bin-packs site-packages into four buckets of similar size, which the final
+stage copies one per layer. The image is byte for byte what `uv sync --frozen` produced, the
+total is unchanged, and the largest layer went from 9.1 GB to 4.3 GB.
+
+`verify.sh` still retries a failed pull over HTTP/1.1 and builds locally if that fails too. That
+path is now a safety net rather than the expected route.
 
 Sizes refer to the Apptainer `.sif` files produced on the reference hardware. Each recipe consists
 of three files: `install.sh`, which contains the installation steps and the rationale for them, and
