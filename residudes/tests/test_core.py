@@ -286,9 +286,24 @@ def test_slides_deck_and_scenes(tmp_path):
     assert [m["label"] for m in models] == ["A1", "A3"]
     pml = slides.scenes_pml(models)
     assert "png figs/A3_plddt.png" in pml and "overlay" not in pml          # no superposition across stoichiometries
+    mt = slides.scenes_mt(models)
+    assert "screenshot figs/A3_plddt.png 1800 1350 300" in mt and "overlay" not in mt
+    assert "set lod_medium 400000" in mt and "set bg white" in mt           # report quality, not terminal defaults
+    assert "rename A1 A1" in mt or "rename A1.cif A1" in mt or "rename A1 " in mt   # named on arrival
+    assert "color chain\n" in mt                                            # a scheme takes no selection in molterm
     typ = slides.build_typ(d, ddir)
     assert '#"' in typ and '\\"quoted\\"' in typ                             # dossier text goes in as Typst strings
     assert "table.cell(fill:" in typ                                         # the confidence heat table
+
+
+def test_scenes_mt_overlay_uses_molterm_hex():
+    """PyMOL takes 0xRRGGBB and molterm does not: it refuses the slot colours unless they are written #RRGGBB."""
+    from residudes import slides
+
+    models = [{"label": f"m{i}", "name": f"m{i}", "path": f"/x/m{i}.cif", "sto": "A2"} for i in range(2)]
+    mt = slides.scenes_mt(models)
+    assert "color #0072B2 m0" in mt and "0x" not in mt
+    assert "align m1 to m0 automap" in mt                                   # chains paired by sequence
 
 
 def test_guard_sends_pymol_to_sbatch():

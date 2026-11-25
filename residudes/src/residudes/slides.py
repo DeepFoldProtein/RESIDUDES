@@ -4,12 +4,13 @@ The deck (report/report.typ -> report/report.pdf, touying metropolis like the te
 dossier, so it can be rebuilt at any stage:
   target and construct · the priors · the n-sweep (pool confidence per stoichiometry x predictor, as a heat table)
   · decisions and the priors they rest on · the checkpoint conversations · the first-results review · structures
-  (PyMOL renders of the slate, or of the best model per stoichiometry before there is a slate) · the slate
+  (renders of the slate, or of the best model per stoichiometry before there is a slate) · the slate
   · the agent's own slides (report/agent.typ, included as written) · agent cost per stage.
 
-Structure pictures come from report/scenes.pml, written here and rendered by PyMOL through sbatch (never on the
-login node): `residudes slides` submits the render when pictures are missing and builds the deck with what exists;
-run it again when the job is done. The agent adds its own scenes with `residudes render T --pml report/pml/x.pml`.
+Structure pictures come from report/scenes.mt, written here and rendered by molterm at report quality (300 dpi,
+full geometry) in the time the command takes - seconds, so no job to wait for. Where molterm is absent the old
+path still works: report/scenes.pml, rendered by PyMOL through sbatch, never on the login node. The agent adds
+its own PyMOL scenes with `residudes render T --pml report/pml/x.pml`.
 
   residudes slides T [--no-render] [--with-retro]
   residudes render T --pml FILE
@@ -128,6 +129,64 @@ def cluster_models(ddir: Path, limit: int = 8) -> list[dict]:
     return out
 
 
+# Report-quality rendering, from molterm's own recipe. Two of these matter more than the rest: the LOD
+# thresholds, because the default drops to reduced geometry above 5,000 atoms and every complex we render is
+# bigger than that, so a deck built without them is drawn at preview detail; and `sm relative`, which makes a
+# view tuned at any size render identically at another, so the same script serves a quick look and the deck.
+SCENE_QUALITY = ["set lod_medium 400000", "set lod_low 400000",   # full geometry: our models are 10k+ atoms
+                 "set bg white",                                  # molterm defaults to transparent, which the
+                 #                                                  JPEG step would flatten onto black
+                 "set sm relative",                               # one view, any output size
+                 "set csd 24",                                    # cartoon spline subdivisions (default 14)
+                 "set ch 1.6", "set csh 1.8", "set cl 0.30",      # helix, sheet, loop widths
+                 "set outline on", "set ot 0.2", "set od 0.2", "set fog 0.4"]
+FIG_SIZE = "1800 1350 300"                                        # 6x4.5 in at 300 dpi
+FIG_WIDE = "2400 1700 300"                                        # the overlay, which carries more structure
+
+
+def scenes_mt(models: list[dict], small: tuple[str, ...] = ()) -> str:
+    """One molterm script for every picture the deck uses (run from report/, writes figs/*.png).
+
+    The same two rules as the PyMOL scenes it replaces. Every model is superposed on the first and drawn from one
+    view, because the question these pictures answer is how they differ, and a picture that re-orients each model
+    answers nothing. And a chain short enough to vanish at this scale (a peptide, a ligand-sized subunit) is drawn
+    as spheres in the accent colour: on H1388 the whole target is where an 11-residue peptide sits on a 233-residue
+    groove, and in plain cartoon all eight cluster medoids looked like the same blue blob.
+
+    What molterm adds over PyMOL here: `align ... automap` pairs chains by sequence, so models whose chains come
+    out in a different order (routine across predictors) superpose instead of silently landing apart, and it prints
+    the TM-score and RMSD of every superposition, which is evidence the deck can quote."""
+    lines = ["# residudes scenes: written by `residudes slides`; run with `molterm --no-tui --script scenes.mt` from report/",
+             *SCENE_QUALITY]
+    for m in models:
+        # molterm names an object after the file stem, and ours are all `model.cif`: the second would come in as
+        # `model_1`. Renaming straight after each load frees the stem again, so the next load is `model` once more.
+        lines += [f"load {m['path']}", f"rename {Path(m['path']).stem} {m['label']}"]
+    first = models[0]["label"] if models else None
+    for m in models[1:]:
+        lines.append(f"align {m['label']} to {first} automap")     # chain-aware, sequence-paired
+    lines.append("show cartoon")
+    if first:
+        lines.append(f"orient {first}")                            # one view for every picture: they are comparable
+    for m in models:
+        lab = m["label"]
+        # A colour scheme takes no selection in molterm (`color chain af3_s1` is refused); it paints every object.
+        # That is harmless because only the enabled one is drawn, and it is why the enable comes first.
+        lines += ["disable all", f"enable {lab}", "color chain"]
+        for ch in small:                                           # the chain that would otherwise disappear
+            lines += [f"show spacefill chain {ch}", f"color #D55E00 chain {ch}"]
+        lines += [f"screenshot figs/{lab}_chains.png {FIG_SIZE}",
+                  "color plddt", f"screenshot figs/{lab}_plddt.png {FIG_SIZE}"]
+    same = [m for m in models if m.get("sto") == models[0].get("sto")] if models else []
+    if len(same) > 1:                                  # superpose only models of one stoichiometry (the first's)
+        lines.append("disable all")
+        for i, m in enumerate(same):
+            slot = "#" + SLOT_COLOURS[i % len(SLOT_COLOURS)][2:]   # 0x0072B2 (PyMOL) -> #0072B2 (molterm)
+            lines += [f"enable {m['label']}", f"color {slot} {m['label']}"]
+        lines += [f"orient {first}", f"screenshot figs/overlay.png {FIG_WIDE}"]
+    return "\n".join(lines) + "\n"
+
+
 def scenes_pml(models: list[dict], small: tuple[str, ...] = ()) -> str:
     """One PyMOL script for every picture the deck uses (run from report/, writes figs/*.png).
 
@@ -173,6 +232,46 @@ def scenes_pml(models: list[dict], small: tuple[str, ...] = ()) -> str:
 
 
 # ----------------------------------------------------------------------------------------------- rendering
+def render_mt(cfg, d: Dossier, scene: Path, actor: str) -> str:
+    """Render a molterm scene, here and now.
+
+    PyMOL goes through sbatch because ray-tracing a complex costs minutes and a gigabyte; molterm draws the same
+    deck in seconds (measured on a T1416 A3 trimer, 10,179 atoms: 0.2 s per 1800x1350 figure, 40 MB, with the
+    multimer superposition the slower part at a few seconds each). That fits on a login node, so the pictures are
+    there when the command returns instead of a job id to come back to."""
+    mt = tool(cfg, "molterm")
+    if not mt:
+        raise FileNotFoundError('molterm not found: set [tools] molterm = "/path/to/molterm" in residudes.toml')
+    rep = scene.parent
+    (rep / "figs").mkdir(parents=True, exist_ok=True)
+    r = subprocess.run([mt, "--no-tui", "--script", str(scene)], cwd=rep, capture_output=True, text=True, timeout=3600)
+    figs = sorted((rep / "figs").glob("*.png"))
+    if r.returncode != 0:
+        # molterm carries on after a failed command, so a non-zero exit means some figure was drawn in a state
+        # nobody asked for. Say which line failed rather than hand back a figure-shaped file.
+        bad = [ln for ln in (r.stderr or r.stdout).splitlines() if ".mt:" in ln][:3]
+        d.note(actor, f"render {scene.name}: molterm exit {r.returncode}" + (f" ({bad[0]})" if bad else ""))
+        return f"molterm failed (exit {r.returncode}): " + ("; ".join(bad) if bad else "see the output above")
+    _to_jpeg(rep / "figs")
+    aligned = [ln for ln in r.stdout.splitlines() if "aligned" in ln.lower()]
+    d.runs.append({"time": now(), "by": actor, "scheduler": "local", "what": f"render: {scene.name}",
+                   "state": "done", "out": str(rep / "figs")})
+    d.note(actor, f"render {scene.name}: {len(figs)} figures" + (f"; {aligned[0]}" if aligned else ""))
+    return f"molterm {scene.name} -> {len(figs)} figures in {rep / 'figs'}" + (f" | {aligned[0]}" if aligned else "")
+
+
+def _to_jpeg(figs: Path) -> None:
+    """Typst embeds JPEG as given and re-encodes PNG, which grew one deck about fourfold; convert when PIL is here."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return
+    for f in figs.glob("*.png"):
+        jpg = f.with_suffix(".jpg")
+        if not jpg.exists() or jpg.stat().st_mtime < f.stat().st_mtime:
+            Image.open(f).convert("RGB").save(jpg, quality=88)
+
+
 def render_cmd(cfg, d: Dossier, pml: Path, actor: str) -> str:
     from residudes import ops
     pymol = tool(cfg, "pymol")
@@ -549,17 +648,19 @@ def slides_cmd(cfg, d: Dossier, actor: str, render: bool = True, with_retro: boo
     out = []
     models = figure_models(d, ddir) + cluster_models(ddir)
     if models:
-        scenes = rep / "scenes.pml"
         chains = report._chains(d)
         small = tuple(chain_letter(i) for i, (_, seq) in enumerate(chains) if len(seq) <= 40)
-        text = scenes_pml(models, small)
+        # molterm draws the deck here in seconds; PyMOL is the fallback, and still goes through sbatch.
+        use_mt = bool(tool(cfg, "molterm"))
+        scenes = rep / ("scenes.mt" if use_mt else "scenes.pml")
+        text = scenes_mt(models, small) if use_mt else scenes_pml(models, small)
         changed = not scenes.exists() or scenes.read_text() != text
         scenes.write_text(text)
         missing = [m for m in models if not _pic(rep / "figs", f"{m['label']}_chains")]
         if render and (changed or missing):
             try:
-                out.append(render_cmd(cfg, d, scenes, actor))
-            except (FileNotFoundError, ValueError) as exc:
+                out.append(render_mt(cfg, d, scenes, actor) if use_mt else render_cmd(cfg, d, scenes, actor))
+            except (FileNotFoundError, ValueError, subprocess.TimeoutExpired) as exc:
                 out.append(f"no render: {exc}")
     typ = rep / "report.typ"
     typ.write_text(build_typ(d, ddir, with_retro))

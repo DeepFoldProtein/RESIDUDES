@@ -31,6 +31,11 @@ rm -rf /var/lib/apt/lists/*
 # pulls the prebuilt molterm binary for this platform.
 npm install -g --no-fund --no-audit molterm-mcp
 
+# molterm-mcp keeps the viewer in its own vendor/bin, which the MCP server knows about and a
+# shell does not. The skill uses both - the MCP tools in a conversation, the command line in a
+# script - so the binary goes on PATH too.
+ln -sf "$(npm root -g)/molterm-mcp/vendor/bin/molterm" /usr/local/bin/molterm
+
 npm cache clean --force
 
 # `residudes slides` compiles the report with typst (a .tar.xz release, hence xz-utils)

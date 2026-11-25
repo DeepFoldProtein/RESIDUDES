@@ -17,7 +17,7 @@ HYPOTHESES → PLAN_REVIEW ⇄ person → INPUTS_READY → RUNNING → POOL_READ
 
 ## 1. Plan review (after the analysis and literature)
 
-Build the slide report first: `residudes slides T`. Add your own slides and PyMOL scenes as AGENTS.md describes.
+Build the slide report first: `residudes slides T`. Add your own slides and molterm scenes as AGENTS.md describes.
 People read the deck with the pictures, not the JSON. Then write a brief, `brief_plan.md` in the dossier
 directory, that points to `report/report.pdf`, and open the checkpoint:
 `residudes consult T --kind plan --brief brief_plan.md --ask "..." --ask "..."`. residudes appends the full analysis
@@ -93,7 +93,7 @@ Questions worth asking at this checkpoint, from CASP17:
    - an interface on an unexpected face;
    - results that contradict a prior from the plan.
 3. If there are no triggers, make the slate (`residudes-selection`).
-4. If there are any, show them in pictures: a PyMOL scene of what you saw (`residudes render`), for example the split
+4. If there are any, show them in pictures: a molterm scene of what you saw, for example the split
    architectures superposed or the clash, on a slide in `report/agent.typ`. Then run `residudes slides T` and open a
    checkpoint: `residudes consult T --kind results --ask ...`. Show the evidence (numbers and model names), then give
    options with costs and a recommendation:

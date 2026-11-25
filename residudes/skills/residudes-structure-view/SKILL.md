@@ -57,6 +57,23 @@ a screenshot taken after a failed `color` is written with the old colouring. `mo
 --script f.mt m.cif || echo "the figure is not trustworthy"` is the difference between a figure
 and a figure-shaped file.
 
+## For the report
+
+The deck's own figures are written by `residudes slides T` into `report/scenes.mt` and rendered at report
+quality. When you write a scene of your own for the deck, copy that file's `set` block rather than the defaults:
+
+```
+set lod_medium 400000      # full geometry: the default drops detail above 5,000 atoms, and every complex is bigger
+set lod_low 400000
+set bg white               # the default is transparent, which the JPEG step would flatten onto black
+set sm relative            # a view tuned at any size renders identically at another
+set csd 24                 # cartoon spline subdivisions (default 14)
+set outline on
+screenshot figs/x.png 1800 1350 300        # 6 x 4.5 in at 300 dpi; up to 8192 x 8192
+```
+
+A picture for the conversation does not need any of this - the defaults are made for a terminal, and are faster.
+
 ## In a conversation
 
 Render into the target's dossier, next to everything else about it:

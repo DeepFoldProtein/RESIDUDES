@@ -87,17 +87,21 @@ The analysis is also a slide deck, `report/report.pdf`, built with `residudes sl
 - the pool's confidence per stoichiometry and predictor, as a heat table;
 - the decisions and the priors they rest on;
 - the checkpoint conversations and the first-results review;
-- PyMOL pictures of the slate, or of the best model per stoichiometry before there is one, by chain and by pLDDT;
+- pictures of the slate, or of the best model per stoichiometry before there is one, by chain and by pLDDT;
 - the agent's cost.
 
 Rebuild it before every checkpoint and when you propose the slate, and point the person to it in the brief.
 - **Add what the standard deck does not show** as your own slides in `report/agent.typ`, in touying syntax: a
   `== Title` line starts a slide, and pictures go in with `#image("figs/x.jpg", height: 70%)` (the render job writes a JPEG next to every PNG; a PNG makes the PDF about 4 times bigger). Examples: an interface
   close-up, two architectures side by side, a template against a model.
-- **Write the PyMOL scene** in `report/pml/<name>.pml`. Run it from `report/`, with absolute model paths, writing
-  `figs/<name>.png`. Render it with `residudes render T --pml report/pml/<name>.pml`, which goes through sbatch.
-  Never run PyMOL on the login node. To look at a picture yourself, open the JPEG (`figs/<name>.jpg`, about 10 times
-  smaller than the PNG).
+- **Write the scene for molterm** in `report/mt/<name>.mt`: one command per line, absolute model paths, writing
+  `figs/<name>.png`. Render it with `molterm --no-tui --script report/mt/<name>.mt` from `report/` and **check the
+  exit code** - molterm carries on after a failed command, so a screenshot taken after a failed `color` is written
+  with the old colouring. For report quality, open `report/scenes.mt` and copy its `set` block: it raises the
+  level-of-detail thresholds (the default drops to reduced geometry above 5,000 atoms, and every complex here is
+  bigger), fixes a white background, and renders at 300 dpi. This runs in seconds and needs no job.
+- **PyMOL** remains for a scene molterm cannot draw. Write it in `report/pml/<name>.pml`, render with
+  `residudes render T --pml report/pml/<name>.pml`, which goes through sbatch; never run PyMOL on the login node.
 - Then run `residudes slides T --no-render` to compile.
 
 ## Commands
@@ -107,7 +111,7 @@ residudes target show T | residudes next T | residudes report T        # read
 residudes consult T --kind plan|results --brief FILE --ask "..."   # open a checkpoint with a person
 residudes reply T C1 "..." | residudes checkpoints T C1              # the conversation
 residudes review T [--add "name: why"]                             # first-results checks
-residudes slides T | residudes render T --pml report/pml/x.pml       # the slide report; your own PyMOL scenes (sbatch)
+residudes slides T | residudes render T --pml report/pml/x.pml       # the slide report (molterm); a PyMOL scene (sbatch)
 residudes evidence T KEY JSON | residudes note T "..." | residudes decide T --type ... --evidence ... --alt ...
 residudes stage T NEXT_STAGE                                       # when the stage's goal is met
 residudes msa T --depth | --crawl --family PF… | --plm             # MSA depth; deepen a thin MSA (family crawl, OTalign)
