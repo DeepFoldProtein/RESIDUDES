@@ -1,0 +1,24 @@
+# Copy to residudes.toml, or let `residudes setup` write one. Every path here is an example:
+# this file describes one machine, and nothing in it is shared with anyone else.
+
+[paths]
+work_root = "./work_root"              # dossiers live in <work_root>/targets
+targets_root = ""                      # an existing residudes-engine predictions tree, if there is one
+residudes_engine = "../residudes-engine"
+residudes_qa = "../residudes-qa"
+
+[budgets]
+agent_usd_per_step = 3.0
+gpu_hours_per_target = 400.0
+
+# Where this machine keeps the databases, weights and tools that catalog.toml asks about.
+# A key left out reports `unconfigured` in `residudes doctor`, which is how you find out what
+# this machine is missing rather than discovering it mid-campaign.
+[databases]
+af3_db = "/data/databases/af3"             # AlphaFold 3's nine genetic databases, and af3.bin
+foldseek_db = "/data/databases/foldseek"   # foldseek PDB; the 2024 build misses recent structures
+foldseek_pdb_2026 = ""                     # a 2026 rebuild, if you have one
+colabfold_db = "/data/databases/colabfold"
+containers = "/data/containers"            # OpenStructure and other .sif files
+campaign = "/data/casp17"                  # an existing campaign tree: targets, analysis, esm
+sabdab = "/data/databases/sabdab"

@@ -1,4 +1,8 @@
-# residudes catalog: what a campaign needs, where the DeepFold cluster keeps it, and how fresh it must be.
+# residudes catalog: what a campaign needs, where this machine keeps it, and how fresh it must be.
+#
+# Locations are written as {key} and filled from [databases] in residudes.toml, so one shared
+# catalogue describes the components while each machine keeps its own layout. `residudes setup`
+# asks for the ones it cannot find; a key with no value reports `unconfigured` and names itself.
 # `residudes setup` / `residudes doctor` check every entry (stat only; no du/find on shared storage).
 #   paths        all must exist
 #   any_of       at least one must exist (alternatives)
@@ -11,13 +15,13 @@ name = "AF3 genetic databases"
 kind = "database"
 used_for = "af3_msa MSA search (jackhmmer)"
 paths = [
-  "/gpfs/database/af3/uniref90_2022_05.fa",
-  "/gpfs/database/af3/mgy_clusters_2022_05.fa",
-  "/gpfs/database/af3/bfd-first_non_consensus_sequences.fasta",
-  "/gpfs/database/af3/uniprot_all_2021_04.fa",
-  "/gpfs/database/af3/rfam_14_9_clust_seq_id_90_cov_80_rep_seq.fasta",
-  "/gpfs/database/af3/rnacentral_active_seq_id_90_cov_80_linclust.fasta",
-  "/gpfs/database/af3/nt_rna_2023_02_23_clust_seq_id_90_cov_80_rep_seq.fasta",
+  "{af3_db}/uniref90_2022_05.fa",
+  "{af3_db}/mgy_clusters_2022_05.fa",
+  "{af3_db}/bfd-first_non_consensus_sequences.fasta",
+  "{af3_db}/uniprot_all_2021_04.fa",
+  "{af3_db}/rfam_14_9_clust_seq_id_90_cov_80_rep_seq.fasta",
+  "{af3_db}/rnacentral_active_seq_id_90_cov_80_linclust.fasta",
+  "{af3_db}/nt_rna_2023_02_23_clust_seq_id_90_cov_80_rep_seq.fasta",
 ]
 max_age_days = 0
 fix = "link the shared copy; versions are fixed by AF3 (2021-2023 releases)"
@@ -26,7 +30,7 @@ fix = "link the shared copy; versions are fixed by AF3 (2021-2023 releases)"
 name = "PDB mmCIF (templates)"
 kind = "database"
 used_for = "templates, exact-sequence sweep"
-paths = ["/gpfs/database/af3/mmcif_files", "/gpfs/database/af3/recent_pdbs/pdb_seqres.txt"]
+paths = ["{af3_db}/mmcif_files", "{af3_db}/recent_pdbs/pdb_seqres.txt"]
 max_age_days = 60
 fix = "weekly rsync from wwPDB (sbatch); a stale mirror hides recent structures"
 
@@ -34,8 +38,8 @@ fix = "weekly rsync from wwPDB (sbatch); a stale mirror hides recent structures"
 name = "foldseek PDB"
 kind = "database"
 used_for = "structural homolog search, public-structure sweep"
-paths = ["/gpfs/database/foldseek/pdb"]
-date_file = "/gpfs/database/foldseek/pdb.version"
+paths = ["{foldseek_db}/pdb"]
+date_file = "{foldseek_db}/pdb.version"
 date_regex = "(\\d{6})\\s+PDB_DATE"
 date_format = "%y%m%d"
 max_age_days = 180
@@ -53,7 +57,7 @@ fix = "rebuild with `foldseek databases PDB` on a compute node, then set [databa
 name = "ColabFold databases"
 kind = "database"
 used_for = "mmseqs2 MSA (local / pop6 GPU API)"
-paths = ["/gpfs/database/colabfold"]
+paths = ["{colabfold_db}"]
 max_age_days = 0
 fix = "link the shared copy"
 
@@ -61,7 +65,7 @@ fix = "link the shared copy"
 name = "AlphaFold 3 weights"
 kind = "weights"
 used_for = "af3 predictions"
-any_of = ["/gpfs/database/af3/af3.bin", "/gpfs/database/af3/af3.bin.zst"]
+any_of = ["{af3_db}/af3.bin", "{af3_db}/af3.bin.zst"]
 max_age_days = 0
 fix = "licensed per user by Google DeepMind: place af3.bin by hand"
 
@@ -69,7 +73,7 @@ fix = "licensed per user by Google DeepMind: place af3.bin by hand"
 name = "OpenStructure container"
 kind = "tool"
 used_for = "scoring against natives (retrospectives)"
-paths = ["/gpfs/deepfold/containers/openstructure.sif"]
+paths = ["{containers}/openstructure.sif"]
 max_age_days = 0
 fix = "apptainer pull docker://registry.scicore.unibas.ch/schwede/openstructure"
 
@@ -77,6 +81,6 @@ fix = "apptainer pull docker://registry.scicore.unibas.ch/schwede/openstructure"
 name = "SAbDab"
 kind = "database"
 used_for = "antibody templates, CDR references"
-paths = ["/gpfs/database/sabdab"]
+paths = ["{sabdab}"]
 max_age_days = 120
 fix = "re-download the SAbDab summary + structures"
