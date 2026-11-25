@@ -18,3 +18,11 @@ def test_sessions_are_named_for_their_target():
 def test_ago_reads_a_session_timestamp():
     assert chat._ago("not a date") == ""
     assert chat._ago("2020-01-01 00:00").endswith("d")
+
+
+def test_the_daemon_steps_aside_for_a_conversation(monkeypatch):
+    """Two agents on one dossier duplicate work; a chat session means a person is on it."""
+    from residudes import daemon
+    monkeypatch.setattr(chat, "sessions", lambda *a, **k: [{"target": "T1234"}])
+    assert daemon._in_conversation("T1234") is True
+    assert daemon._in_conversation("T9999") is False

@@ -4,6 +4,7 @@ Each round, for every dossier (or the ones named):
   - human stages (SLATE_PROPOSED, PACKAGED, SUBMITTED) and RETROSPECTIVE: skip
   - an open checkpoint (PLAN_REVIEW, RESULTS_REVIEW): skip while it waits for a person; when a person has written the
     latest message in it, run an agent step so the agent answers (the conversation goes back and forth)
+  - a chat session open for that target: skip, because a person is working on it there
   - a "NEEDS HUMAN" note newer than the last step: skip until a person writes a newer note
   - at RUNNING / POOL_READY with recorded jobs (Slurm or local pueue) not finished: refresh their state, skip
     (other stages go on while jobs run; e.g. a QA job submitted early does not hold up input design)
@@ -56,7 +57,16 @@ def api_error(res: dict) -> str | None:
     return None                     # error_max_turns / error_max_budget_usd are limits, not errors: an idle step
 
 
+def _in_conversation(target: str) -> bool:
+    """Is someone talking to this target right now? A chat session is a person at the keyboard,
+    and two agents working one dossier at once duplicate work and argue with each other."""
+    from residudes import chat
+    return any(s["target"] == target for s in chat.sessions())
+
+
 def _round_target(cfg: Config, d: Dossier, budget: float | None, max_idle_steps: int, idle: dict) -> str:
+    if _in_conversation(d.target):
+        return f"{d.target}: in conversation (`residudes chat {d.target}`)"
     if d.stage in HUMAN_STAGES or d.stage == "RETROSPECTIVE":
         return f"{d.target}: {d.stage} (waiting for a person)"
     c = d.open_checkpoint()
