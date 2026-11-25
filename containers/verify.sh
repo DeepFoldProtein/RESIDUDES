@@ -222,13 +222,13 @@ fi
 if [ "$GPU" = 1 ] || [ "$ALL" = 1 ]; then
     head_ "the GPU images on this machine's card"
     if ! command -v nvidia-smi >/dev/null 2>&1; then
-        skip "no nvidia-smi: these four only mean anything where there is a GPU"
+        note "no nvidia-smi: these four only mean anything where there is a GPU"
     else
         card=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)
         ok "card: ${card:-unknown}"
 
         run_gpu() {   # name, label, python
-            [ -f "$IMAGES/$1.sif" ] || { skip "$1.sif not here"; return; }
+            [ -f "$IMAGES/$1.sif" ] || { note "$1.sif not here"; return; }
             if out=$(apptainer exec --nv "$IMAGES/$1.sif" "$2" -c "$3" 2>&1 | tail -1); then
                 ok "$1: $out"
             else
@@ -258,7 +258,7 @@ if [ "$ALL" = 1 ] && [ -f "$IMAGES/residudes-relax.sif" ]; then
     if [ -x "${MINIMIZATION:-/data/casp17/gromacs/relax/minimization.sh}" ]; then
         ok "pipeline present to mount: ${MINIMIZATION:-/data/casp17/gromacs/relax/minimization.sh}"
     else
-        skip "relax pipeline not on this host (mount it, or set [tools] minimization)"
+        note "relax pipeline not on this host (mount it, or set [tools] minimization)"
     fi
 fi
 

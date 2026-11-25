@@ -27,17 +27,27 @@ ranked selection. All steps after slate assembly require human action.
 
 ```sh
 git clone https://github.com/DeepFoldProtein/RESIDUDES && cd RESIDUDES
-containers/verify.sh --build                 # build the images, then check the setup end to end
+residudes/bin/residudes setup                # does the installation with you, then checks it
+```
 
+`setup` asks first what this machine already has — the AlphaFold 3 databases are 630 GB and
+`af3.bin` is licensed per person, so finding them matters more than fetching them — and then
+obtains the published images, installs what is missing and runs `containers/verify.sh` at the end.
+It hands the work to whichever agent CLI is present (Claude Code, Codex, Antigravity, Gemini);
+`--manual` asks the questions itself, and with no CLI on the machine it falls back to that by
+itself.
+
+Then a target:
+
+```sh
 cd residudes
-bin/residudes setup                          # resources, databases, config, skills; with you
 bin/residudes target add T1234 --fasta T1234.fasta --stoich A3
 bin/residudes agent step T1234               # one step per stage; `daemon --target T1234` keeps going
 ```
 
-[`docs/setup.md`](docs/setup.md) documents the complete installation: container images or virtual environments,
-the 630 GB of MSA databases, and the three components that must be obtained by the user (AlphaFold 3 parameters, a
-Rosetta build and a MODELLER licence key).
+[`docs/setup.md`](docs/setup.md) documents the installation in full: container images or virtual
+environments, the MSA databases, and the three components that must be obtained by the user
+(AlphaFold 3 parameters, a Rosetta build and a MODELLER licence key).
 
 ## Documentation
 
