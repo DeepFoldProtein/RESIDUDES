@@ -51,13 +51,35 @@ def _component(root: str, exe: str) -> dict:
         return {"name": exe, "status": "check", "path": str(b), "doctor": [str(exc)]}
 
 
+# The picture tools are worth their own line. A missing molterm is not fatal - the deck falls back
+# to PyMOL through sbatch - but a missing USalign is the quiet kind: molterm shells out to it for
+# every superposition, carries on when it is not there, and writes an overlay of unaligned models
+# that looks exactly like an aligned one.
+PICTURE_TOOLS = [
+    ("molterm", "renders the deck and shows structures in a conversation", "npm install -g molterm-mcp, or use the agent image"),
+    ("USalign", "every molterm superposition shells out to it", "build from github.com/pylelab/USalign, or use the agent image"),
+    ("typst", "compiles the slide report", "github.com/typst/typst/releases, or use the agent image"),
+    ("pymol", "the renderer molterm replaced; still used for a scene it cannot draw", "optional"),
+]
+
+
+def _picture_tools(cfg: Config) -> list[dict]:
+    out = []
+    for name, what, fix in PICTURE_TOOLS:
+        path = cfg.extra.get("tools", {}).get(name) or shutil.which(name)
+        status = "ok" if path else ("note" if name == "pymol" else "missing")
+        out.append({"name": name, "status": status, "path": path or "", "what": what, "fix": "" if path else fix})
+    return out
+
+
 def report(cfg: Config) -> dict:
     paths = [cfg.work_root, cfg.targets_root, str(RESIDUDES_DIR),
              *(d for d in os.environ.get("RESIDUDES_WORK_ROOTS", "").split(":") if d)]
     r = resources.detect(paths)
     return {"resources": r, "recommendations": resources.recommendations(r, cfg.work_root),
             "catalog": catalog.check_all(paths=cfg.extra.get("databases") or {}),
-            "components": [_component(cfg.residudes_engine, "residudes-engine"), _component(cfg.residudes_qa, "residudes-qa")]}
+            "components": [_component(cfg.residudes_engine, "residudes-engine"), _component(cfg.residudes_qa, "residudes-qa")],
+            "picture_tools": _picture_tools(cfg)}
 
 
 # ---------------------------------------------------------------------- colour
@@ -124,7 +146,12 @@ def _print_catalog_and_components(rep: dict) -> None:
         print(f"   {mark(c['status'])} {c['name']:32s} {dim(c['date'] or ''):10s}  {c['note']}")
         if c["fix"]:
             print("           " + dim(f"fix: {c['fix']}"))
-    print(bold("\n== 5. components"))
+    print(bold("\n== 5. pictures"))
+    for c in rep.get("picture_tools", []):
+        print(f"   {mark(c['status'])} {c['name']:10s} {dim(c['what'])}")
+        if c["fix"]:
+            print("              " + dim(f"fix: {c['fix']}"))
+    print(bold("\n== 6. components"))
     for c in rep["components"]:
         print(f"   {mark(c['status'])} {c['name']} {dim('(' + str(c['path']) + ')')}")
         for line in c.get("doctor", [])[-8:]:

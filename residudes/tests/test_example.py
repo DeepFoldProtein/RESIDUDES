@@ -42,3 +42,20 @@ def test_the_example_draws_every_figure_it_links(regenerated):
         assert (ddir / "report" / "figs" / f"{name}.svg").is_file(), f"{name}.svg was not drawn"
     # the pool and its clustering come from the two tables the example ships
     assert "875 A1B1 models" in (ddir / "report" / "figs" / "clusters.svg").read_text()
+
+
+def test_setup_reports_the_picture_tools(monkeypatch):
+    """A missing USalign is the quiet kind of missing: molterm carries on and draws an unaligned overlay.
+    Setup should say so before a deck is built, not after someone reads the figure."""
+    from residudes import config, setup
+
+    monkeypatch.setattr(setup.shutil, "which", lambda name: "/usr/bin/" + name if name == "typst" else None)
+    rows = {c["name"]: c for c in setup._picture_tools(config.Config())}
+    assert rows["typst"]["status"] == "ok"
+    assert rows["molterm"]["status"] == "missing" and rows["USalign"]["status"] == "missing"
+    assert "USalign" in rows["USalign"]["fix"]
+    assert rows["pymol"]["status"] == "note"                  # the fallback: absent is not a problem
+
+    cfg = config.Config()
+    cfg.extra = {"tools": {"molterm": "/opt/molterm"}}        # [tools] in residudes.toml wins over PATH
+    assert {c["name"]: c["path"] for c in setup._picture_tools(cfg)}["molterm"] == "/opt/molterm"
