@@ -136,17 +136,26 @@ for name in $SET; do
         ok "$name.sif  $(du -hL "$sif" | cut -f1)"
     elif [ "$PULL" = 1 ] || [ "${PULL_ONE:-0}" = 1 ]; then
         printf '  ..    pulling %s\n' "$name"
-        if apptainer build --force "$sif" "docker://$REGISTRY/$name:$TAG" >/dev/null 2>&1; then
+        # keep the output: a failed pull used to print nothing but "could not pull", which says
+        # neither whether the registry refused it nor whether the disk or the cache is at fault
+        log=$(mktemp)
+        if apptainer build --force "$sif" "docker://$REGISTRY/$name:$TAG" >"$log" 2>&1; then
             ok "$name.sif  pulled from $REGISTRY  $(du -hL "$sif" | cut -f1)"
         else
             bad "$name.sif  could not pull $REGISTRY/$name:$TAG"
+            sed -n '$p' "$log" | sed 's/^/          /'
+            printf '          full log: %s\n' "$log"
         fi
+        rm -f "$log" 2>/dev/null || true
     elif [ "$BUILD" = 1 ] || [ "${BUILD_ONE:-0}" = 1 ]; then
         printf '  ..    building %s\n' "$name"
-        if (cd "$REPO/containers/$name" && apptainer build --force "$sif" "$name.def" >/dev/null 2>&1); then
+        blog=$(mktemp)
+        if (cd "$REPO/containers/$name" && apptainer build --force "$sif" "$name.def" >"$blog" 2>&1); then
             ok "$name.sif  built  $(du -hL "$sif" | cut -f1)"
         else
-            bad "$name.sif  build failed (run apptainer build by hand to see why)"
+            bad "$name.sif  build failed"
+            sed -n '$p' "$blog" | sed 's/^/          /'
+            printf '          full log: %s\n' "$blog"
         fi
     else
         bad "$name.sif missing (--build, or apptainer build from containers/$name)"
