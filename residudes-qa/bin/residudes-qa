@@ -3,6 +3,21 @@
 # Override the interpreter with RESIDUDES_QA_PYTHON (e.g. a venv built elsewhere).
 set -euo pipefail
 HERE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+
+# With RESIDUDES_QA_IMAGE naming residudes-qa-cu130.sif (or residudes-qa.sif), run inside it instead of this checkout's
+# venv: the checkout mounted where the image expects it (so the data under data/files comes with it), and the top-level
+# directory of every absolute path in the arguments bound, which covers the models read and the tables written.
+if [ -n "${RESIDUDES_QA_IMAGE:-}" ]; then
+    binds=""
+    for a in "$PWD" "$@"; do
+        a=${a#*=}
+        case "$a" in /?*) top="/$(echo "$a" | cut -d/ -f2)"
+            case ",$binds," in *",$top,"*) ;; *) binds="${binds:+$binds,}$top" ;; esac ;;
+        esac
+    done
+    exec apptainer run --nv ${binds:+-B "$binds"} -B "$HERE:/opt/residudes-qa" "$RESIDUDES_QA_IMAGE" "$@"
+fi
+
 PY="${RESIDUDES_QA_PYTHON:-$HERE/.venv/bin/python}"
 if [ ! -x "$PY" ]; then
     echo "residudes-qa: no venv at $HERE/.venv — run: cd $HERE && uv sync --extra cu130   (cu124 for CUDA 12.4 drivers)" >&2
