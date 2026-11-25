@@ -92,7 +92,8 @@ def tools() -> dict:
     """Programs residudes calls, and the Python packages its commands import (marked "(python)")."""
     import importlib.util
     found = {}
-    for t in ("claude", "codex", "uv", "apptainer", "pueue", "sbatch", "rsvg-convert", "typst", "hmmsearch", "hmmscan"):
+    for t in ("claude", "codex", "uv", "apptainer", "tmux", "pueue", "sbatch", "rsvg-convert",
+              "typst", "hmmsearch", "hmmscan"):
         found[t] = shutil.which(t) or ""
     for mod, what in (("gemmi", "gemmi (python)"), ("claude_agent_sdk", "claude-agent-sdk (python)")):
         found[what] = "yes" if importlib.util.find_spec(mod) else ""
@@ -118,6 +119,9 @@ def recommendations(r: dict, work_root: str) -> list[str]:
             rec.append(f"{pend} Slurm jobs pending and no idle node: expect queueing; consider other sites (pueue pods)")
     if not r["tools"].get("gemmi (python)"):
         rec.append("gemmi is missing: `uv sync` in residudes/ (residudes gate and the chain check in residudes review need it)")
+    if not r["tools"].get("tmux"):
+        rec.append("no tmux: `residudes chat` holds a conversation in a tmux session, so install it "
+                   "(apt/dnf install tmux, or conda install -c conda-forge tmux)")
     if not r["tools"].get("typst"):
         rec.append("typst is missing: `residudes slides` writes report.typ but no PDF")
     if not r["tools"].get("claude"):

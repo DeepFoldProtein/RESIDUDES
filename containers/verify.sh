@@ -51,7 +51,7 @@ run() {   # run <description> <command…>: ok when it exits 0
 
 # ── the host ────────────────────────────────────────────────────────────────────────────────
 head_ "host"
-for t in apptainer uv python3; do
+for t in apptainer uv python3 tmux; do          # tmux: `residudes chat` holds its sessions in it
     if command -v "$t" >/dev/null; then ok "$t  $(command -v "$t")"; else bad "$t not found"; fi
 done
 command -v sbatch >/dev/null && ok "sbatch (jobs run outside the containers)" \

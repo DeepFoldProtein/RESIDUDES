@@ -11,6 +11,7 @@ apt-get update
 apt-get install -y --no-install-recommends \
     ca-certificates curl git \
     librsvg2-bin \
+    tmux \
     xz-utils
 rm -rf /var/lib/apt/lists/*
 
