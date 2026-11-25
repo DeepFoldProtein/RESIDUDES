@@ -12,7 +12,12 @@ FROM nvidia/cuda:13.0.3-runtime-ubuntu24.04
 COPY --from=uv /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock /opt/core/
 COPY install.sh /tmp/install.sh
-RUN sh /tmp/install.sh && rm /tmp/install.sh
+# one layer per stage: a 9 GB layer is what fails to pull, three 3 GB ones do not
+RUN sh /tmp/install.sh system
+RUN sh /tmp/install.sh base
+RUN sh /tmp/install.sh cuda
+RUN sh /tmp/install.sh torch
+RUN sh /tmp/install.sh check && rm /tmp/install.sh
 
 # What the package page shows for this image. Without these every package inherits the
 # repository's description and the eight pages read identically.

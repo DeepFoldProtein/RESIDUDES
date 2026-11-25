@@ -106,7 +106,9 @@ def _main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="residudes", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--version", action="version", version=f"residudes {__version__}")
     ap.add_argument("--config", help="residudes.toml (default: $RESIDUDES_CONFIG or residudes/residudes.toml)")
-    sub = ap.add_subparsers(dest="cmd", required=True)
+    # `residudes` with no command shows the conversations running here, because that is the
+    # question someone has when they sit down: what is in flight, and what is waiting for me.
+    sub = ap.add_subparsers(dest="cmd", required=False)
 
     p = sub.add_parser("setup", help="first-run onboarding, with an agent by default")
     p.add_argument("--manual", action="store_true",
@@ -226,8 +228,12 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("target", nargs="?")
     p.add_argument("--harness", choices=("claude", "codex", "ag", "gemini"),
                    help="which agent CLI to start (default: the first one on PATH)")
+    p.add_argument("--backend", choices=("builtin", "tmux", "screen"),
+                   help="how to hold the session open (default: builtin, which needs nothing installed)")
+    p.add_argument("--stop", action="store_true", help="end the conversation instead of joining it")
 
     p = sub.add_parser("sessions", help="the target conversations running on this machine")
+    p.add_argument("--backend", choices=("builtin", "tmux", "screen"))
 
     p = sub.add_parser("consult", help="open a checkpoint: talk the plan or the first results through with a person")
     p.add_argument("target")
@@ -434,9 +440,13 @@ def _main(argv: list[str] | None = None) -> int:
             d.runs.append({"time": now(), "by": _actor(), "job": args.job, "scheduler": args.scheduler, "what": args.what,
                            "state": args.state or "submitted"})
         return _with(cfg, args.target, rec)
+    if args.cmd is None:
+        from residudes import chat
+        return chat.list_cmd(cfg)
     if args.cmd in ("chat", "sessions"):
         from residudes import chat
-        return chat.chat_cmd(cfg, getattr(args, "target", None), getattr(args, "harness", None))
+        return chat.chat_cmd(cfg, getattr(args, "target", None), getattr(args, "harness", None),
+                             getattr(args, "backend", None), getattr(args, "stop", False))
     if args.cmd == "automate":
         if args.show or not (args.on or args.off):
             d = Dossier.load(cfg.targets_dir, args.target)

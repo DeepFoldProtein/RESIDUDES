@@ -16,7 +16,7 @@ Stage: final
     install.sh /opt/trt-install.sh
 
 %post
-    sh /opt/trt-install.sh
+    sh /opt/trt-install.sh all      # one process: apptainer has no layers to split it into
     rm /opt/trt-install.sh
 
 %environment

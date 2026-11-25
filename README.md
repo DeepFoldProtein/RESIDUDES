@@ -47,10 +47,10 @@ bin/residudes agent step T1234               # or one step per stage; `daemon --
 ```
 
 `chat` is a conversation in that target's dossier directory: ask what it is doing, steer it,
-leave, come back to the same thread. It is held open by whichever multiplexer the machine has,
-tmux or screen, and runs in the foreground where there is neither — the conversation works either
-way, only the detaching needs one. `residudes sessions` lists the conversations on the machine and
-says which target is waiting on a person.
+leave with `ctrl-\`, come back to the same thread. The session is held open by residudes itself —
+the agent runs under a pty in a detached process, so nothing has to be installed and a closed
+terminal does not end it. `residudes` on its own lists what is running and which target is waiting
+on a person; `--backend tmux` uses tmux instead, for anyone who would rather manage it there.
 
 [`docs/setup.md`](docs/setup.md) documents the installation in full: container images or virtual
 environments, the MSA databases, and the three components that must be obtained by the user

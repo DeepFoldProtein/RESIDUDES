@@ -1,30 +1,32 @@
-# AlphaFold 3 and the JAX backends of Protenix, OpenFold 3 and Boltz-2.
+# residudes-engine's prediction runtime: Protenix v2, OpenFold 3, Boltz-2; PyTorch and TensorRT.
 #
-# Mounted at run time: the checkout, the checkpoints, and af3.bin — which Google DeepMind
-# licenses to each user and which therefore cannot be inside any image.
-#
-# Build from residudes-engine/core/ as the context, because the vendored model sources are
-# copied in: docker build -f containers/residudes-engine-jax/Dockerfile residudes-engine/core
+# Mounted at run time: the checkout (so one image serves any branch), the checkpoints, and the
+# TensorRT engines — those are built per GPU and are not portable.
 #
 #   docker run --gpus all -v $PWD/residudes-engine:/opt/residudes-engine \
-#       -v /data/af3:/af3 residudes-engine-jax predict --model af3 --backend jax --input input.json
+#       -v /data/checkpoints:/ckpt -v /data/engines:/engines residudes-engine-trt \
+#       predict --model pt2 --input input.json --out out/
 FROM ghcr.io/astral-sh/uv:0.11.7 AS uv
 FROM nvidia/cuda:13.0.3-runtime-ubuntu24.04
 
 COPY --from=uv /uv /usr/local/bin/uv
-COPY jaxenv/pyproject.toml jaxenv/uv.lock /opt/jaxenv/
-COPY models/alphafold3 /opt/models/alphafold3
-COPY models/openfold-3 /opt/models/openfold-3
+COPY pyproject.toml uv.lock /opt/core/
 COPY install.sh /tmp/install.sh
-RUN sh /tmp/install.sh && rm /tmp/install.sh
+# one layer per stage: a 9 GB layer is what fails to pull, three 3 GB ones do not
+RUN sh /tmp/install.sh system
+RUN sh /tmp/install.sh venv
+RUN sh /tmp/install.sh torch
+RUN sh /tmp/install.sh cuda
+RUN sh /tmp/install.sh rest
+RUN sh /tmp/install.sh check && rm /tmp/install.sh
 
 # What the package page shows for this image. Without these every package inherits the
 # repository's description and the eight pages read identically.
-LABEL org.opencontainers.image.title="RESIDUDES engine (JAX + AlphaFold 3)" \
-      org.opencontainers.image.description="AlphaFold 3 with its C++ extension already compiled, and the JAX backends. Contains vendored AlphaFold 3 code under CC BY-NC-SA 4.0: non-commercial. af3.bin is licensed per user and is bind-mounted." \
+LABEL org.opencontainers.image.title="RESIDUDES engine (PyTorch + TensorRT)" \
+      org.opencontainers.image.description="Protenix v2, OpenFold 3 and Boltz-2 on PyTorch or TensorRT 10.16. Checkpoints and the per-GPU TensorRT engines are bind-mounted." \
       org.opencontainers.image.source="https://github.com/DeepFoldProtein/RESIDUDES" \
       org.opencontainers.image.documentation="https://github.com/DeepFoldProtein/RESIDUDES/blob/main/containers/README.md" \
-      org.opencontainers.image.licenses="CC-BY-NC-SA-4.0"
+      org.opencontainers.image.licenses="MIT"
 
 WORKDIR /work
 ENV PATH=/opt/venv/bin:$PATH \

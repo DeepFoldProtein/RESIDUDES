@@ -19,18 +19,21 @@ import subprocess
 from pathlib import Path
 
 from residudes.config import Config
+from residudes import session
 from residudes.dossier import Dossier
 from residudes.setup import available_harness, bold, dim, green, yellow
 
 PREFIX = "residudes-"
+LEAVE = "ctrl-\\"             # what detaches from one of our own sessions
 
 
-def backend() -> str | None:
-    """tmux if it is here, else screen, else nothing - the conversation then runs in the foreground."""
-    for name in ("tmux", "screen"):
-        if shutil.which(name):
-            return name
-    return None
+def backend(prefer: str | None = None) -> str:
+    """Which session mechanism to use: our own by default, a multiplexer when asked for one."""
+    if prefer in ("tmux", "screen") and shutil.which(prefer):
+        return prefer
+    if prefer == "builtin" or prefer is None:
+        return "builtin"
+    return "builtin"
 
 
 def _tmux(*args: str, capture: bool = True) -> subprocess.CompletedProcess:
@@ -51,12 +54,29 @@ def _screen_sessions() -> list[dict]:
     return out
 
 
-def sessions() -> list[dict]:
-    """The target sessions the multiplexer is holding."""
-    if backend() == "screen":
+def builtin_sessions(cfg) -> list[dict]:
+    """Our own sessions: one directory per target under the work root."""
+    out = []
+    root = Path(cfg.targets_dir)
+    if not root.is_dir():
+        return out
+    for ddir in sorted(root.iterdir()):
+        pid = session.running(ddir) if ddir.is_dir() else None
+        if pid:
+            p = session.paths(ddir)
+            started = p["started"].read_text().strip() if p["started"].exists() else ""
+            out.append({"target": ddir.name, "name": ddir.name, "created": started,
+                        "attached": False, "windows": "1", "pid": pid})
+    return out
+
+
+def sessions(cfg=None, prefer: str | None = None) -> list[dict]:
+    """The target sessions running on this machine."""
+    mux = backend(prefer)
+    if mux == "builtin":
+        return builtin_sessions(cfg) if cfg else []
+    if mux == "screen":
         return _screen_sessions()
-    if backend() != "tmux":
-        return []
     r = _tmux("list-sessions", "-F", "#{session_name}\t#{session_created}\t#{session_attached}\t#{session_windows}")
     if r.returncode != 0:
         return []                                  # no server running: no sessions, not an error
@@ -85,21 +105,18 @@ def _state(cfg: Config, target: str) -> str:
     return " · ".join(bits)
 
 
-def list_cmd(cfg: Config) -> int:
-    rows = sessions()
-    if backend() is None:
-        print("no tmux or screen here, so a conversation cannot be left running in the background.")
-        print(dim("`residudes chat <target>` still works: it runs in the foreground until you leave it."))
-        return 0
+def list_cmd(cfg: Config, prefer: str | None = None) -> int:
+    rows = sessions(cfg, prefer)
     if not rows:
-        print("no sessions. " + dim("start one with `residudes chat <target>`"))
+        print("no conversations running. " + dim("start one with `residudes chat <target>`"))
         return 0
-    print(bold("sessions"))
+    print(bold("conversations"))
     for s in rows:
-        mark = green("attached") if s["attached"] else dim("detached")
-        print(f"  {s['target']:12s} {mark:20s} {_state(cfg, s['target'])}")
-        print(f"               {dim('since ' + s['created'] + ', ' + s['windows'] + ' window(s)')}")
-    print("\n" + dim("attach with `residudes chat <target>`; leave it running with ctrl-b d"))
+        where = green("attached") if s.get("attached") else dim("running")
+        print(f"  {s['target']:12s} {where:20s} {_state(cfg, s['target'])}")
+        if s.get("created"):
+            print(f"               {dim('since ' + s['created'])}")
+    print("\n" + dim("join one with `residudes chat <target>`; " + LEAVE + " leaves it running"))
     return 0
 
 
@@ -119,12 +136,38 @@ Dossier directory (your working directory): {ddir}
 """
 
 
-def chat_cmd(cfg: Config, target: str | None, harness: str | None) -> int:
+def chat_cmd(cfg: Config, target: str | None, harness: str | None, prefer: str | None = None,
+             stop: bool = False) -> int:
     if target is None:
-        return list_cmd(cfg)
-    mux = backend()
+        return list_cmd(cfg, prefer)
+    mux = backend(prefer)
+    ddir = Path(cfg.targets_dir) / target
+    if stop:
+        if mux == "builtin":
+            ok_ = session.stop(ddir) == 0
+        else:
+            ok_ = _tmux("kill-session", "-t", PREFIX + target).returncode == 0
+        print(f"{target}: conversation ended" if ok_ else f"{target}: no conversation to end")
+        return 0 if ok_ else 1
+    if not ddir.is_dir():
+        print(f"no dossier for {target} at {ddir} (create it with `residudes target add {target}`)")
+        return 1
+
+    if mux == "builtin":
+        if session.running(ddir) is None:
+            found = available_harness(harness)
+            if not found:
+                print("no agent CLI on PATH (claude, codex, ag, gemini); `residudes chat` needs one")
+                return 1
+            cmd, agent_name, argv = found
+            print(f"starting {green(agent_name)} for {bold(target)} {dim('(' + LEAVE + ' leaves it running)')}")
+            session.start(ddir, argv(BRIEF.format(target=target, ddir=ddir)))
+        else:
+            print(f"joining {bold(target)}  {dim('(' + LEAVE + ' leaves it running)')}")
+        return session.attach(ddir)
+
     name = PREFIX + target
-    exists = any(s["name"] == name for s in sessions())
+    exists = any(s["name"] == name for s in sessions(cfg, prefer))
     inside = bool(os.environ.get("TMUX"))
     if not exists:
         found = available_harness(harness)
@@ -132,25 +175,15 @@ def chat_cmd(cfg: Config, target: str | None, harness: str | None) -> int:
             print("no agent CLI on PATH (claude, codex, ag, gemini); `residudes chat` needs one")
             return 1
         cmd, agent_name, argv = found
-        ddir = Path(cfg.targets_dir) / target
-        if not ddir.is_dir():
-            print(f"no dossier for {target} at {ddir} (create it with `residudes target add {target}`)")
-            return 1
         print(f"starting {green(agent_name)} for {bold(target)} in {dim(str(ddir))}")
         cmdline = argv(BRIEF.format(target=target, ddir=ddir))
         if mux == "tmux":
             _tmux("new-session", "-d", "-s", name, "-c", str(ddir), *cmdline, capture=False)
-        elif mux == "screen":
+        else:
             subprocess.run(["screen", "-dmS", name, *cmdline], cwd=str(ddir))
-        else:                                      # no multiplexer: the conversation is this terminal
-            print(dim("no tmux or screen here, so this runs in the foreground; it ends when you leave it"))
-            return subprocess.call(cmdline, cwd=str(ddir))
-    elif mux is None:
-        print("that session cannot exist without tmux or screen")
-        return 1
     else:
         leave = "ctrl-b d" if mux == "tmux" else "ctrl-a d"
         print(f"attaching to {bold(target)}  {dim('(' + leave + ' to leave it running)')}")
-    if mux == "tmux":                              # switch-client inside tmux, attach outside it
+    if mux == "tmux":
         return _tmux("switch-client" if inside else "attach-session", "-t", name, capture=False).returncode
     return subprocess.call(["screen", "-r", name])
