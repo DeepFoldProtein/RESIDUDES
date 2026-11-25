@@ -29,6 +29,10 @@ cd RESIDUDES/residudes
 uv sync                          # claude-agent-sdk (agent runner) and gemmi (gates); otherwise stdlib only
 bin/residudes setup                # first run: an agent CLI does it with you (--manual for the questions)
 bin/residudes doctor               # re-run at any time to re-check the installation
+
+bin/residudes target add T1234 --fasta T1234.fasta --stoich A3
+bin/residudes chat T1234           # talk to the agent about this target; ctrl-\ leaves it running
+bin/residudes                      # what is running, and which target is waiting on a person
 ```
 
 **Dossier location.** `setup` proposes `work_root/` in the directory it was run from, and lists any shared
