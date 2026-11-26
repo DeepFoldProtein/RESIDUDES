@@ -588,14 +588,23 @@ def assemble(out: Path, cfg=None) -> dict:
 def plm_cmd(cfg, d, aligner: str, actor: str) -> str:
     from residudes.dossier import Dossier, now
     script = (cfg.extra.get("tools", {}) if cfg else {}).get("plmmsa") or PLMMSA
-    if not Path(script).exists():
-        raise FileNotFoundError(f"plmMSA client not found: {script} (set [tools] plmmsa in residudes.toml)")
     ddir = Dossier.path(cfg.targets_dir, d.target).parent
     work = ddir / "msas" / "plm_target"
     work.mkdir(parents=True, exist_ok=True)
     (work / "target.fasta").write_text(f">{d.target}\n{_query(d)}\n")
-    r = subprocess.run(["bash", script, f"--aligner={aligner}", str(work)], capture_output=True, text=True, timeout=1800)
-    a3m = work / "msas" / "plmmsa" / aligner / "merged.a3m"
+    if script:                                               # a site's own submit script
+        if not Path(script).exists():
+            raise FileNotFoundError(f"plmMSA client not found: {script} ([tools] plmmsa in residudes.toml)")
+        r = subprocess.run(["bash", script, f"--aligner={aligner}", str(work)], capture_output=True, text=True, timeout=1800)
+        a3m = work / "msas" / "plmmsa" / aligner / "merged.a3m"
+    else:
+        # No site script (a public install): the engine's own plmMSA source, which calls the public API. This used
+        # to fail with "set [tools] plmmsa", and agents went around it to the engine by hand (R81 on a clean install).
+        engine = Path(cfg.residudes_engine) / "bin" / "residudes-engine"
+        r = subprocess.run([str(engine), "msa", "--source", "plmmsa", f"--aligner={aligner}",
+                            "--fasta", str(work / "target.fasta"), "--name", d.target, "--out", str(work / "engine")],
+                           capture_output=True, text=True, timeout=1800)
+        a3m = work / "engine" / "msa" / "unpaired_A.a3m"
     if r.returncode != 0 or not a3m.exists():
         raise ValueError(f"plmMSA failed ({r.returncode}): {r.stderr[-800:]}")
     dest = ddir / "msas" / f"plm_{aligner}"
