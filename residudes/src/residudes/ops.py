@@ -58,15 +58,29 @@ def pool_cmd(cfg: Config, d: Dossier, explicit: str | None, actor: str, refresh:
     return "\n".join(lines)
 
 
+def slurm_flags(gpu: bool, slurm: dict | None = None) -> list[str]:
+    """Where residudes' own jobs go, from residudes.toml [slurm]: `partition` (default: the cluster's default
+    partition), `gres` for GPU jobs (default gpu:1; e.g. gpu:RTX4090:1 to match the engines' card) and `extra` sbatch
+    flags (e.g. ["--exclude=login1"]). It used to be `-p normal` for every site - this cluster's name for it."""
+    if slurm is None:
+        from residudes.config import load
+        try:
+            slurm = (load().extra or {}).get("slurm", {}) or {}
+        except Exception:
+            slurm = {}
+    out = ["-p", str(slurm["partition"])] if slurm.get("partition") else []
+    if gpu:
+        out.append(f"--gres={slurm.get('gres') or 'gpu:1'}")
+    return out + [str(x) for x in slurm.get("extra", []) or []]
+
+
 def _sbatch(cmd: str, name: str, log: Path, gpu: bool, hours: int, after: list[str] | None = None, cpus: int = 8,
             wait: bool = False) -> str:
     """Submit `cmd` and return the job id. With wait, block until the job ends (sbatch --wait) and raise if it failed:
     for work the caller needs before it can go on, such as the final deck's pictures."""
     if not shutil.which("sbatch"):
         raise FileNotFoundError("sbatch not found: this needs a Slurm host (gates also run here with --local, up to 100 models)")
-    args = ["sbatch", "--parsable", "-p", "normal", "-c", str(cpus), "-t", f"{hours:02d}:00:00", "-J", name, "-o", str(log)]
-    if gpu:
-        args += ["--gres=gpu:1"]
+    args = ["sbatch", "--parsable", *slurm_flags(gpu), "-c", str(cpus), "-t", f"{hours:02d}:00:00", "-J", name, "-o", str(log)]
     if after:
         args += [f"--dependency=afterok:{':'.join(after)}"]
     if wait:

@@ -135,3 +135,11 @@ def test_sbatch_wait_blocks_and_reports_a_failed_job(tmp_path, monkeypatch):
     else:
         raise AssertionError("a failed job passed")
     assert "--wait" in calls[0][0] and calls[0][1]["timeout"]
+
+
+def test_residudes_jobs_take_their_slurm_flags_from_the_config():
+    """No site's partition name is baked in; a site names its own, its GPU type and anything else."""
+    from residudes import ops
+    assert ops.slurm_flags(False, {}) == [] and ops.slurm_flags(True, {}) == ["--gres=gpu:1"]
+    flags = ops.slurm_flags(True, {"partition": "normal", "gres": "gpu:RTX4090:1", "extra": ["--exclude=ada"]})
+    assert flags == ["-p", "normal", "--gres=gpu:RTX4090:1", "--exclude=ada"]

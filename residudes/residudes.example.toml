@@ -38,3 +38,9 @@ plmmsa = ""                                                   # a site's plmMSA 
 uniref90 = "/data/databases/af3/uniref90_2022_05.fa"
 mgnify = "/data/databases/af3/mgy_clusters_2022_05.fa"
 uniprot = "/data/databases/af3/uniprot_all_2021_04.fa"
+
+# How residudes submits its own jobs (QA, gates, renders, MSA crawls); predictions follow residudes-engine's site file.
+# [slurm]
+# partition = "gpu"                 # default: the cluster's default partition
+# gres = "gpu:RTX4090:1"            # default gpu:1; match the card the TensorRT engines were built for
+# extra = ["--exclude=login1"]      # any other sbatch flags, e.g. to keep jobs off a login node in the partition
