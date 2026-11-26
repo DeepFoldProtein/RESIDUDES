@@ -25,6 +25,7 @@ import subprocess
 import time
 from pathlib import Path
 
+from residudes.chat import tmux_bin
 from residudes.dossier import Dossier
 
 TAG = "@residudes_view"
@@ -32,12 +33,12 @@ SLOTS = ["#0072B2", "#D55E00", "#009E73", "#CC79A7", "#E69F00"]
 
 
 def _tmux(*args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(["tmux", *args], capture_output=True, text=True)
+    return subprocess.run([tmux_bin(), *args], capture_output=True, text=True)
 
 
 def here() -> str | None:
     """The pane this process runs in (the agent's own), or None outside tmux."""
-    return os.environ.get("TMUX_PANE") if os.environ.get("TMUX") and shutil.which("tmux") else None
+    return os.environ.get("TMUX_PANE") if os.environ.get("TMUX") and shutil.which(tmux_bin()) else None
 
 
 def viewer_pane(anchor: str) -> str | None:
@@ -103,6 +104,8 @@ def script(models: list[dict], small: tuple[str, ...], render: str | None, camer
     else:
         lines += [f"color {SLOTS[i % len(SLOTS)]} {m['label']}" for i, m in enumerate(models)]
     lines += [f"camera load {camera}", f"zoom {first}"] if camera else [f"orient {first}"]
+    # zoom leaves every atom in $sele, and the live pane draws a halo on each (screenshots leave it out)
+    lines.append("select clear")
     return "\n".join(lines) + "\n"
 
 

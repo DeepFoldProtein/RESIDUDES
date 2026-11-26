@@ -9,6 +9,7 @@ def test_the_pane_superposes_several_models_and_faces_a_peptide_in_one():
     one = viewer.script([{"label": "M1", "path": "/r/sep/af3/seed_20/sample_0/model.cif"}], ("A",), "block", "/v/view.cam")
     assert one.startswith("set renderer block\nload /r/sep/af3/seed_20/sample_0/model.cif\nrename model M1\n")
     assert "color chain" in one and "show spacefill chain A" in one and "camera load /v/view.cam\nzoom M1" in one
+    assert one.endswith("zoom M1\nselect clear\n")                 # no selection halo over the live picture
     two = viewer.script([{"label": "M1", "path": "/a/model.cif"}, {"label": "M3", "path": "/b/model.cif"}], (), None, None)
     assert two.startswith("set renderer auto\n")                         # not left to ~/.molterm/init.mt
     assert "rename model M3" in two                                       # same stem, each renamed on arrival
@@ -55,3 +56,14 @@ def test_target_show_lists_a_run_that_has_no_job_id(tmp_path, monkeypatch, capsy
     d.save(tmp_path / "targets")
     assert cli.main(["target", "show", "T"]) == 0
     assert "run local: render: scenes.mt [done]" in capsys.readouterr().out
+
+
+def test_tmux_is_the_binary_of_the_server_we_are_in(monkeypatch, tmp_path):
+    exe = tmp_path / "tmux-3.8"
+    exe.write_text("#!/bin/sh\n")
+    exe.chmod(0o755)
+    monkeypatch.setattr(chat.os, "readlink", lambda p: str(exe) if p == "/proc/4242/exe" else "")
+    monkeypatch.setenv("TMUX", "/tmp/tmux-1/sixel,4242,0")
+    assert chat.tmux_bin() == str(exe)                     # a 3.2a client would be dropped by this server
+    monkeypatch.delenv("TMUX")
+    assert chat.tmux_bin() != str(exe)                     # outside tmux: whatever is on PATH

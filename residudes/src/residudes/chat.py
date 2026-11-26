@@ -29,7 +29,22 @@ def have_tmux() -> bool:
     """tmux is required rather than reimplemented: a terminal application needs resizing,
     scrollback and repainting handled correctly, and a half-written multiplexer gets those
     wrong in ways that show up as a garbled screen."""
-    return bool(shutil.which("tmux"))
+    return bool(shutil.which(tmux_bin()))
+
+
+def tmux_bin() -> str:
+    """The tmux that runs the server this process is inside ($TMUX is socket,pid,session), else the one on PATH.
+    Versions do not mix: a 3.8 server drops a 3.2a client ("server exited unexpectedly"), and a sixel-capable
+    tmux beside an older system one is exactly that pair."""
+    pid = os.environ.get("TMUX", "").rsplit(",", 2)[1:2]
+    if pid and pid[0].isdigit():
+        try:
+            exe = os.readlink(f"/proc/{pid[0]}/exe")
+        except OSError:
+            exe = ""
+        if exe and os.access(exe, os.X_OK):
+            return exe
+    return shutil.which("tmux") or "tmux"
 
 
 def _no_tmux() -> int:
@@ -40,7 +55,7 @@ def _no_tmux() -> int:
 
 
 def _tmux(*args: str, capture: bool = True) -> subprocess.CompletedProcess:
-    return subprocess.run(["tmux", *args], capture_output=capture, text=True)
+    return subprocess.run([tmux_bin(), *args], capture_output=capture, text=True)
 
 
 def sessions(cfg=None, prefer: str | None = None) -> list[dict]:
