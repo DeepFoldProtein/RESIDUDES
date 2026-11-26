@@ -98,3 +98,11 @@ def test_a_session_brings_the_structure_tools(tmp_path):
     cfg = json.loads(path.read_text())
     assert "molterm" in cfg["mcpServers"]
     assert chat.write_mcp_config(tmp_path) is None          # someone else's file is left alone
+
+
+def test_the_daemon_goes_on_at_once_after_a_step_that_moved_a_target():
+    from residudes import daemon
+    moved = ["T1431: step success $0.41 IDENTIFIED -> HYPOTHESES", "H1388: waiting on jobs"]
+    assert daemon.next_wait(moved, 300) == 60
+    assert daemon.next_wait(["T1431: step success $0.3 RUNNING -> RUNNING", "H1388: NEEDS HUMAN"], 300) == 300
+    assert daemon.next_wait(["H1388: waiting on jobs"], 300) == 300

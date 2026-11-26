@@ -123,6 +123,21 @@ def round_once(cfg: Config, targets: list[str] | None, budget: float | None, max
     return report
 
 
+MOVED = 60                                                     # the wait after a round that moved a target on
+
+
+def next_wait(lines: list[str], interval: int) -> int:
+    """The wait before the next round: the full interval when nothing moved (jobs running, people to answer), and
+    only the one-minute floor after a step that changed a stage. Waiting 300 s after every step made a run that
+    the agent could take in a series of short steps mostly sleep (seen on a clean T1431 run: 5 min between steps)."""
+    for line in lines:
+        if ": step " in line and " -> " in line:
+            before, _, after = line.rpartition(" -> ")
+            if before.split()[-1] != after.strip():
+                return min(interval, MOVED)
+    return interval
+
+
 def run(cfg: Config, targets: list[str] | None, interval: int, once: bool, budget: float | None, max_idle_steps: int = 3,
         exit_when_idle: bool = False) -> int:
     interval = max(60, interval)
@@ -154,4 +169,4 @@ def run(cfg: Config, targets: list[str] | None, interval: int, once: bool, budge
         if exit_when_idle and not any(": step " in l or "waiting on jobs" in l or ": error " in l for l in lines):
             print(time.strftime("%H:%M:%S"), "nothing left for the agent: every target waits for a person", flush=True)
             return 0
-        time.sleep(interval)
+        time.sleep(next_wait(lines, interval))
