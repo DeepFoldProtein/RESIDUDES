@@ -242,6 +242,14 @@ PDB
         else
             bad "USalign missing: molterm's align/super/alignto all fail, and overlays are drawn unaligned"
         fi
+        # The final deck is ray-traced by PyMOL (`residudes slides T --final`); check it ray-traces, not only imports.
+        printf 'load /work/tiny.pdb\nshow cartoon\nset ray_shadows, 1\nset antialias, 2\npng /work/ray.png, width=320, height=240, ray=1\n' >"$work/r.pml"
+        if apptainer exec -B "$work:/work" "$AGENT" pymol -cq /work/r.pml >"$work/ray.log" 2>&1 && [ -s "$work/ray.png" ] \
+           && head -c4 "$work/ray.png" | grep -q PNG; then
+            ok "PyMOL ray-traces inside the image (the final deck; $(wc -c <"$work/ray.png") bytes of PNG)"
+        else
+            bad "PyMOL did not ray-trace in the image: $(tail -1 "$work/ray.log" 2>/dev/null)"
+        fi
         rm -rf "$work"
     fi
 else
