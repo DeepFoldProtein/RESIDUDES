@@ -125,3 +125,12 @@ def test_the_daemon_goes_on_at_once_after_a_step_that_moved_a_target():
     assert daemon.next_wait(moved, 300) == 60
     assert daemon.next_wait(["T1431: step success $0.3 RUNNING -> RUNNING", "H1388: NEEDS HUMAN"], 300) == 300
     assert daemon.next_wait(["H1388: waiting on jobs"], 300) == 300
+
+
+def test_agent_sessions_switch_models_when_a_message_is_flagged():
+    """A flagged message paused an unattended chat on a dialog (the person's own setting was false)."""
+    import json
+    from residudes import setup
+    argv = dict((c, f) for c, _n, f in setup.HARNESS_CLI)["claude"]("hello")
+    assert argv[:2] == ["claude", "--settings"] and argv[-1] == "hello"
+    assert json.loads(argv[2]) == {"switchModelsOnFlag": True}

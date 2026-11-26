@@ -84,7 +84,9 @@ async def _step(d: Dossier, cfg: Config, budget: float, max_turns: int, model: s
     log = logs / f"{dt.datetime.now().strftime('%Y%m%d-%H%M%S')}_{d.stage}.log"
     system, user = _prompt(d, cfg)
     bins = [str(RESIDUDES_DIR / "bin"), str(Path(cfg.residudes_engine) / "bin"), str(Path(cfg.residudes_qa) / "bin")]
+    from residudes.setup import CLAUDE_SETTINGS
     options = ClaudeAgentOptions(
+        settings=CLAUDE_SETTINGS,                          # a flagged message switches models instead of failing the step
         system_prompt={"type": "preset", "preset": "claude_code", "append": system},
         cwd=str(tdir),
         add_dirs=[str(RESIDUDES_DIR), cfg.residudes_engine, cfg.residudes_qa] + ([cfg.targets_root] if cfg.targets_root else []),

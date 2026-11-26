@@ -365,8 +365,14 @@ def run_doctor(cfg_path: str | None, as_json: bool) -> int:
 # installs - which is work a coding agent can do, and which this project already has a skill for.
 # So `residudes setup` hands the job to whichever agent CLI is on the machine and falls back to
 # the questions below when there is none. `--manual` always gets the questions.
+# When Claude Code's safeguards flag a message (a false positive on a CASP target is not rare: "[bio]" on a
+# protein-ligand run), the session switches to the other model and goes on instead of stopping on a dialog that
+# nobody in an unattended run answers. Passed as flag settings, which rank above a person's own user setting
+# (which may be false: then the conversation sat paused, and a headless step would fail instead of switching).
+CLAUDE_SETTINGS = '{"switchModelsOnFlag": true}'
+
 HARNESS_CLI = (                       # command, name, how to pass a prompt and keep the terminal
-    ("claude", "Claude Code", lambda prompt: ["claude", prompt]),
+    ("claude", "Claude Code", lambda prompt: ["claude", "--settings", CLAUDE_SETTINGS, prompt]),
     ("codex", "Codex CLI", lambda prompt: ["codex", prompt]),
     ("ag", "Antigravity CLI", lambda prompt: ["ag", prompt]),
     ("gemini", "Gemini CLI", lambda prompt: ["gemini", "-i", prompt]),
