@@ -50,7 +50,7 @@ def viewer_pane(anchor: str) -> str | None:
 
 
 def renderer() -> str | None:
-    """None lets molterm pick (pixels where it can); 'block' where tmux would swallow them. RESIDUDES_VIEW_RENDERER
+    """None lets molterm pick (`auto`: pixels where it can); 'block' where tmux would swallow them. RESIDUDES_VIEW_RENDERER
     overrides. tmux passes sixel from 3.4 on, built with it, and then lists `sixel` among the client's features."""
     if os.environ.get("RESIDUDES_VIEW_RENDERER"):
         return os.environ["RESIDUDES_VIEW_RENDERER"]
@@ -89,7 +89,8 @@ def resolve(cfg, d: Dossier, items: list[str]) -> list[dict]:
 def script(models: list[dict], small: tuple[str, ...], render: str | None, camera: str | None) -> str:
     """The molterm script the pane starts with: each model under its own name, superposed on the first by sequence,
     one colour per model when there are several, chains when there is one, a small chain as spheres."""
-    lines = [f"set renderer {render}"] if render else []
+    # always said: ~/.molterm/init.mt runs first and may pin a renderer (`pixel` leaves a tmux 3.2a pane black)
+    lines = [f"set renderer {render or 'auto'}"]
     for m in models:
         lines += [f"load {m['path']}", f"rename {Path(m['path']).stem} {m['label']}"]
     first = models[0]["label"]

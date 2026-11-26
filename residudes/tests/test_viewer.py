@@ -10,7 +10,8 @@ def test_the_pane_superposes_several_models_and_faces_a_peptide_in_one():
     assert one.startswith("set renderer block\nload /r/sep/af3/seed_20/sample_0/model.cif\nrename model M1\n")
     assert "color chain" in one and "show spacefill chain A" in one and "camera load /v/view.cam\nzoom M1" in one
     two = viewer.script([{"label": "M1", "path": "/a/model.cif"}, {"label": "M3", "path": "/b/model.cif"}], (), None, None)
-    assert "set renderer" not in two and "rename model M3" in two          # same stem, each renamed on arrival
+    assert two.startswith("set renderer auto\n")                         # not left to ~/.molterm/init.mt
+    assert "rename model M3" in two                                       # same stem, each renamed on arrival
     assert "align M3 to M1 automap" in two and "color #D55E00 M3" in two and "orient M1" in two
 
 
