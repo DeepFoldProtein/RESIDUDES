@@ -160,6 +160,17 @@ built. Measured on H1388's input, the same seed and GPU type on both routes: AF3
 OpenFold3 varies run to run on either route by the same amount; Protenix matches on confidence, with the peptide
 about 2 Å apart in two of five samples where two self-built runs agree to 0.2 Å.
 
+QA goes the same way with its own variable, naming the image file; `residudes-qa` then runs inside it, with the
+checkout mounted so its `data/files` come along:
+
+```sh
+export RESIDUDES_QA_IMAGE=/path/to/images/residudes-qa-cu130.sif      # or residudes-qa.sif, CPU only
+RESIDUDES_QA_SOURCE_TREE=/path/to/source residudes-qa data fetch --source local   # the data, once, through the image
+```
+
+The launcher binds the top-level directory of every absolute path in the arguments and in its own variables
+(`RESIDUDES_QA_*`, `EMA_*`), so a source tree named that way is visible inside the image.
+
 ## Verification
 
 `containers/verify.sh` performs an end-to-end check of an installation: the presence of the images,
