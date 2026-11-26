@@ -22,6 +22,13 @@ the checkpoints, at which the agent writes a brief and halts; orange marks every
 operator. Dashed curves denote the three permitted loops back, and the bands indicate which stages drive
 residudes-engine and which drive residudes-qa.
 
+**What a run hands back.** The recorded run in [`examples/H1388`](examples/H1388/) ends with this report, all thirty
+pages: the target and what was known about it, the MSAs and templates, the pool and its clusters, the two
+checkpoints, the slate, and what the agent spent. molterm draws the decks along the way; the final one is
+ray-traced in PyMOL ([PDF](examples/H1388/report/report.pdf)).
+
+[![all thirty pages of the H1388 report, from the target and its priors through the pool, the checkpoints and the slate to what the agent spent](docs/figures/report-pages.jpg)](examples/H1388/report/report.pdf)
+
 ## Installation
 
 ```sh
