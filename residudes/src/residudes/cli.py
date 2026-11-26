@@ -272,10 +272,10 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("--archive", action="store_true",
                    help="save the conversation into the dossier and leave it running")
     p.add_argument("--auto", action="store_true", default=None,
-                   help="keep the target moving (the default; turns it back on after --no-auto): the conversation is "
-                        "asked for the next step whenever it goes quiet, until the target waits for a person")
+                   help="run the target to PACKAGED without stopping for you: the conversation is asked for each next "
+                        "step, and the agent answers its own checkpoints (grants the mandate if there is none)")
     p.add_argument("--no-auto", dest="auto", action="store_false",
-                   help="the target moves only when asked; remembered until --auto")
+                   help="the target moves only when asked; takes back a mandate auto granted; remembered until --auto")
     p.add_argument("--drive", action="store_true", help=argparse.SUPPRESS)   # the --auto driver's own loop
 
     p = sub.add_parser("sessions", help="the target conversations running on this machine")

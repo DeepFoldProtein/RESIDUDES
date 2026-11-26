@@ -38,7 +38,7 @@ bin/residudes setup                # first run: an agent CLI does it with you (-
 bin/residudes doctor               # re-run at any time to re-check the installation
 
 bin/residudes target add H1388 --fasta examples/H1388/H1388.fasta --stoich A1B1   # the example's own input
-bin/residudes chat H1388           # talk to the agent about this target; it keeps moving (--no-auto: by hand)
+bin/residudes chat H1388           # talk to the agent; --auto runs it to PACKAGED without stopping for you
 bin/residudes                      # what is running, and which target is waiting on a person
 ```
 
