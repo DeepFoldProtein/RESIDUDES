@@ -85,7 +85,6 @@ async def _step(d: Dossier, cfg: Config, budget: float, max_turns: int, model: s
     system, user = _prompt(d, cfg)
     bins = [str(RESIDUDES_DIR / "bin"), str(Path(cfg.residudes_engine) / "bin"), str(Path(cfg.residudes_qa) / "bin")]
     options = ClaudeAgentOptions(
-        env={"CLAUDE_CODE_AUTO_CONNECT_IDE": "false"},       # never the person's editor: see chat._agent_env
         system_prompt={"type": "preset", "preset": "claude_code", "append": system},
         cwd=str(tdir),
         add_dirs=[str(RESIDUDES_DIR), cfg.residudes_engine, cfg.residudes_qa] + ([cfg.targets_root] if cfg.targets_root else []),
@@ -99,7 +98,8 @@ async def _step(d: Dossier, cfg: Config, budget: float, max_turns: int, model: s
         max_buffer_size=64 * 1024 * 1024,                  # a Read of a rendered picture can exceed the 1 MB default
         model=model,
         env={"PATH": os.pathsep.join(bins + [os.environ.get("PATH", "")]),
-             "RESIDUDES_CONFIG": cfg.path, "RESIDUDES_ACTOR": "agent"},
+             "RESIDUDES_CONFIG": cfg.path, "RESIDUDES_ACTOR": "agent",
+             "CLAUDE_CODE_AUTO_CONNECT_IDE": "false"},          # never the person's editor: see chat._agent_env
     )
     result: dict = {}
     with open(log, "w", buffering=1) as fh:            # line-buffered: tail -f works
