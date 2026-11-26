@@ -64,6 +64,9 @@ for name in $IMAGES; do
     echo "▶ $name"
     prepare "$name"
     docker build -t "$name:$TAG" -f "$REPO/containers/$name/Dockerfile" "$(context_for "$name")"
+    case "$name" in            # the recipe was copied into the engine's tree; do not leave it there
+        residudes-engine-*) rm -f "$REPO/residudes-engine/core/Dockerfile" "$REPO/residudes-engine/core/install.sh" ;;
+    esac
     check "$name"
     if [ "$PUSH" = 1 ]; then
         # AlphaFold 3's vendored code is CC BY-NC-SA 4.0: this image is non-commercial, and

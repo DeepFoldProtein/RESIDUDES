@@ -9,3 +9,7 @@ images/
 # site files describe one machine; only the template is shared
 residudes-engine/sites/*.toml
 !residudes-engine/sites/*.example.toml
+
+# publish.sh copies an engine recipe into the build context for the length of one build
+residudes-engine/core/Dockerfile
+residudes-engine/core/install.sh
