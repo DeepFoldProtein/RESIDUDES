@@ -299,7 +299,7 @@ def ensure(cfg: Config, target: str, harness: str | None = None) -> bool:
     cmdline = argv(BRIEF.format(target=target, ddir=ddir))
     # `env` in front, not tmux's -e: tmux replaces PATH with the PATH of the client that creates the session, so a
     # PATH given with -e never reaches the agent (measured: RESIDUDES_* arrived, PATH did not)
-    cmdline = ["env", *_agent_env(cfg), *cmdline]
+    cmdline = ["env", "-u", "CLAUDE_CODE_SSE_PORT", *_agent_env(cfg), *cmdline]
     if _tmux("has-session", "-t", SESSION).returncode != 0:
         ok = _tmux("new-session", "-d", "-s", SESSION, "-n", target, "-c", str(ddir), *cmdline, capture=False).returncode == 0
     else:
@@ -318,7 +318,10 @@ def _agent_env(cfg: Config) -> list[str]:
     nothing on PATH - and this config, so a conversation reads the same dossiers the command that opened it did."""
     from residudes.config import RESIDUDES_DIR
     bins = [str(RESIDUDES_DIR / "bin"), str(Path(cfg.residudes_engine) / "bin"), str(Path(cfg.residudes_qa) / "bin")]
-    out = ["PATH=" + os.pathsep.join(bins + [os.environ.get("PATH", "")]), "RESIDUDES_ACTOR=agent"]
+    out = ["PATH=" + os.pathsep.join(bins + [os.environ.get("PATH", "")]), "RESIDUDES_ACTOR=agent",
+           # started from an editor's terminal, the agent CLI would attach to that editor and take its connection away
+           # from the person's own session ("Visual Studio Code switched to another Claude Code session")
+           "CLAUDE_CODE_AUTO_CONNECT_IDE=false"]
     return out + ([f"RESIDUDES_CONFIG={cfg.path}"] if getattr(cfg, "path", None) else [])
 
 

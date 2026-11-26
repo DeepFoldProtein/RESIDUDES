@@ -87,3 +87,10 @@ def test_do_answers_with_molterm_then_drops_the_selection(monkeypatch):
     typed = [a[-1] for a in sent if a[:1] == ("send-keys",) and "-l" in a]
     assert typed == [":select chain A", ":show ballstick sele", ":select clear"]   # the reply is read before the clear
     assert sent[-1][-1] == "C-l"                           # and molterm redraws, or a sixel pane is left blank
+
+
+def test_the_conversation_agent_stays_off_the_persons_editor(tmp_path):
+    """Started from an editor's terminal, the agent CLI would attach to that editor and take it from the person."""
+    from residudes.config import Config
+    env = chat._agent_env(Config(work_root=str(tmp_path)))
+    assert "CLAUDE_CODE_AUTO_CONNECT_IDE=false" in env
