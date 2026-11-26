@@ -22,7 +22,7 @@ Stage: final
     rm /opt/jax-install.sh
 
 %environment
-    export PATH=/opt/venv/bin:$PATH
+    export PATH=/opt/venv/bin:/opt/hmmer/bin:$PATH
     export PYTHONPATH=/opt/residudes-engine/src
     export RESIDUDES_ENGINE_CORE=/opt/residudes-engine/core
 

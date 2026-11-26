@@ -59,6 +59,22 @@ if [ "$stage" = all ] || [ "$stage" = sync ]; then
     /opt/venv/bin/build_data
 fi
 
+# HMMER 3.4 with AlphaFold 3's --seq_limit patch, built as AlphaFold 3's own image builds it. The af3 MSA source is
+# AlphaFold 3's data pipeline (jackhmmer, nhmmer, hmmsearch), and the only source that searches RNA; without HMMER
+# here a clean image-only install could predict but not build those MSAs - a protein-RNA run's MSA job died in 1 s.
+# Built in the stage that has the compiler; the final stage copies /opt/hmmer.
+if [ "$stage" = all ] || [ "$stage" = hmmer ]; then
+    mkdir -p /tmp/hmmer
+    (cd /tmp/hmmer \
+     && curl -fsSLO http://eddylab.org/software/hmmer/hmmer-3.4.tar.gz \
+     && echo "ca70d94fd0cf271bd7063423aabb116d42de533117343a9b27a65c17ff06fbf3  hmmer-3.4.tar.gz" | sha256sum --check \
+     && tar zxf hmmer-3.4.tar.gz \
+     && patch -p0 < /opt/models/alphafold3/docker/jackhmmer_seq_limit.patch \
+     && cd hmmer-3.4 && ./configure --prefix /opt/hmmer && make -j"$(nproc)" && make install \
+     && cd easel && make install)
+    rm -rf /tmp/hmmer
+fi
+
 # The venv is ~9 GB. As one layer that does not survive every network: measured, a 9 GB blob dies
 # partway with PROTOCOL_ERROR or unexpected EOF while the 3 GB images pull cleanly on the same
 # link. Splitting the *install* does not help - uv rebuilds the environment when an earlier pass
@@ -118,4 +134,11 @@ from openfold3.entry_points.experiment_runner import InferenceExperimentRunner  
 import shutil
 assert shutil.which("gcc"), "no C compiler: Triton cannot build its launcher"
 print("openfold3 installed")
+import os, subprocess
+os.environ["PATH"] = "/opt/hmmer/bin:" + os.environ.get("PATH", "")
+for b in ("jackhmmer", "nhmmer", "hmmsearch", "hmmbuild", "hmmalign"):   # what the af3 MSA source runs
+    assert shutil.which(b), f"no {b}: the af3 MSA source cannot run in this image"
+from alphafold3.data.tools.subprocess_utils import jackhmmer_seq_limit_supported
+assert jackhmmer_seq_limit_supported(shutil.which("jackhmmer")), "jackhmmer without AlphaFold 3's --seq_limit patch"
+print("hmmer 3.4 (--seq_limit) ok")
 EOF

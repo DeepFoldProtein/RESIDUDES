@@ -157,7 +157,9 @@ The job wrapper picks the image by model - AlphaFold 3 in the jax image, Proteni
 image - runs it with the image's own interpreter, mounts the checkout, and binds the top-level directory of every
 absolute path in the site file and in the job's arguments (weights, engines, databases, input, output). No venv is
 built: with the variable set and no venv in the checkout, the commands that need the runtime on the host as well
-(`residudes-engine inputs`, `run`) go into the jax image the same way. Measured on H1388's input, the same seed and GPU type on both routes: AF3 and Boltz-2 give identical models;
+(`residudes-engine inputs`, `run`, and `msa --source af3`, which is AlphaFold 3's data pipeline and the one source
+that searches RNA; the image carries HMMER 3.4 with AlphaFold 3's `--seq_limit` patch for it) go into the jax image
+the same way. Measured on H1388's input, the same seed and GPU type on both routes: AF3 and Boltz-2 give identical models;
 OpenFold3 varies run to run on either route by the same amount; Protenix matches on confidence, with the peptide
 about 2 Å apart in two of five samples where two self-built runs agree to 0.2 Å.
 

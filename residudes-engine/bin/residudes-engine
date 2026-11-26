@@ -22,7 +22,14 @@ export PYTHONPATH="$RESIDUDES_ENGINE_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 # Without this a clean image-only install could predict but not build what it predicts from.
 if [ -n "${RESIDUDES_ENGINE_IMAGES:-}" ] && [ -z "${RESIDUDES_ENGINE_IN_IMAGE:-}" ] \
    && [ ! -x "$RESIDUDES_ENGINE_ROOT/core/.venv/bin/python" ] && [ -z "${RESIDUDES_ENGINE_VENV:-}" ]; then
-    case "${1:-}" in inputs|run)
+    route=
+    case "${1:-}" in
+        inputs|run) route=1 ;;
+        # the af3 MSA source is AlphaFold 3's data pipeline, which the jax image carries with HMMER; run on the
+        # host it died in a second with "venv_jax not set" (a protein-RNA run's MSA job, and 120 predictions behind it)
+        msa) prev=; for a in "$@"; do case "$prev:$a" in --source:*af3*|*:--source=*af3*) route=1 ;; esac; prev=$a; done ;;
+    esac
+    if [ -n "$route" ]; then
         image="$RESIDUDES_ENGINE_IMAGES/residudes-engine-jax.sif"
         [ -f "$image" ] || { echo "residudes-engine: no venv here and no $image" >&2; exit 2; }
         site=$("$PY" -c 'from residudes_engine.config import resolve_site_path; print(resolve_site_path())' 2>/dev/null || true)
@@ -56,7 +63,7 @@ PY
         echo "▶ residudes-engine $1 in image $(basename "$image"); bound: ${binds:-none}" >&2
         exec apptainer run ${binds:+-B "$binds"} -B "$RESIDUDES_ENGINE_ROOT:/opt/residudes-engine" \
             --env "RESIDUDES_ENGINE_VENV=/opt/venv,RESIDUDES_ENGINE_VENV_JAX=/opt/venv,RESIDUDES_ENGINE_IN_IMAGE=1${site:+,RESIDUDES_ENGINE_SITE_FILE=$site}" \
-            "$image" "$@" ;;
-    esac
+            "$image" "$@"
+    fi
 fi
 exec "$PY" -m residudes_engine "$@"

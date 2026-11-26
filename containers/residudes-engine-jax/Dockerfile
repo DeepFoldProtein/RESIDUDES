@@ -18,6 +18,7 @@ COPY models/openfold-3 /opt/models/openfold-3
 COPY install.sh /tmp/install.sh
 RUN sh /tmp/install.sh system
 RUN sh /tmp/install.sh sync
+RUN sh /tmp/install.sh hmmer            # AlphaFold 3's data pipeline tools, for the af3 MSA source
 RUN sh /tmp/install.sh split 4          # site-packages into four buckets of similar size
 
 # What the package page shows for this image. Without these every package inherits the
@@ -32,6 +33,8 @@ COPY --from=builder /split/1/ /
 COPY --from=builder /split/2/ /
 COPY --from=builder /split/3/ /
 COPY --from=builder /split/4/ /
+COPY --from=builder /opt/hmmer /opt/hmmer
+ENV PATH=/opt/hmmer/bin:$PATH
 RUN sh /tmp/install.sh check && rm /tmp/install.sh
 
 LABEL org.opencontainers.image.title="RESIDUDES engine (JAX + AlphaFold 3)" \
