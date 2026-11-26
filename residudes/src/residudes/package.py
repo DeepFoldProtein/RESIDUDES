@@ -16,6 +16,7 @@ with a TER per chain, the ligand as MDL), which needs RDKit.
 """
 from __future__ import annotations
 
+import json
 import math
 import os
 import re
@@ -79,17 +80,76 @@ def check_model(path: str, sto: str, seqs: list[str]) -> dict:
     return out
 
 
-def polymer_copy(path: str, out: Path) -> Path:
-    """The model with ligands and waters removed (TS carries ATOM records only), pLDDT kept in the B-factors."""
+def provenance(src: str, row: dict | None) -> dict:
+    """What a model's B-factors are and which deposited structures it was built from, from its pool row and the
+    summary.json beside it. A predictor writes pLDDT there; a model copied from a deposited complex (a
+    template-derived model, MODELLER) has no pLDDT and carries the deposit's B-factors - M1370's were 27-290, which
+    the CASP file would have presented as confidences, with PARENT N/A although the model is the template's."""
+    summ: dict = {}
+    try:
+        summ = json.loads((Path(src).parent / "summary.json").read_text())
+    except (OSError, ValueError):
+        pass
+    plddt = (row or {}).get("plddt")
+    if plddt in (None, "", "nan", "None"):
+        plddt = summ.get("plddt")
+    parents: list[str] = []
+    for k in ("parent", "parents", "template", "templates"):
+        v = summ.get(k)
+        for x in v if isinstance(v, list) else [v] if v else []:
+            x = (x.get("pdb_id") or x.get("path") or "") if isinstance(x, dict) else str(x)
+            m = re.match(r"^(\d[0-9A-Za-z]{3})(?:[_.\-].*)?$", Path(str(x)).name)
+            if m and m.group(1).upper() not in parents:
+                parents.append(m.group(1).upper())
+    return {"confidence": plddt not in (None, "", "nan", "None"), "parents": parents, "chains": summ.get("chains") or {}}
+
+
+B_COPIED, B_MUTATED, B_EDGE = 90.0, 70.0, 60.0         # a template-derived model's confidence, residue by residue
+
+
+def provenance_bfactors(st, chains: dict) -> str:
+    """Set B-factors a template-derived model can honestly claim: the deposit's coordinates copied (90), a residue
+    mutated to the target's (70), and the two residues at a chain end or next to a missing stretch (60). It also
+    keeps the column from being constant, which CASP rejects."""
+    for ch in st[0]:
+        res = list(ch)
+        if not res:
+            continue
+        mutated = {int(m.group(1)) for x in (chains.get(ch.name, {}) or {}).get("mutated", [])
+                   for m in [re.match(r"^[A-Z](\d+)[A-Z]$", str(x))] if m}
+        edge = set()
+        for i, r in enumerate(res):
+            gap_before = i == 0 or r.seqid.num - res[i - 1].seqid.num > 1
+            gap_after = i == len(res) - 1 or res[i + 1].seqid.num - r.seqid.num > 1
+            if gap_before:
+                edge.update(range(i, min(i + 2, len(res))))
+            if gap_after:
+                edge.update(range(max(0, i - 1), i + 1))
+        for i, r in enumerate(res):
+            b = B_EDGE if i in edge else B_MUTATED if r.seqid.num in mutated else B_COPIED
+            for a in r:
+                a.b_iso = b
+    return f"B-factors set from provenance ({B_COPIED:g} copied, {B_MUTATED:g} mutated, {B_EDGE:g} at an end or gap)"
+
+
+def polymer_copy(path: str, out: Path, prov: dict | None = None) -> tuple[Path, str]:
+    """The model with ligands and waters removed (TS carries ATOM records only), pLDDT kept in the B-factors; a
+    model whose B-factors are not confidences (no pLDDT) gets provenance B-factors instead. Returns the file and
+    what was done to the B-factors."""
     import gemmi
     st = gemmi.read_structure(str(path))
     st.setup_entities()                                # remove_ligands_and_waters needs entity types
     st.remove_ligands_and_waters()
     st.remove_empty_chains()
     st.setup_entities()
+    note = "pLDDT"
+    if prov is not None and not prov["confidence"]:
+        bs = [a.b_iso for ch in st[0] for r in ch for a in r]
+        note = provenance_bfactors(st, prov["chains"]) + (f"; the model's own were {min(bs):.0f}-{max(bs):.0f}, not confidences"
+                                                          if bs else "")
     out.parent.mkdir(parents=True, exist_ok=True)
     st.make_mmcif_document().write_file(str(out))
-    return out
+    return out, note
 
 
 def approved_slate(d) -> dict:
@@ -121,7 +181,8 @@ def package_cmd(cfg, d, mode: str | None, method: str, casp_id: str | None, mmci
     ddir = Dossier.path(cfg.targets_dir, d.target).parent.resolve()
     prop = approved_slate(d)
     with open(ddir / "pool.csv") as fh:
-        paths = {_model_key(r): r["path"] for r in csv.DictReader(fh)}
+        pool_rows = {_model_key(r): r for r in csv.DictReader(fh)}
+    paths = {k: r["path"] for k, r in pool_rows.items()}
     seqs = gate.fasta_records(d.sequence.get("text", ""))
     tid = casp_id or re.sub(r"[^A-Za-z0-9].*$", "", d.target)
     pdir = ddir / "package"
@@ -142,6 +203,9 @@ def package_cmd(cfg, d, mode: str | None, method: str, casp_id: str | None, mmci
             problems.append(f"slot {slot}: model file not found")
             continue
         chk = check_model(src, sto, seqs)
+        prov = provenance(src, pool_rows.get(m))
+        chk["parent"] = " ".join(prov["parents"]) or "N/A"
+        chk["bfactors"] = "pLDDT" if prov["confidence"] else "provenance (no pLDDT)"
         rows.append({"slot": slot, "model": m, **chk})
         if not chk["ok"]:
             problems.append(f"slot {slot}: " + ("; ".join(chk["length_mismatch"]) or f"{chk['chains']}/{chk['expected_chains']} chains"))
@@ -149,10 +213,13 @@ def package_cmd(cfg, d, mode: str | None, method: str, casp_id: str | None, mmci
             continue
         big = (chk["expected_chains"] or 0) > 26 or chk["chains"] > 26 or chk["atoms"] > 99_999
         as_cif = mmcif or big                          # PDB cannot hold two-letter chain ids or 100k atoms
-        poly = polymer_copy(src, pdir / "polymer" / f"model_{slot}.cif").resolve()
+        poly, bnote = polymer_copy(src, pdir / "polymer" / f"model_{slot}.cif", prov)
+        poly = poly.resolve()
+        rows[-1]["bfactors"] = bnote
         out = (pdir / (f"{tid}_{slot}.cif" if as_cif else f"{tid}_{slot}.pdb")).resolve()
         cmd = ["uv", "run", "--project", str(utils), "casp17", "prepare", "-i", str(poly), "-t", tid, "-n", str(slot),
-               "-o", str(out), f"--{mode}", "--method", method, "--stoich", sto.split("@")[0]] + (["--mmcif"] if as_cif else [])
+               "-o", str(out), f"--{mode}", "--method", method, "--stoich", sto.split("@")[0],
+               "--parent", chk["parent"]] + (["--mmcif"] if as_cif else [])
         try:
             r = subprocess.run(cmd, capture_output=True, text=True, cwd=str(utils), timeout=600)
         except subprocess.TimeoutExpired:
@@ -173,6 +240,8 @@ def package_cmd(cfg, d, mode: str | None, method: str, casp_id: str | None, mmci
         lines.append(f"| {r['slot']} | {r['model']} | {'yes' if r['ok'] else '**no**'} | {r['chains']}/{r['expected_chains']} | "
                      f"{'; '.join(r['length_mismatch']) or 'ok'} | {r['breaks']} | {r['cis_nonpro']} | {r['clash_pairs']} |")
     lines += ["", "Clashes are fixed by relaxation; breaks, cis peptides and length mismatches need a person's look."]
+    lines += ["", "| slot | B-factors | PARENT |", "|---|---|---|"] + [
+        f"| {r['slot']} | {r.get('bfactors', '')} | {r.get('parent', '')} |" for r in rows if not r.get("error")]
     if problems:
         lines += ["", "**Needs a person before anything is submitted:**"] + [f"- {x}" for x in problems]
     (pdir / "checks.md").write_text("\n".join(lines) + "\n")

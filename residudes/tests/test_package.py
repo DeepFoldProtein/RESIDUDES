@@ -33,7 +33,8 @@ def test_checks_count_chains_lengths_breaks_and_clashes(tmp_path):
 
 def test_polymer_copy_drops_ligands(tmp_path):
     good = _pdb(tmp_path / "good.pdb", {"A": _chain(0, 0), "B": _chain(0, 5.0)}, ligand=(7.6, -4.0, 0))
-    out = package.polymer_copy(str(good), tmp_path / "poly.cif")
+    out, note = package.polymer_copy(str(good), tmp_path / "poly.cif")
+    assert note == "pLDDT"
     st = gemmi.read_structure(str(out))
     assert [c.name for c in st[0]] == ["A", "B"] and all(r.name == "ALA" for c in st[0] for r in c)
 
@@ -150,8 +151,47 @@ def test_package_writes_mmcif_past_26_chains(tmp_path, monkeypatch):
     monkeypatch.setattr(package.shutil, "which", lambda x: "/usr/bin/uv")
     monkeypatch.setattr(package, "check_model", lambda *a, **k: {"chains": 36, "expected_chains": 36, "length_mismatch": [],
                                                                   "breaks": 0, "cis_nonpro": 0, "clash_pairs": 0, "atoms": 9, "ok": True})
-    monkeypatch.setattr(package, "polymer_copy", lambda src, out: (out.parent.mkdir(parents=True, exist_ok=True), out.write_text("x"), out)[2])
+    monkeypatch.setattr(package, "polymer_copy", lambda src, out, prov=None: (out.parent.mkdir(parents=True, exist_ok=True), out.write_text("x"), (out, "pLDDT"))[2])
     good = _pdb(tmp_path / "good.pdb", {"A": _chain(0, 0), "B": _chain(0, 5.0)})
     Cfg, d, ddir = _setup(tmp_path, [good])
     package.package_cmd(Cfg, d, "server", "M", "T9", False, False, "agent")
     assert "--mmcif" in seen[0] and seen[0][seen[0].index("-o") + 1].endswith("T9_1.cif") and d.stage == "PACKAGED"
+
+
+def test_template_derived_model_gets_provenance_bfactors_and_parent(tmp_path, monkeypatch):
+    """F38: a model copied from a deposited complex carried the deposit's B-factors (27-290) into the CASP file as
+    if they were confidences, with PARENT N/A. Without a pLDDT it gets provenance B-factors and its template as PARENT."""
+    import json
+    seen = []
+
+    def fake_run(cmd, **kw):
+        seen.append(cmd)
+        Path(cmd[cmd.index("-o") + 1]).write_text("x")
+        return subprocess.CompletedProcess(cmd, 0, "ok", "")
+    monkeypatch.setattr(package.subprocess, "run", fake_run)
+    monkeypatch.setattr(package.shutil, "which", lambda x: "/usr/bin/uv")
+    src = tmp_path / "results" / "A2" / "V3" / "tplderived" / "seed_1" / "sample_0"
+    src.mkdir(parents=True)
+    st = gemmi.read_structure(str(_pdb(tmp_path / "m.pdb", {"A": _chain(0, 0), "B": _chain(0, 5.0)})))
+    for ch in st[0]:
+        for r in ch:
+            for a in r:
+                a.b_iso = 150.0                                   # a deposit's B, not a confidence
+    st.setup_entities()
+    st.make_mmcif_document().write_file(str(src / "model.cif"))
+    (src / "summary.json").write_text(json.dumps({"plddt": None, "template": "/x/refs/9U5Q.cif",
+                                                  "chains": {"B": {"mutated": ["A3S"]}}}))
+    Cfg, d, ddir = _setup(tmp_path, [src / "model.cif"])
+    with open(ddir / "pool.csv") as fh:                         # the pool row has no pLDDT either
+        rows = list(csv.DictReader(fh))
+    rows[0]["plddt"] = ""
+    with open(ddir / "pool.csv", "w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+    package.package_cmd(Cfg, d, "server", "M", "T9", False, False, "agent")
+    assert seen[0][seen[0].index("--parent") + 1] == "9U5Q"
+    poly = gemmi.read_structure(str(ddir / "package" / "polymer" / "model_1.cif"))
+    b = {(ch.name, r.seqid.num): r[0].b_iso for ch in poly[0] for r in ch}
+    assert max(b.values()) == 90 and b[("A", 1)] == 60 and b[("B", 3)] == 70 and len(set(b.values())) == 3
+    assert "provenance" in (ddir / "package" / "checks.md").read_text() and "9U5Q" in (ddir / "package" / "checks.md").read_text()
