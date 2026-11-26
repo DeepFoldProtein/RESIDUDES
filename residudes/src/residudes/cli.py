@@ -368,6 +368,7 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("--max-turns", type=int)
     p.add_argument("--model")
     p.add_argument("--quiet", action="store_true")
+    p.add_argument("--force", action="store_true", help="step even while the target's recorded jobs are still running")
 
     args = ap.parse_args(argv)
     if args.cmd == "setup":
@@ -657,6 +658,13 @@ def _main(argv: list[str] | None = None) -> int:
         return daemon.run(cfg, args.target or None, args.interval, args.once, args.budget, exit_when_idle=args.exit_when_idle)
     if args.cmd == "agent":
         from residudes.agent import step
+        from residudes.daemon import _waiting_on_jobs
+        # the daemon's own check, for a person stepping by hand: while the stage only waits on its jobs, a step pays an
+        # agent to find that out (a clean run stepped this way spent four steps doing it, $0.10 each)
+        if not getattr(args, "force", False) and _waiting_on_jobs(cfg, args.target):
+            print(f"{args.target}: waiting on its jobs (`residudes jobs {args.target}`); no step taken - --force to step anyway")
+            print(json.dumps({"subtype": "skipped", "reason": "waiting on jobs"}))
+            return 0
         res = step(cfg, args.target, args.budget, args.max_turns, args.model, verbose=not args.quiet)
         print(json.dumps(res, indent=1, default=str))
         return 0 if res.get("subtype") in ("success", "skipped") else 1
