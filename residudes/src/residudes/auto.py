@@ -188,6 +188,16 @@ def typed(screen: str) -> str:
     return "" if _DIM.search(lead) else _ESC.sub("", after).strip(" \u00a0")
 
 
+def halted(plain: str) -> str:
+    """Why the agent CLI stopped the conversation itself, or "". Its safeguards can pause a session ("Session paused
+    ... flagged this session ... Switch to <model> / Edit prompt and retry"); that screen keeps redrawing, so it read
+    as recent activity and auto waited on it for good (a clean protein-ligand run). Only a person can choose there."""
+    if "Session paused" not in plain and "safeguards flagged" not in plain:
+        return ""
+    tag = re.search(r"Details:\s*`?\[?([\w-]+)\]?`?", plain)
+    return "its safeguards paused the session" + (f" [{tag.group(1)}]" if tag else "")
+
+
 def pane(target: str) -> dict:
     """The conversation as the driver needs it: busy, a dialog open, typed text, seconds since any output."""
     where = chat.agent_pane(target)
@@ -199,6 +209,7 @@ def pane(target: str) -> dict:
             # the input line drawn: an agent CLI that is still starting has drawn nothing yet, and an ask typed then
             # lands in whatever comes up first (a clean run's first ask went in ahead of the trust-this-folder prompt)
             "ready": "❯" in plain,
+            "halted": halted(plain),
             "typed": typed(screen),
             "quiet": time.time() - int(act) if act.isdigit() else 0.0}
 
@@ -223,6 +234,9 @@ def decide(d: Dossier, p: dict, quiet: float = QUIET) -> tuple[str, str]:
         return "done", d.stage
     if not d.agent_may_act():                             # the mandate stops short of here
         return "done", f"the mandate ends before {d.stage}"
+    if p.get("halted"):
+        return "done", (f"stuck at {d.stage}: the agent CLI paused the conversation ({p['halted']}); a person decides -"
+                        " switch the model, edit and retry, or take the step over")
     if not p.get("ready", True):
         return "wait", "the conversation is still starting"
     if p["busy"] or p["dialog"]:

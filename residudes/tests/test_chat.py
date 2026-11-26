@@ -39,6 +39,23 @@ def test_auto_types_only_into_a_quiet_conversation():
     assert what == "ask" and "will not be answered" in text and "do not write NEEDS HUMAN" in text
 
 
+def test_auto_ends_stuck_when_the_agent_cli_pauses_the_session():
+    """The paused screen keeps redrawing: read as recent activity, auto waited on it for good."""
+    from residudes import auto
+    from residudes.dossier import Dossier
+    screen = """  Session paused
+  Opus 5.5's safeguards flagged this session. You may be seeing this for the
+  first time ...
+  Details: `[bio]`
+  ❯ 1. Switch to Opus 5
+    2. Edit prompt and retry with Opus 5.5"""
+    assert auto.halted(screen) == "its safeguards paused the session [bio]"
+    assert auto.halted("❯ draft text\n esc to interrupt") == ""
+    p = {"busy": False, "dialog": False, "typed": "", "quiet": 0.5, "ready": True, "halted": auto.halted(screen)}
+    what, why = auto.decide(Dossier(target="T1234", stage="NEW"), p)
+    assert what == "done" and why.startswith("stuck at NEW: the agent CLI paused") and "a person decides" in why
+
+
 def test_auto_tells_typing_from_a_suggestion():
     """Claude Code draws its suggested prompt grey after the ❯; what a person types is in the normal colour."""
     from residudes import auto
