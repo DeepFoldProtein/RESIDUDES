@@ -45,7 +45,8 @@ PLAYBOOK = {
                    "--sto S` (site gates from the evidence), check and edit the draft against what the analysis supports (sites, "
                    "references), and run it with `residudes gate T --spec <draft> --sto S` (sbatch: stop and let the next step continue "
                    "while they run); when they are done, `residudes gate T --show` and move to RESULTS_REVIEW", "residudes-selection"),
-    "SLATE_PROPOSED": ("wait for a person to run `residudes approve`", None),
+    "SLATE_PROPOSED": ("wait for a person to run `residudes approve T --what \"slate vN\" --why \"...\"` (under a mandate "
+                       "you run it yourself, the same way: never move the stage by hand)", None),
     "APPROVED": ("package the approved slate: `residudes package T --server|--human` (geometry checks, polymer-only TS files "
                  "through casp17-utils); read package/checks.md and report anything a person should look at. If the checks "
                  "show clashes or non-proline cis peptides, `residudes relax T` repairs them under restraints and says what "
@@ -304,11 +305,12 @@ class Dossier:
         return {"automated": True, "mandate": {"by": self.automation.get("by"),
                                                "time": self.automation.get("time")}}
 
-    def approve(self, person: str, what: str) -> None:
+    def approve(self, person: str, what: str, why: str | None = None) -> None:
         if person in AGENT_ACTORS and not self.automation_allows("approve"):
             raise ValueError("approve is for people only (or a person turns automation on: `residudes automate T --on`)")
-        self.approvals.append({"time": now(), "by": person, "what": what, **self._automation_mark(person)})
-        self.note(person, f"approved: {what}"
+        self.approvals.append({"time": now(), "by": person, "what": what, **({"why": why} if why else {}),
+                               **self._automation_mark(person)})
+        self.note(person, f"approved: {what}" + (f" - {why}" if why else "")
                   + (f" [automated under the mandate from {self.automation.get('by')}]" if person in AGENT_ACTORS else ""))
 
     def agent_may_act(self) -> bool:

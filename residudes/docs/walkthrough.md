@@ -121,7 +121,7 @@ bin/residudes slate T1234                      # propose 5 from the models that 
                                              # one per cluster/seed in slots 1-3 (--site S; antibodies: --no-interface)
 bin/residudes slate T1234 --sto A2:3,A1:2      # a hedge across stoichiometries, slots in that order
 bin/residudes slate T1234 --models M1,...,M5   # the five chosen after review
-bin/residudes approve T1234 --what "slate v2"  # people only: moves it to APPROVED; names models that fail its gates
+bin/residudes approve T1234 --what "slate v2" --why "..."  # people only: moves it to APPROVED; names models that fail its gates
 bin/residudes package T1234 --server           # geometry checks, polymer-only TS files via casp17-utils `prepare`
 bin/residudes stage T1234 SUBMITTED            # people only, after submitting the files yourself
 bin/residudes retro T1234 --native native.pdb  # once the native is out: score the slate models (sbatch, OpenStructure)

@@ -678,6 +678,12 @@ def test_final_review_findings(tmp_path, monkeypatch, capsys):
     # an approval that is not about a slate keeps the stage
     assert cli.main(["approve", "T3", "--what", "stoichiometry A3"]) == 0
     assert Dossier.load(targets, "T3").stage == "SLATE_PROPOSED"
+    assert 'residudes approve T3 --what "slate v1" --why' in capsys.readouterr().out   # and it says how the slate is approved
+    # no --what at SLATE_PROPOSED approves the latest slate, with the reason kept
+    assert cli.main(["approve", "T3", "--why", "all five pass the trimer gates"]) == 0
+    d = Dossier.load(targets, "T3")
+    assert d.stage == "APPROVED" and d.approvals[-1]["what"] == "slate v1"
+    assert d.approvals[-1]["why"] == "all five pass the trimer gates"
     # --sto: a stoichiometry decision that differs from the given one has to be named
     from residudes.cli import _sto
     d = Dossier.load(targets, "T3")

@@ -118,7 +118,7 @@ FULL_HELP = """residudes command line.
   residudes decide T --type stoichiometry --chose A3 --evidence "..." [--alt A1 ...] [--confidence high]
   residudes run-record T --job ID --what "af3 seeds 1-128 on af3_msa" [--scheduler slurm|pueue|other] [--state done]
   residudes stage T STAGE [--why "..."]
-  residudes approve T --what "slate v1"       people only: lets the target past SLATE_PROPOSED
+  residudes approve T --what "slate v1" --why "..."   people only: lets the target past SLATE_PROPOSED
 """
 
 
@@ -204,7 +204,8 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("--why", default="")
     p = sub.add_parser("approve", help="people only, unless a person turned automation on")
     p.add_argument("target")
-    p.add_argument("--what", required=True)
+    p.add_argument("--what", help='what is approved, e.g. "slate v2" (default at SLATE_PROPOSED: the latest slate)')
+    p.add_argument("--why", help="the reason, recorded with the approval")
 
     p = sub.add_parser("automate", help="people only: let the agent answer its own checkpoints on this target")
     p.add_argument("target")
@@ -555,15 +556,25 @@ def _main(argv: list[str] | None = None) -> int:
         def approve(d):
             from residudes import gate
             props = [x["value"] for x in d.evidence.get("slate_proposal", [])]
+            latest = f"slate v{props[-1].get('version')}" if props else "slate"
+            if args.what is None:
+                if d.stage != "SLATE_PROPOSED":
+                    raise ValueError(f"--what is needed: {d.target} is at {d.stage}, not waiting on a slate")
+                args.what = latest
             m = re.search(r"\bv(\d+)\b", args.what)               # "slate v2" approves version 2, not the latest
             names_slate = bool(m) or re.search(r"\bslate\b", args.what, re.I) is not None
             if m and not any(str(x.get("version")) == m.group(1) for x in props):
                 raise ValueError(f"no slate v{m.group(1)} is recorded (slates: "
                                  + (", ".join(f"v{x.get('version')}" for x in props) or "none") + "); nothing was approved")
-            d.approve(_actor(), args.what)
+            d.approve(_actor(), args.what, why=args.why)
             if d.stage == "SLATE_PROPOSED" and names_slate:     # approving a slate is the person's move to APPROVED
                 d.move("APPROVED", _actor(), f"approved: {args.what}")
             if not names_slate:
+                if d.stage == "SLATE_PROPOSED":
+                    # T1417's agent put its reasoning in --what, read "not a slate", and moved the stage by hand past
+                    # the approval's gate check: say how the slate itself is approved.
+                    return (f"approved: {args.what} - not a slate, so the stage stays SLATE_PROPOSED.\n"
+                            f"to approve the slate: residudes approve {d.target} --what \"{latest}\" --why \"<the reason>\"")
                 return f"approved: {args.what} (not a slate: the stage stays {d.stage})"
             prop = next((x for x in props if m and str(x.get("version")) == m.group(1)), props[-1] if props else {})
             models = prop.get("models", [])
