@@ -404,7 +404,7 @@ def render_mt(cfg, d: Dossier, scene: Path, actor: str) -> str:
                 + ("; ".join(bad) if bad else f"exit {r.returncode}"))
     _to_jpeg(rep / "figs")
     aligned = [ln for ln in r.stdout.splitlines() if "aligned" in ln.lower()]
-    d.runs.append({"time": now(), "by": actor, "scheduler": "local", "what": f"render: {scene.name}",
+    d.runs.append({"time": now(), "by": actor, "job": None, "scheduler": "local", "what": f"render: {scene.name}",
                    "state": "done", "out": str(rep / "figs")})
     d.note(actor, f"render {scene.name}: {len(figs)} figures" + (f"; {aligned[0]}" if aligned else ""))
     return f"molterm {scene.name} -> {len(figs)} figures in {rep / 'figs'}" + (f" | {aligned[0]}" if aligned else "")

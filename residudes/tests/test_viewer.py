@@ -39,3 +39,18 @@ def test_the_daemon_types_into_the_conversation_not_the_structure(monkeypatch):
     untagged = "%5\t\tH1388\n%4\t\t\n"                     # a window from before the tag: the one that is not the view
     monkeypatch.setattr(chat, "_tmux", lambda *a, **k: sp.CompletedProcess(a, 0, untagged, ""))
     assert chat.agent_pane("H1388") == "%4"
+
+
+def test_target_show_lists_a_run_that_has_no_job_id(tmp_path, monkeypatch, capsys):
+    """Found by the chat agent on H1388: a molterm render is recorded locally, without a job id, and
+    `residudes target show` died on it with KeyError: 'job'."""
+    from residudes import cli
+    from residudes.dossier import Dossier
+    cfg = tmp_path / "residudes.toml"
+    cfg.write_text(f'[paths]\nwork_root = "{tmp_path}"\n')
+    monkeypatch.setenv("RESIDUDES_CONFIG", str(cfg))
+    d = Dossier(target="T")
+    d.runs.append({"time": "t", "by": "a", "scheduler": "local", "what": "render: scenes.mt", "state": "done"})
+    d.save(tmp_path / "targets")
+    assert cli.main(["target", "show", "T"]) == 0
+    assert "run local: render: scenes.mt [done]" in capsys.readouterr().out

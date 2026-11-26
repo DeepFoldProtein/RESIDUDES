@@ -237,6 +237,9 @@ def ensure(cfg: Config, target: str, harness: str | None = None) -> bool:
     _cmd, _name, argv = found
     write_mcp_config(ddir)
     cmdline = argv(BRIEF.format(target=target, ddir=ddir))
+    # `env` in front, not tmux's -e: tmux replaces PATH with the PATH of the client that creates the session, so a
+    # PATH given with -e never reaches the agent (measured: RESIDUDES_* arrived, PATH did not)
+    cmdline = ["env", *_agent_env(cfg), *cmdline]
     if _tmux("has-session", "-t", SESSION).returncode != 0:
         ok = _tmux("new-session", "-d", "-s", SESSION, "-n", target, "-c", str(ddir), *cmdline, capture=False).returncode == 0
     else:
@@ -247,6 +250,16 @@ def ensure(cfg: Config, target: str, harness: str | None = None) -> bool:
 
 
 AGENT_TAG = "@residudes_agent"
+
+
+def _agent_env(cfg: Config) -> list[str]:
+    """What `residudes agent step` gives its agent, given to the conversation's too: the three checkouts' bin/ on
+    PATH, so `residudes ...` (and `residudes view`) resolves however chat was started - `bin/residudes chat` puts
+    nothing on PATH - and this config, so a conversation reads the same dossiers the command that opened it did."""
+    from residudes.config import RESIDUDES_DIR
+    bins = [str(RESIDUDES_DIR / "bin"), str(Path(cfg.residudes_engine) / "bin"), str(Path(cfg.residudes_qa) / "bin")]
+    out = ["PATH=" + os.pathsep.join(bins + [os.environ.get("PATH", "")]), "RESIDUDES_ACTOR=agent"]
+    return out + ([f"RESIDUDES_CONFIG={cfg.path}"] if getattr(cfg, "path", None) else [])
 
 
 def agent_pane(target: str) -> str:

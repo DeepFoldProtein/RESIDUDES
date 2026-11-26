@@ -461,7 +461,8 @@ def _main(argv: list[str] | None = None) -> int:
             for x in d.decisions:
                 print(f"  {x['id']} {x['type']}: {x['chose']} ({x['confidence']}) <- {'; '.join(x['evidence'])[:160]}")
             for x in d.runs:
-                print(f"  run {x['job']}: {x['what']} [{x['state']}]")
+                # a local run (a molterm render, a gate with --local) has no job id: name where it ran instead
+                print(f"  run {x.get('job') or x.get('scheduler', 'local')}: {x['what']} [{x['state']}]")
             for x in d.log[-5:]:
                 print(f"  {x['time']} {x['actor']}: {x['note'][:160]}")
             return 0
