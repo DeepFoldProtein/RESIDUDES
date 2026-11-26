@@ -151,3 +151,16 @@ def test_a_model_shown_twice_is_copied_not_loaded_again():
     lines = slides.load_lines([{"path": "/r/a/model.cif", "label": "M4"}, {"path": "/r/b/model.cif", "label": "M5"},
                                {"path": "/r/a/model.cif", "label": "C24"}])
     assert lines == ["load /r/a/model.cif", "rename model M4", "load /r/b/model.cif", "rename model M5", "copy M4 as C24"]
+
+
+def test_a_job_whose_dependency_failed_counts_as_finished(monkeypatch):
+    """Slurm keeps a job queued after its afterok dependency failed; counted as pending, the target waited for good."""
+    import subprocess as sp
+    from residudes import ops
+    calls = []
+    def fake(args, **k):
+        calls.append(args)
+        return sp.CompletedProcess(args, 0, "PENDING DependencyNeverSatisfied\n" if args[0] == "squeue" else "", "")
+    monkeypatch.setattr(ops.subprocess, "run", fake)
+    assert ops._slurm_state("350909") == "NEVER_RAN" and not ops.active({"state": "NEVER_RAN"})
+    assert ["scancel", "350909"] in calls

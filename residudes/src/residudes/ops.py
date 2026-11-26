@@ -137,7 +137,8 @@ def qa_cmd(cfg: Config, d: Dossier, sto: str, what: str, variants: str | None, a
 
 
 TERMINAL = {"COMPLETED", "FAILED", "CANCELLED", "TIMEOUT", "OUT_OF_MEMORY", "NODE_FAIL", "BOOT_FAIL", "DEADLINE",
-            "UNKNOWN", "done", "failed", "cancelled"}           # UNKNOWN = purged from sacct; everything else is still active
+            "UNKNOWN", "done", "failed", "cancelled",
+            "NEVER_RAN"}           # UNKNOWN = purged from sacct; NEVER_RAN = its dependency failed; the rest is active
 
 
 def scheduler(r: dict) -> str:
@@ -162,9 +163,16 @@ def active(r: dict) -> bool:
 
 def _slurm_state(job: str) -> str | None:
     try:
-        q = subprocess.run(["squeue", "-h", "-j", job, "-o", "%T"], capture_output=True, text=True, timeout=60)
+        q = subprocess.run(["squeue", "-h", "-j", job, "-o", "%T %r"], capture_output=True, text=True, timeout=60)
         if q.returncode == 0 and q.stdout.strip():
-            return q.stdout.strip().splitlines()[0]
+            state, _, reason = q.stdout.strip().splitlines()[0].partition(" ")
+            if state == "PENDING" and reason.strip() == "DependencyNeverSatisfied":
+                # a job chained (afterok) on one that failed can never start, and Slurm keeps it queued: counted as
+                # pending it held a clean run's target "waiting on jobs" for good (120 predictions after a failed MSA
+                # job). It is cancelled and recorded as never having run.
+                subprocess.run(["scancel", job], capture_output=True, timeout=60)
+                return "NEVER_RAN"
+            return state
         s = subprocess.run(["sacct", "-n", "-X", "-j", job, "-o", "State"], capture_output=True, text=True, timeout=60)
         return (s.stdout.split() or ["UNKNOWN"])[0] if s.returncode == 0 else None
     except (FileNotFoundError, subprocess.TimeoutExpired):
