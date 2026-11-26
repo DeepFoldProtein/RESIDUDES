@@ -12,6 +12,7 @@ def test_the_pane_superposes_several_models_and_faces_a_peptide_in_one():
     assert "camera load /v/view.cam\nzoom M1" in one
     px = viewer.script([{"label": "M1", "path": "/r/model.cif"}], ("A",), None, None)   # pixels: a grey cartoon
     assert "show cartoon\ncolor #BBBBBB\nshow ballstick chain A\ncolor #D55E00 chain A" in px and "ribbon" not in px
+    assert "set cartoon_mode pymol\nhide all" in px                                   # PyMOL's cartoon, not molterm's
     assert one.endswith("zoom M1\nselect clear\n")                 # no selection halo over the live picture
     two = viewer.script([{"label": "M1", "path": "/a/model.cif"}, {"label": "M3", "path": "/b/model.cif"}], (), None, None)
     assert two.startswith("set renderer auto\n")                         # not left to ~/.molterm/init.mt

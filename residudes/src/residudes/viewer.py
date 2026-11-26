@@ -104,7 +104,9 @@ def script(models: list[dict], small: tuple[str, ...], render: str | None, camer
     first = models[0]["label"]
     lines += [f"align {m['label']} to {first} automap" for m in models[1:]]
     pixels = render is None                                  # molterm picks a pixel renderer; text ones are named
-    lines += ["hide all", "show cartoon" if pixels else "show ribbon"]
+    # PyMOL's cartoon (oval helices, flat barbed strands), asked for by a person who found molterm's own blunt; and
+    # the default widths: narrower strands (cartoon_sheet, _arrow_width) turn into round rods, which is worse
+    lines += ["set cartoon_mode pymol", "hide all", "show cartoon" if pixels else "show ribbon"]
     if len(models) == 1:
         smalls = list(small or models[0].get("small", []))
         lines.append("color #BBBBBB" if pixels and smalls else "color chain")
