@@ -44,6 +44,7 @@ FLAG = "@residudes_auto"    # a window option: the tmux status line marks the ta
 GRANT_NOTE = "granted by turning auto on: it runs the target to PACKAGED without stopping for a person"
 
 _ESC = re.compile(r"\x1b\[[0-9;:?]*[A-Za-z]")
+_CHIP = re.compile(r"(?:\x1b\[[0-9;:]*m)*\[⧉[^\]]*\]")   # "[⧉ In auto.py]": an attached editor's selection
 _DIM = re.compile(r"\x1b\[(?:[0-9;]*;)?(?:2|90|38;5;(?:8|24[0-9]|25[0-5]))(?:;[0-9;]*)?m")
 
 
@@ -170,17 +171,21 @@ def stop(cfg: Config, target: str, why: str = "turned off", remember: bool = Fal
 
 def typed(screen: str) -> str:
     """What a person has typed into the conversation's input line, from `capture-pane -e`: the text after its
-    last `❯`. A suggestion Claude Code offers there is drawn dim or grey and is not typing; text in the normal
-    colour is, and is left alone (an ask typed after it would be sent with it)."""
+    last `❯`. A suggestion Claude Code offers there is drawn dim or grey and is not typing, nor is an attached
+    editor's file chip; text in the normal colour is, and is left alone (an ask typed after it would go with it)."""
     lines = [ln for ln in screen.splitlines() if "❯" in ln]
     if not lines:
         return ""
-    after = lines[-1].split("❯", 1)[1]
-    m = re.search(r"[^\s ]", _ESC.sub("", after))
-    if not m:
+    after = _CHIP.sub("", lines[-1].split("❯", 1)[1])
+    lead = ""                                             # the escapes in force at the first visible character
+    for tok in re.findall(r"\x1b\[[0-9;:?]*[A-Za-z]|.", after, re.S):
+        if tok.startswith("\x1b"):
+            lead += tok
+        elif tok not in " \u00a0":
+            break
+    else:
         return ""
-    lead = after[:after.find(m.group(0))]                 # the escapes in front of the first visible character
-    return "" if _DIM.search(lead) else _ESC.sub("", after).strip("  ")
+    return "" if _DIM.search(lead) else _ESC.sub("", after).strip(" \u00a0")
 
 
 def pane(target: str) -> dict:

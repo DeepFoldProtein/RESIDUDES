@@ -47,6 +47,8 @@ def test_auto_tells_typing_from_a_suggestion():
     assert auto.typed("\x1b[39m❯\u00a0\x1b[2mshow the slate superposed\x1b[22m\n") == ""        # suggested
     assert auto.typed("\x1b[39m❯\u00a0\x1b[38;5;246mshow the slate\x1b[39m\n") == ""
     assert auto.typed("no prompt here") == ""
+    chip = "\x1b[39m❯\u00a0\x1b[38;5;74m[⧉ In auto.py] \x1b[2m\x1b[39m[auto] Advance T1364\x1b[0m\n"
+    assert auto.typed(chip) == ""                          # an editor's file chip plus a suggestion: nobody typing
 
 
 def test_auto_is_the_default_and_by_hand_is_remembered(tmp_path, monkeypatch):
