@@ -134,3 +134,20 @@ def test_agent_sessions_switch_models_when_a_message_is_flagged():
     argv = dict((c, f) for c, _n, f in setup.HARNESS_CLI)["claude"]("hello")
     assert argv[:2] == ["claude", "--settings"] and argv[-1] == "hello"
     assert json.loads(argv[2]) == {"switchModelsOnFlag": True}
+
+
+def test_a_note_can_come_from_stdin_or_a_file(tmp_path, monkeypatch):
+    """Backticks in a double-quoted note were run by the shell; stdin and @file keep the text as written."""
+    import io
+    from residudes import cli
+    from residudes.dossier import Dossier
+    cfgf = tmp_path / "residudes.toml"
+    cfgf.write_text(f'[paths]\nwork_root = "{tmp_path / "work"}"\n')
+    monkeypatch.setenv("RESIDUDES_CONFIG", str(cfgf))
+    Dossier(target="T9").save(tmp_path / "work" / "targets")
+    monkeypatch.setattr("sys.stdin", io.StringIO("the `pocket` evidence: $HOME stays\n"))
+    assert cli.main(["note", "T9", "-"]) == 0
+    (tmp_path / "n.txt").write_text("from a file")
+    assert cli.main(["note", "T9", f"@{tmp_path / 'n.txt'}"]) == 0
+    notes = [x["note"] for x in Dossier.load(tmp_path / "work" / "targets", "T9").log]
+    assert "the `pocket` evidence: $HOME stays" in notes and "from a file" in notes

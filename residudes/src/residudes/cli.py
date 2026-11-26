@@ -113,7 +113,8 @@ FULL_HELP = """residudes command line.
   residudes review T [--add "name: why"]      first-results checks -> triggers (a trigger means a results checkpoint)
 
   dossier writes (used by the agent and by people):
-  residudes note T "text"                     free-form log line ("NEEDS HUMAN: ..." asks for a person)
+  residudes note T "text" | - | @file         free-form log line ("NEEDS HUMAN: ..." asks for a person); - reads stdin,
+                                              so <<'EOF' keeps backticks and $ as written
   residudes evidence T KEY VALUE | @file.json   append a finding (VALUE may be JSON; @file for long JSON)
   residudes decide T --type stoichiometry --chose A3 --evidence "..." [--alt A1 ...] [--confidence high]
   residudes run-record T --job ID --what "af3 seeds 1-128 on af3_msa" [--scheduler slurm|pueue|other] [--state done]
@@ -485,7 +486,10 @@ def _main(argv: list[str] | None = None) -> int:
         print(f"{d.target} at {d.stage}: {goal}" + (f"  [skill {skill}]" if skill else ""))
         return 0
     if args.cmd == "note":
-        return _with(cfg, args.target, lambda d: d.note(_actor(), args.text))
+        # `-` reads the text from stdin and @file from a file: a note with backticks or $ in a double-quoted shell
+        # argument lost them to command substitution (zsh ran `pocket` as a command and the word was gone).
+        text = sys.stdin.read() if args.text == "-" else Path(args.text[1:]).read_text() if args.text.startswith("@") else args.text
+        return _with(cfg, args.target, lambda d: d.note(_actor(), text.strip()))
     if args.cmd == "evidence":
         raw = args.value
         if raw.startswith("@"):                                # long values from a file: no shell quoting to get wrong
