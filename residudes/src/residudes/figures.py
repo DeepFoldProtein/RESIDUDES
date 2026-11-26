@@ -286,9 +286,10 @@ def chain_map_svg(d: Dossier, out, width: int = 1400, ddir=None) -> Path | None:
             last_x = x
             C.line(x, y - 6, x, y + 40, c, 3)
             C.text(x, y + 86 + 22 * (level % 3), f"{seq[r - 1]}{r}", 17, c, "middle", "bold")
-    for j, text in enumerate(notes):
+    lines = [ln for text in notes for ln in wrap(text, width - x0 - 40, 18)]      # a long "not placed" ran off the edge
+    for j, text in enumerate(lines):
         C.text(x0, 96 + row * len(cs) + 26 + 34 * j, text, 18, MUTED)
-    return C.save(out, 96 + row * len(cs) + 34 * len(notes))
+    return C.save(out, 96 + row * len(cs) + 34 * len(lines))
 
 
 # ------------------------------------------------------------------------------------------------ the literature
@@ -961,10 +962,33 @@ def _panel(C: Canvas, px: float, py: float, pw: float, ph: float, ps: list[dict]
     for p in ps:
         if p["key"] in ring and "x" in p:
             C.dot(sx(p["x"]), sy(p["y"]), 7.0, "none", stroke=INK, sw=1.8)
-    for p in ps:
-        if star and p["key"] in star and "x" in p:
-            C.text(sx(p["x"]), sy(p["y"]) + 7, "★", 20, FLAG, "middle")
-            C.text(sx(p["x"]) + 12, sy(p["y"]) + 6, star[p["key"]], 14, FLAG, weight="bold")
+    # slate models often sit in one cluster, drawn on top of each other: one star for those, labelled with all of
+    # them, and each label moved down until it clears the stars and the labels already placed
+    groups: list[list[tuple[float, float, str]]] = []
+    for x, y, lab in sorted((sx(p["x"]), sy(p["y"]), star[p["key"]]) for p in ps
+                            if star and p["key"] in star and "x" in p):
+        near = next((g for g in groups if abs(g[0][0] - x) < 16 and abs(g[0][1] - y) < 16), None)
+        near.append((x, y, lab)) if near else groups.append([(x, y, lab)])
+    spots = [(sum(a for a, _, _ in g) / len(g), sum(b for _, b, _ in g) / len(g), " ".join(sorted(c for _, _, c in g)))
+             for g in groups]
+    taken = [(x - 8, y - 9, x + 8, y + 8) for x, y, _ in spots]
+    gap = 6                                         # two labels side by side read as one ("M2M1 M3 M4")
+
+    def free(lx, ly, lw):
+        inside = px + 2 <= lx and lx + lw <= px + pw - 2 and py + 14 <= ly <= py + ph - 2
+        return inside and not any(lx - gap < b2 and lx + lw + gap > b0 and ly - 13 - gap < b3 and ly + 2 + gap > b1
+                                  for b0, b1, b2, b3 in taken)
+    for x, y, lab in spots:
+        C.text(x, y + 7, "★", 20, FLAG, "middle")
+        lw = tw(lab, 14, True)
+        beside = [(x + 12, y + 6), (x - 12 - lw, y + 6), (x - lw / 2, y - 12), (x - lw / 2, y + 24)]
+        nearby = sorted(((a + dx, b + dy) for a, b in beside for dx in range(-60, 61, 10) for dy in range(-45, 46, 15)),
+                        key=lambda t: (t[0] + lw / 2 - x) ** 2 + (t[1] - 5 - y) ** 2)   # noqa: B023 - this star
+        lx, ly = next((t for t in beside + nearby if free(*t, lw)), beside[0])
+        if (lx, ly) not in beside:                  # moved off its star to stay legible: say whose label it is
+            C.line(x, y, min(max(x, lx), lx + lw), min(max(y, ly - 13), ly + 2), FLAG, 1)
+        taken.append((lx, ly - 13, lx + lw, ly + 2))
+        C.text(lx, ly, lab, 14, FLAG, weight="bold")
 
 
 def _colourbar(C: Canvas, x: float, y: float, h: float, lo: float, hi: float, label: str) -> None:
