@@ -60,13 +60,14 @@ on its own lists every target, which are in conversation and which are waiting o
 
 Ask about a shape and the agent answers with the structure: it opens molterm in a pane beside the
 conversation, drives it as you talk (colours, labels, distances, another model on top) and closes it
-when you are done. Here it was asked how H1388's phosphoserine sits in the 14-3-3 pocket. The pane draws
-with characters, slim by default; a tmux with sixel (3.4 or later) and a terminal that shows images get
-pixels instead, and the agent reads its own full-resolution snapshot either way.
+when you are done. Here it was asked how H1388's phosphoserine sits in the 14-3-3 pocket. With a tmux built
+with sixel (3.4 or later) and a terminal that shows images (in VS Code, `terminal.integrated.enableImages`)
+the pane draws pixels, as here; otherwise it draws with characters, slim by default. The agent reads its own
+full-resolution snapshot either way.
 
 [![a residudes chat window: the conversation on the left, molterm on the right with the phosphoserine, the pocket residues and their distances](docs/figures/chat-molterm.png)](docs/figures/chat-molterm.png)
 
-<sub>The tmux window itself, drawn by [`docs/tmux_shot.py`](docs/tmux_shot.py).</sub>
+<sub>The tmux window itself, text and picture, drawn by [`docs/tmux_shot.py`](docs/tmux_shot.py) `--images`.</sub>
 
 [`docs/setup.md`](docs/setup.md) documents the installation in full: container images or virtual
 environments, the MSA databases, and the three components that must be obtained by the user

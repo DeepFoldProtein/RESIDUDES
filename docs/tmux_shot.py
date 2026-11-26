@@ -2,19 +2,33 @@
 line. tmux cannot take a screenshot, and a terminal's own one is not reproducible; this is how
 docs/figures/chat-molterm.png was made, from a `residudes chat` window with the structure pane open.
 
-usage: python3 docs/tmux_shot.py SOCKET_NAME TARGET_WINDOW OUT.png [font_px]     (needs pillow and fonttools)
+usage: python3 docs/tmux_shot.py SOCKET_NAME TARGET_WINDOW OUT.png [font_px] [--images]   (needs pillow, fonttools)
        SOCKET_NAME is tmux's -L name ("default" for the usual server); TARGET_WINDOW e.g. residudes:H1388
+       --images: also draw the sixel pictures in the panes (tmux 3.4+ built with sixel). capture-pane has only
+       text, so a read-only client is attached for a moment at this drawing's cell size in pixels; tmux replays
+       its stored pictures to it, scaled to that size, and they are put where tmux placed them.
 """
+import colorsys
+import fcntl
+import os
+import pty
 import re
+import select
+import signal
+import struct
 import subprocess
 import sys
+import termios
+import time
 import unicodedata
 
 from fontTools.ttLib import TTFont
 from PIL import Image, ImageDraw, ImageFont
 
-SOCK, WIN, OUT = sys.argv[1:4]
-PX = int(sys.argv[4]) if len(sys.argv) > 4 else 16
+IMAGES = "--images" in sys.argv
+ARGS = [a for a in sys.argv[1:] if a != "--images"]
+SOCK, WIN, OUT = ARGS[:3]
+PX = int(ARGS[3]) if len(ARGS) > 3 else 16
 
 
 def font_file(pattern: str) -> str | None:
@@ -236,6 +250,79 @@ if status:                                              # tmux's own default bar
     for i, ch in enumerate(r):
         if ww - len(r) + i >= len(bar):
             cell(ww - len(r) + i, y, ch, st)
+
+def replayed(cols: int, rows: int) -> bytes:
+    """What tmux sends a read-only client of this drawing's size, in characters and pixels, as it attaches."""
+    pid, fd = pty.fork()
+    if pid == 0:
+        fcntl.ioctl(0, termios.TIOCSWINSZ, struct.pack("HHHH", rows, cols, cols * CW, rows * CH))
+        os.environ["TERM"] = "xterm-256color"
+        for k in ("TMUX", "TMUX_PANE"):
+            os.environ.pop(k, None)
+        os.execvp("tmux", ["tmux", "-L", SOCK, "attach", "-f", "read-only,ignore-size", "-t", WIN])
+    raw, end = b"", time.time() + 3
+    while time.time() < end:
+        if select.select([fd], [], [], 0.2)[0]:
+            try:
+                raw += os.read(fd, 1 << 16)
+            except OSError:
+                break
+    os.kill(pid, signal.SIGTERM)
+    os.waitpid(pid, 0)
+    return raw
+
+
+def sixel(data: str) -> Image.Image:
+    """One DECSIXEL body (after `q`) as an RGBA picture; pixels it does not set stay transparent."""
+    ra = re.match(r'"(\d+);(\d+);(\d+);(\d+)', data)
+    w, h = int(ra.group(3)), int(ra.group(4))
+    data = data[ra.end():]
+    pic = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = pic.load()
+    pal, cur, x, y, i = {}, (255, 255, 255, 255), 0, 0, 0
+    while i < len(data):
+        c = data[i]
+        if c == "#":
+            m = re.match(r"#(\d+)(?:;(\d+);(\d+);(\d+);(\d+))?", data[i:])
+            i += m.end()
+            n = int(m.group(1))
+            if m.group(2):
+                u, a, b, d = map(int, m.group(2, 3, 4, 5))
+                rgb = [v * 2.55 for v in (a, b, d)] if u == 2 else \
+                    [v * 255 for v in colorsys.hls_to_rgb(((a - 120) % 360) / 360, b / 100, d / 100)]
+                pal[n] = (*(round(v) for v in rgb), 255)
+            cur = pal.get(n, cur)
+            continue
+        if c == "!":
+            m = re.match(r"!(\d+)(.)", data[i:])
+            i += m.end()
+            rep, ch = int(m.group(1)), m.group(2)
+        elif c in "$-":
+            x, y, i = 0, y + 6 * (c == "-"), i + 1
+            continue
+        elif "?" <= c <= "~":
+            rep, ch, i = 1, c, i + 1
+        else:
+            i += 1
+            continue
+        bits = ord(ch) - 63
+        for _ in range(rep):
+            for k in range(6):
+                if bits >> k & 1 and x < w and y + k < h:
+                    px[x, y + k] = cur
+            x += 1
+    return pic
+
+
+if IMAGES:
+    raw = replayed(ww, wh + status)
+    last = {}
+    for m in re.finditer(rb"\x1b\[(\d+);(\d+)H\x1bP[0-9;]*q(.*?)\x1b\\", raw, re.S):
+        last[int(m.group(1)), int(m.group(2))] = m.group(3)             # a later picture at one spot replaces it
+    for (row, col), data in last.items():
+        pic = sixel(data.decode("latin1"))
+        img.paste(pic, ((col - 1) * CW, (row - 1) * CH), pic)
+    print(f"{len(last)} picture(s) from tmux")
 
 img.save(OUT)
 print(OUT, img.size)
