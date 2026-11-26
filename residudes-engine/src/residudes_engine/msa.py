@@ -48,12 +48,28 @@ class MsaError(RuntimeError):
 
 # ── sequences and stoichiometry ───────────────────────────────────────────
 
+def molecule(seq: str) -> str:
+    """protein, rna or dna, from the sequence alone (a CASP FASTA carries no type). RNA has U; DNA is A/C/G/T
+    only, ten or more of them - no real protein chain is made of Ala, Cys, Gly and Thr alone. Without this every
+    chain was a protein: an RNA was searched with jackhmmer over protein databases and written as a protein entity."""
+    letters = set(seq.upper())
+    if letters <= set("ACGUN") and "U" in letters:
+        return "rna"
+    if letters <= set("ACGTN") and len(seq) >= 10:
+        return "dna"
+    return "protein"
+
+
 @dataclass
 class Chain:
     letter: str          # source letter A, B, C … (FASTA order)
     name: str            # FASTA header (first token)
     seq: str
     copies: int = 1
+
+    @property
+    def molecule(self) -> str:
+        return molecule(self.seq)
 
 
 STO_TOKEN = re.compile(r"([A-Z])(\d+)")
@@ -453,7 +469,7 @@ def af3_search(chains: list[Chain], *, out_dir: Path, script: Path | str, python
     work.mkdir(parents=True, exist_ok=True)
     name = "query"
     spec = {"name": name, "dialect": "alphafold3", "version": 1, "modelSeeds": [1],
-            "sequences": [{"protein": {"id": ch.letter, "sequence": ch.seq}} for ch in chains]}
+            "sequences": [{ch.molecule: {"id": ch.letter, "sequence": ch.seq}} for ch in chains]}   # RNA → nhmmer
     json_path = work / "input.json"
     json_path.write_text(json.dumps(spec, indent=2) + "\n")
 

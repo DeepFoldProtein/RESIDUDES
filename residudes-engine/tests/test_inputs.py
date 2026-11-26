@@ -89,6 +89,45 @@ class AssemblyJson(unittest.TestCase):
             self.assertEqual(prot["pairedMsa"], "")
             self.assertNotIn("pairedMsaPath", prot)
 
+    def test_rna_and_dna_chains_are_written_as_their_own_entities(self) -> None:
+        """M1370 (RNA + 3C protease): every chain used to be a protein entity; the agent rewrote each input by hand."""
+        self.assertEqual([msa.molecule(x) for x in ("GGAAACAGCGGAUGGG", "ACGTACGTTTGACCA", "ACGT", "MKTAYIAK", "GATTACA")],
+                         ["rna", "dna", "protein", "protein", "protein"])
+        chains = [msa.Chain("A", "rna", "GGAAACAGCGGAUGGGUAUCC", 1), msa.Chain("B", "prot", "MKTAYIAKQRN", 1),
+                  msa.Chain("C", "dna", "ACGTACGTTTGACCA", 2)]
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            for x in ("A", "B"):
+                (d / f"unpaired_{x}.a3m").write_text(">q\nX\n")
+            asm = inputs.Assembly(name="t", chains=chains, unpaired={x: d / f"unpaired_{x}.a3m" for x in ("A", "B")})
+            asm.templates["A"] = [{"mmcifPath": "x.cif", "queryIndices": [0], "templateIndices": [0]}]
+            seqs = asm.build(d)["sequences"]
+            self.assertEqual([next(iter(s)) for s in seqs], ["rna", "protein", "dna"])
+            self.assertEqual(set(seqs[0]["rna"]), {"id", "sequence", "unpairedMsaPath"})   # no templates, no paired
+            self.assertEqual(seqs[2]["dna"], {"id": ["C", "D"], "sequence": "ACGTACGTTTGACCA"})
+            self.assertEqual(seqs[1]["protein"]["pairedMsa"], "")
+
+    def test_protein_msa_sources_skip_nucleic_chains(self) -> None:
+        import types
+        from residudes_engine import cli_inputs
+        seen = []
+        def fake(chains, **k):
+            seen.append([c.letter for c in chains])
+            return msa.MsaResult("colabfold")
+        ns = types.SimpleNamespace(source="colabfold", no_env=False, no_filter=False, no_pair=False, pairing="greedy", api=None,
+                                   token=None, db=None, mmseqs=None,
+                                   poll=1, timeout=1, threads=1)
+        chains = [msa.Chain("A", "rna", "GGAAACAGCGGAUGGGUAUCC", 1), msa.Chain("B", "prot", "MKTAYIAKQRN", 1)]
+        orig = cli_inputs.msa_mod.colabfold_search
+        cli_inputs.msa_mod.colabfold_search = fake
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                cli_inputs.run_msa(chains, Path(d), ns, None)
+                cli_inputs.run_msa(chains[:1], Path(d) / "rna_only", ns, None)
+        finally:
+            cli_inputs.msa_mod.colabfold_search = orig
+        self.assertEqual(seen, [["B"]])                  # the RNA never reaches a protein database; alone, it is skipped
+
     def test_ids_msas_glycan_contact(self) -> None:
         chains = [msa.Chain("A", "heavy", "MKTAYIAKQRN", 2), msa.Chain("B", "light", "GGGSTT", 1)]
         with tempfile.TemporaryDirectory() as d:

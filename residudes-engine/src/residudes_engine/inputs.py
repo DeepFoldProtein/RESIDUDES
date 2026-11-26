@@ -195,6 +195,14 @@ class Assembly:
         sequences = []
         for ch in self.chains:
             body: dict = {"id": ids[ch.letter][0] if ch.copies == 1 else ids[ch.letter], "sequence": ch.seq}
+            if ch.molecule != "protein":
+                # AlphaFold 3's rna entity takes an unpaired MSA and no templates; its dna entity takes neither.
+                # Written as proteins they were folded as polypeptides of Ala/Cys/Gly/Ser (M1370's agent patched
+                # every input by hand).
+                if ch.molecule == "rna" and ch.letter in self.unpaired:
+                    body["unpairedMsaPath"] = str(self.unpaired[ch.letter].resolve())
+                sequences.append({ch.molecule: body})
+                continue
             if ch.letter in self.unpaired:
                 body["unpairedMsaPath"] = str(self.unpaired[ch.letter].resolve())
             if ch.letter in self.paired:

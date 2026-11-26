@@ -75,15 +75,25 @@ def run_msa(chains: list[Chain], out_dir: Path, ns, site) -> Path:
             raise MsaError(f"unknown MSA source {src!r} (choose from {', '.join(msa_mod.SOURCES)})")
     results = []
     no_templates = getattr(ns, "no_templates", False)     # only the inputs/prepare parsers carry it
+    # ColabFold, MMseqs2 and plmMSA search protein databases: they get the protein chains only. An RNA or DNA chain
+    # gets its MSA from the af3 source (nhmmer over RNAcentral, Rfam and nt), or none.
+    protein = [ch for ch in chains if ch.molecule == "protein"]
+    for ch in chains:
+        if ch.molecule != "protein":
+            _log(f"note: chain {ch.letter} ({ch.name}) is {ch.molecule.upper()}: "
+                 + ("searched by the af3 source only" if "af3" in sources else "no source here searches it (af3 does): no MSA"))
     for src in sources:
         _log(f"▶ MSA search: {src}")
+        if src != "af3" and not protein:
+            _log(f"  {src}: no protein chain, skipped")
+            continue
         if src == "plmmsa":
             results.append(msa_mod.plmmsa_search(
-                chains, api=s["plmmsa_api"], token=s["plmmsa_token"], aligner=ns.aligner, mode=ns.mode,
+                protein, api=s["plmmsa_api"], token=s["plmmsa_token"], aligner=ns.aligner, mode=ns.mode,
                 score_model=ns.score_model, poll=ns.poll, timeout=ns.timeout, log=_log))
         elif src == "colabfold":
             results.append(msa_mod.colabfold_search(
-                chains, api=s["colabfold_api"], use_env=not ns.no_env, use_filter=not ns.no_filter,
+                protein, api=s["colabfold_api"], use_env=not ns.no_env, use_filter=not ns.no_filter,
                 use_templates=not no_templates, pair=not ns.no_pair, pairing=ns.pairing,
                 poll=ns.poll, timeout=ns.timeout, workdir=out_dir / "msa" / "_colabfold", log=_log))
         elif src == "af3":
@@ -92,7 +102,7 @@ def run_msa(chains: list[Chain], out_dir: Path, ns, site) -> Path:
             if not s["mmseqs_db"]:
                 raise MsaError("local mmseqs2 needs --db (or [msa] mmseqs_db in the site file / RESIDUDES_ENGINE_MMSEQS_DB)")
             results.append(msa_mod.mmseqs2_search(
-                chains, out_dir=out_dir / "msa", db_dir=Path(s["mmseqs_db"]), mmseqs=s["mmseqs_bin"], gpu=ns.gpu,
+                protein, out_dir=out_dir / "msa", db_dir=Path(s["mmseqs_db"]), mmseqs=s["mmseqs_bin"], gpu=ns.gpu,
                 use_env=not ns.no_env, use_templates=not no_templates, threads=ns.threads, log=_log))
     # several sources → one merged unpaired A3M per chain; paired/templates from the first source that has them
     merged = msa_mod.MsaResult("+".join(sources), meta={r.source: r.meta for r in results})
