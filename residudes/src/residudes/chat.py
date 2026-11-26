@@ -125,7 +125,9 @@ def list_cmd(cfg: Config, prefer: str | None = None) -> int:
     rows = _rows(cfg, prefer)
     if not rows:
         print(dim(f"no targets under {cfg.targets_dir}"))
-        print("start one with " + bold("residudes target add T1234 --fasta T1234.fasta"))
+        fasta = Path(__file__).resolve().parents[2] / "examples" / "H1388" / "H1388.fasta"
+        print("start one with " + bold(f"residudes target add H1388 --fasta {fasta} --stoich A1B1")
+              + dim("   (the shipped example's input)"))
         return 0
     live = sum(r["live"] for r in rows)
     yours = [r["target"] for r in rows if r["waiting"].startswith("you")]

@@ -2,7 +2,7 @@
 
   residudes                          what is in flight, and what is waiting for you
   residudes setup                    install and check this machine, with an agent
-  residudes target add T1234 --fasta T1234.fasta --stoich A3
+  residudes target add H1388 --fasta examples/H1388/H1388.fasta --stoich A1B1   (the shipped example)
   residudes chat T1234               talk to the agent about a target (ctrl-b d leaves it running)
   residudes daemon --all             keep every target moving; it stops where a person is needed
 

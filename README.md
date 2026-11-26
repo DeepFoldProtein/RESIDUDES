@@ -37,14 +37,19 @@ It hands the work to whichever agent CLI is present (Claude Code, Codex, Antigra
 `--manual` asks the questions itself, and with no CLI on the machine it falls back to that by
 itself.
 
-Then a target:
+Then a target. The repository carries one to start with: H1388, the input of the run in
+[`residudes/examples/H1388`](residudes/examples/H1388), so what yours does can be read against what that one did.
 
 ```sh
 cd residudes
-bin/residudes target add T1234 --fasta T1234.fasta --stoich A3
-bin/residudes chat T1234                     # talk to the agent about it; the session keeps running
-bin/residudes agent step T1234               # or one step per stage; `daemon --target T1234` keeps going
+bin/residudes target add H1388 --fasta examples/H1388/H1388.fasta --stoich A1B1
+bin/residudes chat H1388                     # talk to the agent about it; the session keeps running
+bin/residudes agent step H1388               # or one step per stage; `daemon --target H1388` keeps going
 ```
+
+`target add` grants the agent a mandate up to a packaged slate (`--review` keeps a person at both checkpoints),
+so `daemon --target H1388` takes it the whole way: that run took 45 minutes and $6.81 of agent steps, with 60
+prediction jobs. For a target of your own, the same lines with its FASTA and stoichiometry.
 
 `chat` opens that target's conversation: ask what it is doing, steer it, leave with `ctrl-b d`,
 come back to the same thread. There is **one agent per target** — the daemon works through the

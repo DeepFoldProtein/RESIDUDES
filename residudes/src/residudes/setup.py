@@ -303,11 +303,12 @@ def run_setup(cfg_path: str | None, yes: bool, as_json: bool, project: str | Non
         print("   " + dim(f"later: {verify}   (--gpu for the GPU images, --af3-db DIR --deep for the databases)"))
 
     print(bold("\n== 9. how to start a target"))
-    print("   residudes target add T1234 --fasta T1234.fasta [--stoich A3]   # creates the dossier")
-    print("   residudes next T1234                                        # what the next step is, and its skill")
-    print("   residudes agent step T1234                                  # let the agent do that step (asks nothing outward)")
-    print("   residudes target show T1234                                 # dossier: stage, evidence, decisions")
-    print("   residudes approve T1234 --what 'slate v1'                   # only a person moves a target past SLATE_PROPOSED")
+    fasta = RESIDUDES_DIR / "examples" / "H1388" / "H1388.fasta"       # the shipped example's own input
+    print(f"   residudes target add H1388 --fasta {fasta} --stoich A1B1   # creates the dossier")
+    print("   residudes chat H1388                     # talk to the agent about it")
+    print("   residudes daemon --target H1388          # all the way to a packaged slate (examples/H1388 took 45 min, $6.81)")
+    print("   residudes target show H1388              # dossier: stage, evidence, decisions")
+    print("   " + dim("--review on target add keeps a person at both checkpoints; submission is always a person's"))
     return 0
 
 

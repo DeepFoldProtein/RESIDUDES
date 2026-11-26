@@ -59,3 +59,31 @@ def test_setup_reports_the_picture_tools(monkeypatch):
     cfg = config.Config()
     cfg.extra = {"tools": {"molterm": "/opt/molterm"}}        # [tools] in residudes.toml wins over PATH
     assert {c["name"]: c["path"] for c in setup._picture_tools(cfg)}["molterm"] == "/opt/molterm"
+
+
+def test_the_quickstart_registers_the_examples_own_input():
+    """Every quickstart starts with `target add H1388 --fasta examples/H1388/H1388.fasta`, so a fresh clone runs the
+    target the example ran, on the same sequences, and the two can be read side by side. That file must be the
+    sequence the example's dossier recorded, and every place that names it must name a file that exists."""
+    import json
+    import re
+    fasta = EXAMPLE / "H1388.fasta"
+    assert fasta.read_text() == json.loads((EXAMPLE / "dossier.json").read_text())["sequence"]["text"]
+    root = EXAMPLE.parents[2]
+    for doc in (root / "README.md", root / "residudes" / "README.md"):
+        cmds = re.findall(r"target add H1388 --fasta (\S+) --stoich (\S+)", doc.read_text())
+        assert cmds, doc
+        for path, sto in cmds:
+            assert (root / "residudes" / path).exists() and sto == "A1B1", (doc, path)
+
+
+def test_registering_the_example_input_gives_the_examples_chains(tmp_path, monkeypatch):
+    from residudes import cli
+    cfg = tmp_path / "residudes.toml"
+    cfg.write_text(f'[paths]\nwork_root = "{tmp_path}"\n')
+    monkeypatch.setenv("RESIDUDES_CONFIG", str(cfg))
+    assert cli.main(["target", "add", "H1388", "--fasta", str(EXAMPLE / "H1388.fasta"), "--stoich", "A1B1"]) in (0, None)
+    d = Dossier.load(tmp_path / "targets", "H1388")
+    shipped = Dossier.load(EXAMPLE.parent, "H1388")
+    assert d.sequence["text"] == shipped.sequence["text"] and d.stoichiometry == shipped.stoichiometry
+    assert d.automation and d.automation_allows("SLATE_PROPOSED")      # full automation, as the example ran
