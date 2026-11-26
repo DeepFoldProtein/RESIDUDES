@@ -39,6 +39,10 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+# the size of the file itself: `du` counts the blocks allocated so far, which on a network filesystem right after a
+# pull can read "512" for a 70 MB image
+size_of() { numfmt --to=iec "$(stat -Lc %s "$1")"; }
+
 ok()   { printf '  \033[32mok\033[0m    %s\n' "$1"; pass=$((pass + 1)); }
 bad()  { printf '  \033[31mFAIL\033[0m  %s\n' "$1"; fail=$((fail + 1)); }
 note() { printf '  --    %s\n' "$1"; skip=$((skip + 1)); }
@@ -133,7 +137,7 @@ for name in $SET; do
         PULL_ONE=0; BUILD_ONE=0
     fi
     if [ -f "$sif" ]; then
-        ok "$name.sif  $(du -hL "$sif" | cut -f1)"
+        ok "$name.sif  $(size_of "$sif")"
     elif [ "$PULL" = 1 ] || [ "${PULL_ONE:-0}" = 1 ]; then
         printf '  ..    pulling %s\n' "$name"
         # keep the output: a failed pull used to print nothing but "could not pull", which says
@@ -149,19 +153,19 @@ for name in $SET; do
         export APPTAINER_TMPDIR="${APPTAINER_TMPDIR:-$IMAGES/.tmp}"
         mkdir -p "$APPTAINER_TMPDIR"
         if GODEBUG=http2client=0 apptainer pull --force --disable-cache "$sif" "docker://$REGISTRY/$name:$TAG" >"$log" 2>&1; then
-            ok "$name.sif  pulled from $REGISTRY  $(du -hL "$sif" | cut -f1)"
+            ok "$name.sif  pulled from $REGISTRY  $(size_of "$sif")"
         # one more attempt for a transport that dropped: the network, not the image
         elif grep -q 'stream error\|unexpected EOF\|connection reset\|timeout' "$log" &&
              printf '  ..    %s\n' "retrying $name once" &&
              GODEBUG=http2client=0 apptainer pull --force --disable-cache "$sif" "docker://$REGISTRY/$name:$TAG" >>"$log" 2>&1; then
-            ok "$name.sif  pulled on the second attempt  $(du -hL "$sif" | cut -f1)"
+            ok "$name.sif  pulled on the second attempt  $(size_of "$sif")"
         else
             # A pull that cannot finish is not a reason to have no image: the recipe is here, and
             # building fetches many small wheels instead of one 9-11 GB layer, which is what fails.
             note "$name could not be pulled ($(sed -n '$p' "$log" | tail -c 60)); building it instead"
             printf '  ..    building %s\n' "$name"
             if (cd "$REPO/containers/$name" && apptainer build --force "$sif" "$name.def" >>"$log" 2>&1); then
-                ok "$name.sif  built after the pull failed  $(du -hL "$sif" | cut -f1)"
+                ok "$name.sif  built after the pull failed  $(size_of "$sif")"
             else
                 bad "$name.sif  neither pulled nor built"
                 sed -n '$p' "$log" | sed 's/^/          /'
@@ -174,7 +178,7 @@ for name in $SET; do
         printf '  ..    building %s\n' "$name"
         blog=$(mktemp)
         if (cd "$REPO/containers/$name" && apptainer build --force "$sif" "$name.def" >"$blog" 2>&1); then
-            ok "$name.sif  built  $(du -hL "$sif" | cut -f1)"
+            ok "$name.sif  built  $(size_of "$sif")"
         else
             bad "$name.sif  build failed"
             sed -n '$p' "$blog" | sed 's/^/          /'
