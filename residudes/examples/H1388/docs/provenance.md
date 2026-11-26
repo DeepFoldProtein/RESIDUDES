@@ -38,3 +38,16 @@ bug, since fixed: an open checkpoint used to override the note.
 Both were fixed in the code, a person's note on the dossier said so (02:07, by `deepfold`), and the daemon was
 restarted. The agent resolved C1 itself on its next step; its answer from before the refusal stood. Steps 5 to 7
 in [`steps.json`](../steps.json), $0.74, are the cost of that.
+
+## The final deck, drawn after the run
+
+The run built every deck with `--no-render`, as AGENTS.md then told it to, so the deck it left had no pictures
+of the models. The two figures the agent drew itself were molterm's: rasterised without anti-aliasing, five
+predictors' peptides merged into one file (so secondary structure paired the overlapping copies into β-slabs that
+do not exist), every atom as ball-and-stick, viewed from behind the receptor.
+
+After the run, `residudes slides H1388 --final` drew the deck the way a run now ends: PyMOL, ray-traced, in one
+sbatch job (29 figures, 8 min 43 s with the queue). The agent's two scenes were rewritten as PyMOL scenes in
+[`report/pml/`](../report/pml/) by a person, following the guidance that now ships in residudes-structure-view;
+its molterm scenes stay in [`report/mt/`](../report/mt/). Its caption on the peptide slide said the receptor was
+hidden, and now says grey. The deck's pictures ship at 1200 px (rendered at 1800 × 1350); `report.pdf` embeds those.

@@ -8,7 +8,7 @@
 
 #show: metropolis-theme.with(
   aspect-ratio: "16-9",
-  config-info(title: [#"H1388: target report"], subtitle: [#"stage SLATE_PROPOSED"],
+  config-info(title: [#"H1388: target report"], subtitle: [#"stage PACKAGED"],
     author: [residudes · DeepFold], date: [#"2026-11-26"]),
   config-common(new-section-slide-fn: none),
 )
@@ -95,6 +95,20 @@ Best (and median of the top 10) ipTM for complexes, pTM for monomers. Darker is 
 #align(center)[#image("figs/clusters.svg", height: 76%)]
 #text(size: 11pt)[#"300 models, 12 clusters in 2 input variants · best predicted DockQ per cluster: sep:6 0.81, sep:10 0.81, sep:9 0.80"]
 
+== What each cluster is: the model at the centre of it
+
+#grid(columns: 4, gutter: 8pt,
+  figure(image("figs/C10_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C10 · 46 models · conf 0.95 · DockQ 0.74 · af3/of3"]]),
+  figure(image("figs/C6_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C6 · 39 models · conf 0.95 · DockQ 0.73 · pt2/af3"]]),
+  figure(image("figs/C2_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C2 · 34 models · conf 0.96 · DockQ 0.75 · af3"]]),
+  figure(image("figs/C7_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C7 · 31 models · conf 0.91 · DockQ 0.46 · of3/bt2"]]),
+  figure(image("figs/C1_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C1 · 30 models · conf 0.92 · DockQ 0.51 · af3/bt2"]]),
+  figure(image("figs/C4_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C4 · 27 models · conf 0.68 · DockQ 0.45 · af3/of3"]]),
+  figure(image("figs/C0_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C0 · 21 models · conf 0.92 · DockQ 0.51 · of3/bt2"]]),
+  figure(image("figs/C9_chains.jpg", height: 26%), caption: [#text(size: 9pt)[#"C9 · 20 models · conf 0.96 · DockQ 0.73 · pt2/af3"]]),
+)
+#text(size: 11pt)[#"Each is the model with the highest membership in its cluster, superposed on the first and coloured by chain. Clusters are ordered by size; the numbers are the cluster's, not the model's."]
+
 == Decisions and the priors they rest on
 
 #text(size: 10pt)[#table(columns: (auto, auto, 1fr, auto), stroke: 0.4pt + luma(200), inset: 4pt,
@@ -158,9 +172,30 @@ Best (and median of the top 10) ipTM for complexes, pTM for monomers. Darker is 
   ),
 )]
 
-== The slate: structures
+== The slate: structures (by chain)
 
-Pictures are being rendered (`residudes slides` again when the render job is done).
+#grid(columns: 3, gutter: 6pt,
+  figure(image("figs/M1_chains.jpg", height: 33%), caption: [#"M1: A1B1__sep__af3__s20_0"]),
+  figure(image("figs/M2_chains.jpg", height: 33%), caption: [#"M2: A1B1__sep__pt2__s5_0"]),
+  figure(image("figs/M3_chains.jpg", height: 33%), caption: [#"M3: A1B1__sep__af3__s9_0"]),
+  figure(image("figs/M4_chains.jpg", height: 33%), caption: [#"M4: A1B1__sep__pt2__s10_0"]),
+  figure(image("figs/M5_chains.jpg", height: 33%), caption: [#"M5: A1B1__sep__af3__s7_0"]),
+)
+
+== The slate: confidence (pLDDT)
+
+#grid(columns: 3, gutter: 6pt,
+  figure(image("figs/M1_plddt.jpg", height: 33%), caption: [#"M1"]),
+  figure(image("figs/M2_plddt.jpg", height: 33%), caption: [#"M2"]),
+  figure(image("figs/M3_plddt.jpg", height: 33%), caption: [#"M3"]),
+  figure(image("figs/M4_plddt.jpg", height: 33%), caption: [#"M4"]),
+  figure(image("figs/M5_plddt.jpg", height: 33%), caption: [#"M5"]),
+)
+#text(size: 11pt)[pLDDT: #text(fill: rgb("#0053D6"))[■] > 90 · #text(fill: rgb("#65CBF3"))[■] 70–90 · #text(fill: rgb("#FFDB13"))[■] 50–70 · #text(fill: rgb("#FF7D45"))[■] < 50]
+
+== The slate: superposed on M1
+
+#align(center)[#image("figs/overlay.jpg", height: 78%)]
 
 == Slate v2 (chosen by review)
 
@@ -187,8 +222,13 @@ Pictures are being rendered (`residudes slides` again when the render job is don
   [#"6"], [#"organisers' declared stoichiometry (dossier stoichiometry.given)"], [#"stoichiometry_evidence"],
   [#"7"], [#"receptor (chain B) CA superposition onto the top-ranking_score af3 SEP model A1B1__sep__af3__s20_0, then peptide chain A CA RMSD (all 11 and core A4-…"], [#"peptide_agreement"],
   [#"8"], [#"A1B1__sep__af3__s20_0"], [#"peptide_agreement, slate_consensus"],
+  [#"9"], [#"<WORK>/targets/H1388/package/H1388_1.pdb"], [#"package"],
+  [#"10"], [#"<WORK>/targets/H1388/package/H1388_2.pdb"], [#"package"],
+  [#"11"], [#"<WORK>/targets/H1388/package/H1388_3.pdb"], [#"package"],
+  [#"12"], [#"<WORK>/targets/H1388/package/H1388_4.pdb"], [#"package"],
+  [#"13"], [#"<WORK>/targets/H1388/package/H1388_5.pdb"], [#"package"],
 )]
-#text(size: 11pt)[*No source recorded*: #"public_structures, identity, construct, templates, inputs, gates_breakdown, qa"]
+#text(size: 11pt)[*No source recorded*: #"public_structures, identity, construct, templates, inputs, gates_breakdown, qa, slate_approval_check, package_checks"]
 
 == What this proposes, and what it is asking
 
@@ -211,6 +251,9 @@ Pictures are being rendered (`residudes slides` again when the render job is don
   [#"INPUTS_READY"], [#"1"], [#"19"], [#"0.54"],
   [#"RUNNING"], [#"1"], [#"19"], [#"0.49"],
   [#"POOL_READY"], [#"2"], [#"10"], [#"0.87"],
-  [*total*], [#"12"], [#"141"], [#"5.00"],
+  [#"RESULTS_REVIEW"], [#"1"], [#"29"], [#"0.95"],
+  [#"SLATE_PROPOSED"], [#"1"], [#"14"], [#"0.47"],
+  [#"APPROVED"], [#"1"], [#"13"], [#"0.39"],
+  [*total*], [#"15"], [#"197"], [#"6.81"],
 )]
 

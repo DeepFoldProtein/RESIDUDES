@@ -32,13 +32,13 @@ SLATE_PROPOSED → APPROVED → PACKAGED   (stops: submission is a person's)
 | [`inputs/`](inputs/) | the two inputs it built: phosphoserine on the peptide, 6S9K pinned, a deep MSA on the receptor |
 | [`pool.csv`](pool.csv) · [`qa/`](qa/) · [`gates/`](gates/) | the 300 models, their interface scores, clusters and the pocket gate |
 | [`slate_v2.md`](slate_v2.md) · [`package/`](package/) | the approved five and the files packaged from them, with the geometry checks |
-| [`report/`](report/) | the deck, and the figures drawn from the dossier |
+| [`report/`](report/) | the deck, ray-traced at the end (`residudes slides T --final`), and the figures drawn from the dossier |
 
 | Topic | Document |
 |---|---|
 | what the steps found and decided | [`docs/findings.md`](docs/findings.md) |
 | how the slate scores against the native | [`docs/retrospective.md`](docs/retrospective.md) — and why that is not a blind result |
-| what was edited, withheld and fixed mid-run | [`docs/provenance.md`](docs/provenance.md) |
+| what was edited, withheld and fixed mid-run, and the deck drawn after it | [`docs/provenance.md`](docs/provenance.md) |
 
 ## What it shows
 

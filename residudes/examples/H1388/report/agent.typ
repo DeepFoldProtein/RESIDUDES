@@ -15,7 +15,7 @@
 #grid(columns: (58%, 42%), gutter: 1em,
   image("figs/pep_split.png", height: 72%),
   [
-  Most confident model per arm, superposed on 14-3-3 gamma (hidden; blue sticks = pocket B49/56/131/132).
+  Most confident model per arm, superposed on 14-3-3 gamma (grey; blue sticks = pocket B49/56/131/132; on the peptides, residue 7).
   - #text(fill: rgb("#D55E00"))[af3 + pS7] (s20_0) and #text(fill: rgb("#009E73"))[pt2] (s5_0): one register, core A4-A10 median 0.56 / 0.57 Å apart.
   - #text(fill: rgb("#CC79A7"))[bt2] (s1_0): 10.5 Å off; arm median 3.05 Å.
   - #text(fill: rgb("#E69F00"))[af3 unmodified] (s5_0): 7.9 Å median, register shifted.
