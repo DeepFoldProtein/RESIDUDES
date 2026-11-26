@@ -42,6 +42,8 @@ This run:
   residudes-engine: {cfg.residudes_engine}
   residudes-qa: {cfg.residudes_qa}
   existing predictions (residudes-engine layout), if any: {cfg.targets_root or '(none configured)'}
+    (import only these, your own runs, or a directory a person names; predictions you come across elsewhere -
+    beside the FASTA, in a team folder - are a finding to record, not a pool to import)
   `residudes` is on PATH; RESIDUDES_ACTOR=agent.
 
 The instructions below are residudes/AGENTS.md, shared with Claude Code, Codex and Antigravity.

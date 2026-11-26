@@ -25,9 +25,46 @@ def target_dir(cfg: Config, d: Dossier, explicit: str | None = None) -> Path:
         return Path(explicit)
     if d.sequence.get("source_dir"):
         return Path(d.sequence["source_dir"])
+    own = Dossier.path(cfg.targets_dir, d.target).parent
+    if (own / "results").is_dir():                         # the runs this campaign made (`--out results/<sto>/...`)
+        return own
     if cfg.targets_root and (Path(cfg.targets_root) / d.target).is_dir():
         return Path(cfg.targets_root) / d.target
     raise FileNotFoundError(f"no prediction directory for {d.target}: pass --dir or set targets_root in residudes.toml")
+
+
+def _named_by_person(d: Dossier, root: Path) -> bool:
+    """Whether a person pointed at this directory: in a note, a checkpoint reply or a resolution."""
+    from residudes.dossier import AGENT_ACTORS
+    machine = AGENT_ACTORS + ("residudes",)
+    texts = [x["note"] for x in d.log if x["actor"] not in machine]
+    for c in d.checkpoints:
+        texts += [m.get("text", "") for m in c.get("thread", []) if m.get("by") not in machine]
+        if c.get("resolution") and c["resolution"].get("by") not in machine:
+            texts.append(c["resolution"].get("note", ""))
+    keys = {str(root).rstrip("/"), str(root.resolve()).rstrip("/")}
+    return any(k and k in t for t in texts for k in keys)
+
+
+def pool_source_allowed(cfg: Config, d: Dossier, root: Path, actor: str) -> str | None:
+    """Why the agent may not import this directory, or None. Its own runs (the dossier directory), the configured
+    targets_root and a directory a person named are its to import; predictions it found elsewhere are not. On a clean
+    run an agent imported 840 team models it found beside the FASTA it was given (T1431), another the team's
+    257,800-model June pool (T1364), and neither campaign was then its own predictions. A person decides that."""
+    from residudes.dossier import AGENT_ACTORS
+    if actor not in AGENT_ACTORS:
+        return None
+    r = root.resolve()
+    allowed = [Dossier.path(cfg.targets_dir, d.target).parent.resolve()]
+    if cfg.targets_root:
+        allowed.append(Path(cfg.targets_root).resolve())
+    if any(r == a or a in r.parents for a in allowed) or _named_by_person(d, root):
+        return None
+    return (f"{root} holds predictions this campaign did not make, outside targets_root "
+            f"({cfg.targets_root or 'none configured'}): importing them is a person's call. Record what you found "
+            f"(`residudes evidence {d.target} existing_pool '{{\"dir\": \"{r}\", ...}}'`) and go on with your own runs; "
+            f"a person who wants them imported names the directory in a note (`residudes note {d.target} "
+            f"\"import the pool at {r}\"`) or sets targets_root in residudes.toml")
 
 
 def pool_cmd(cfg: Config, d: Dossier, explicit: str | None, actor: str, refresh: bool = False, threads: int = 8) -> str:
@@ -39,6 +76,9 @@ def pool_cmd(cfg: Config, d: Dossier, explicit: str | None, actor: str, refresh:
             lines.append(f"  {k:28s} n={v['n']:5d}  rs median {v['ranking_score_median']}  max {v['ranking_score_max']}  ipTM max {v['iptm_max']}")
         return "\n".join(lines)
     root = target_dir(cfg, d, explicit)
+    why = pool_source_allowed(cfg, d, root, actor)
+    if why:
+        raise PermissionError(why)
     empty: list[str] = []
     rows = poolmod.scan(root, threads=threads, empty=empty)
     if not rows:

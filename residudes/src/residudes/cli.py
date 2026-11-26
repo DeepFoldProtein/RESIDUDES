@@ -70,7 +70,7 @@ def _with(cfg, target: str, fn) -> int:
 def main(argv: list[str] | None = None) -> int:
     try:
         return _main(argv)
-    except (ValueError, FileNotFoundError) as exc:      # refused transitions, missing dossiers: one line, exit 1
+    except (ValueError, FileNotFoundError, PermissionError) as exc:   # refused transitions, missing dossiers: one line, exit 1
         print(f"residudes: {exc}", file=sys.stderr)
         return 1
 

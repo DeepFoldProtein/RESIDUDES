@@ -169,3 +169,28 @@ def test_pool_keeps_chains_apart(tmp_path):
     pool.write_csv(rows, tmp_path / "pool.csv")
     s = slate.from_models(tmp_path / "pool.csv", ["A1@B__v__af3__s1_0"])
     assert s["models"][0]["path"].startswith(str(tmp_path / "T" / "B"))
+
+
+def test_agent_imports_only_its_own_or_named_pools(tmp_path):
+    """F21: an agent imported a team's pool it found beside the FASTA. Its own runs, targets_root and a directory a
+    person named are its to import; anything else is refused with what to do instead."""
+    import pytest
+
+    from residudes import ops
+    from residudes.config import Config
+    cfg = Config(work_root=str(tmp_path / "work"))
+    d = Dossier(target="T")
+    ddir = Dossier.path(cfg.targets_dir, "T").parent
+    ddir.mkdir(parents=True)
+    _make_pool(ddir)                                      # the campaign's own runs: imported without --dir
+    assert "12 models" in ops.pool_cmd(cfg, d, None, "agent")
+    team = tmp_path / "team" / "T"
+    _make_pool(team)
+    with pytest.raises(PermissionError, match="a person's call"):
+        ops.pool_cmd(cfg, d, str(team), "agent", refresh=True)
+    assert "12 models" in ops.pool_cmd(cfg, d, str(team), "jdoe", refresh=True)   # a person may
+    d2 = Dossier(target="T")
+    d2.note("jdoe", f"import the pool at {team}")
+    assert "12 models" in ops.pool_cmd(cfg, d2, str(team), "agent", refresh=True)  # named by a person
+    cfg2 = Config(work_root=str(tmp_path / "work"), targets_root=str(tmp_path / "team"))
+    assert "12 models" in ops.pool_cmd(cfg2, Dossier(target="T"), str(team), "agent", refresh=True)  # configured

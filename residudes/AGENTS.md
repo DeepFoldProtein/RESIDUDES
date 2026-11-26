@@ -191,6 +191,10 @@ clusters and plots the pool. Both sit next to this folder in the RESIDUDES repo.
   person's mandate covers the target (`residudes automate T --on`, the default at registration), and do not
   change `RESIDUDES_ACTOR`. Without a mandate a person approves the slate; submitting is always a person's. In the SDK runner a guard enforces this. In Claude Code,
   `.claude/settings.json` sets `RESIDUDES_ACTOR=agent` and denies `approve`.
+- **Use what the campaign was given.** Import only your own runs, the configured `targets_root`, or a directory a
+  person names (`residudes pool` refuses others), and use only the tools `residudes.toml` names. Predictions or tools
+  you come across on disk - models beside the FASTA, a team folder, an unconfigured checkout - go into the dossier
+  as a finding for a person; a clean campaign that quietly imported a team's earlier pool was no longer its own.
 - **Record as you go.** A step ends when its USD budget runs out, wherever it has got to. Write each finding with
   `residudes evidence` when you make it: a step that ends early is normal, a finding that was never recorded is lost.
 - **A path in the dossier is absolute, and checked.** Evidence, notes and references are read later from another
