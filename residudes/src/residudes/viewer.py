@@ -30,6 +30,10 @@ from residudes.dossier import Dossier
 
 TAG = "@residudes_view"
 SLOTS = ["#0072B2", "#D55E00", "#009E73", "#CC79A7", "#E69F00"]
+# Said to the agent after `show` when the pane is text: a character cell is two dots, so a view zoomed to one residue
+# turns helices into solid blocks (seen in a real chat); the whole pocket with its helices around it still reads.
+TEXT_NOTE = ("; text renderer (this tmux cannot pass pixels): a character is two dots, so frame the pocket with the"
+             " helices around it, not one residue, and read fine detail from `snap`")
 
 
 def _tmux(*args: str) -> subprocess.CompletedProcess:
@@ -147,22 +151,26 @@ def show(cfg, d: Dossier, items: list[str]) -> str:
     names = ", ".join(f"{m['label']} ({m.get('name') or Path(m['path']).name})" for m in models)
     return (f"showing {names} in the pane beside this one"
             + (" (superposed on the first, one colour each)" if len(models) > 1 else "")
-            + ("; text renderer: this tmux cannot pass pixels" if renderer() else ""))
+            + (TEXT_NOTE if renderer() else ""))
 
 
 def do(cfg, d: Dossier, commands: str) -> str:
     """Type molterm commands into the open pane, as a person would: Escape, `:command`, Enter. Returns the pane's
-    last line, which is where molterm answers - an error included."""
+    last line, which is where molterm answers - an error included. Then $sele is dropped: the live pane rings every
+    selected atom, and a `select ... ; show sticks sele` left the picture covered in them (named selections stay)."""
     anchor = here()
     pane = viewer_pane(anchor) if anchor else None
     if not pane:
         return "no structure is open beside this conversation: `residudes view T show ...` first"
-    for c in [c.strip() for c in commands.split(";") if c.strip()]:
+    def type_in(c: str) -> None:
         _tmux("send-keys", "-t", pane, "Escape")
         _tmux("send-keys", "-t", pane, "-l", ":" + c)
         _tmux("send-keys", "-t", pane, "Enter")
         time.sleep(0.3)
+    for c in [c.strip() for c in commands.split(";") if c.strip()]:
+        type_in(c)
     last = [ln for ln in _tmux("capture-pane", "-p", "-t", pane).stdout.splitlines() if ln.strip()]
+    type_in("select clear")
     return f"molterm: {last[-1].strip() if last else '(nothing)'}"
 
 

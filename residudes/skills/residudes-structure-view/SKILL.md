@@ -149,7 +149,11 @@ residudes view T close              # when they are done
 "show" again replaces what the pane shows rather than opening another. Useful `do` lines: `color plddt`,
 `color chain`, `focus chain A and resi 7`, `show sticks chain B and resi 49+56+131+132`, `align M3 to M1 automap`,
 `turn y 90`, `zoom chain A`, `hbonds`, `interface on`. The pane answers on its last line, an error included - read
-what `do` returns.
+what `do` returns. `$sele` is cleared after each `do` (the live pane rings every selected atom), so put a `select`
+and what uses it in one call, or name it: `select pocket = chain B and resi 49+56+131+132`.
+
+When `show` says the pane is a text renderer (a tmux that cannot pass pixels), a character is two dots: frame the
+pocket with the helices around it rather than one residue, and take fine detail from `snap`, which is always pixels.
 
 Then say what the picture shows and what follows from it — the figure is the evidence, the sentence is the claim.
 Record the claim with `residudes note` or `residudes evidence` as usual; a picture that is never referred to again

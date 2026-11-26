@@ -67,3 +67,18 @@ def test_tmux_is_the_binary_of_the_server_we_are_in(monkeypatch, tmp_path):
     assert chat.tmux_bin() == str(exe)                     # a 3.2a client would be dropped by this server
     monkeypatch.delenv("TMUX")
     assert chat.tmux_bin() != str(exe)                     # outside tmux: whatever is on PATH
+
+
+def test_do_answers_with_molterm_then_drops_the_selection(monkeypatch):
+    sent = []
+    def fake(*a):
+        sent.append(a)
+        if a[0] == "list-panes":
+            return sp.CompletedProcess(a, 0, "%0\t\n%2\tH1388\n", "")
+        return sp.CompletedProcess(a, 0, "NORMAL M1\nSelected 79 atoms\n" if a[0] == "capture-pane" else "", "")
+    monkeypatch.setattr(viewer, "_tmux", fake)
+    monkeypatch.setattr(viewer, "here", lambda: "%0")
+    monkeypatch.setattr(viewer.time, "sleep", lambda s: None)
+    assert viewer.do(None, None, "select chain A; show sticks sele") == "molterm: Selected 79 atoms"
+    typed = [a[-1] for a in sent if a[:1] == ("send-keys",) and "-l" in a]
+    assert typed == [":select chain A", ":show sticks sele", ":select clear"]   # the reply is read before the clear
