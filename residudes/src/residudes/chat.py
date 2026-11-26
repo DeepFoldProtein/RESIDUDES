@@ -169,6 +169,15 @@ to answer, open a checkpoint (`residudes consult`) rather than deciding it here.
 You never approve a slate, resolve a checkpoint or submit anything: those are the person's, and the
 stage machine refuses them from you.
 
+The person is looking at this tmux window. When the conversation turns on a shape - they ask to see a model, a
+site, a template, a comparison, or a structure would answer them better than a sentence - put it in the pane
+beside this one, and keep driving it as they talk: `residudes view {target} show M1` (M1-M5 the slate, C0.. a
+cluster, tpl_6S9K_A a template, `slate`, or a file; several are superposed), `residudes view {target} do "<molterm
+command>"` (color plddt · color chain · focus chain A and resi 7 · show sticks resi 49+56 · align M3 to M1 automap ·
+turn y 90 · zoom chain A), `residudes view {target} snap` to see what they see (read the PNG it names), and
+`residudes view {target} close` when they are done. Say what the picture shows; the pane is the evidence, the
+sentence is the claim.
+
 Dossier directory (your working directory): {ddir}
 """
 
@@ -229,10 +238,26 @@ def ensure(cfg: Config, target: str, harness: str | None = None) -> bool:
     write_mcp_config(ddir)
     cmdline = argv(BRIEF.format(target=target, ddir=ddir))
     if _tmux("has-session", "-t", SESSION).returncode != 0:
-        return _tmux("new-session", "-d", "-s", SESSION, "-n", target, "-c", str(ddir),
-                     *cmdline, capture=False).returncode == 0
-    return _tmux("new-window", "-d", "-t", SESSION, "-n", target, "-c", str(ddir),
-                 *cmdline, capture=False).returncode == 0
+        ok = _tmux("new-session", "-d", "-s", SESSION, "-n", target, "-c", str(ddir), *cmdline, capture=False).returncode == 0
+    else:
+        ok = _tmux("new-window", "-d", "-t", SESSION, "-n", target, "-c", str(ddir), *cmdline, capture=False).returncode == 0
+    if ok:                                         # the window's one pane is the agent's; a structure may join it
+        _tmux("set-option", "-p", "-t", f"{SESSION}:{target}", AGENT_TAG, "1")
+    return ok
+
+
+AGENT_TAG = "@residudes_agent"
+
+
+def agent_pane(target: str) -> str:
+    """The conversation's own pane. Addressing the window would reach whichever pane is active, and with a structure
+    open beside the conversation (residudes view) that may be molterm: the daemon's next prompt would be typed into
+    the viewer. A window opened before the tag existed falls back to its first pane that is not the viewer."""
+    r = _tmux("list-panes", "-t", f"{SESSION}:{target}", "-F", "#{pane_id}\t#{" + AGENT_TAG + "}\t#{@residudes_view}")
+    rows = [ln.split("\t") for ln in r.stdout.splitlines()] if r.returncode == 0 else []
+    pick = next((x[0] for x in rows if len(x) > 1 and x[1]), None) or next(
+        (x[0] for x in rows if len(x) < 3 or not x[2]), None)
+    return pick or f"{SESSION}:{target}"
 
 
 def _dress_session() -> None:
@@ -253,7 +278,7 @@ def archive_window(cfg: Config, target: str) -> Path | None:
     ending one without saving it throws away the only account of how the target got here."""
     if not any(s["target"] == target for s in sessions()):
         return None
-    r = _tmux("capture-pane", "-p", "-S", "-", "-t", f"{SESSION}:{target}")
+    r = _tmux("capture-pane", "-p", "-S", "-", "-t", agent_pane(target))
     if r.returncode != 0 or not r.stdout.strip():
         return None
     out = Path(cfg.targets_dir) / target / "chat"
@@ -323,9 +348,9 @@ def send(target: str, text: str) -> bool:
     """
     if not have_tmux():
         return False
-    where = f"{SESSION}:{target}"
     if not any(s["target"] == target for s in sessions()):
         return False
+    where = agent_pane(target)
     # -l sends the text literally, then Enter separately, so a prompt with punctuation or a
     # leading slash is not read as a tmux key name
     if _tmux("send-keys", "-t", where, "-l", text).returncode != 0:

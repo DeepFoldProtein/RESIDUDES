@@ -334,6 +334,11 @@ def _main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("render", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("--pml", required=True)
+    # the chat agent's: a structure in a pane beside the conversation, opened, driven and closed as the person asks
+    p = sub.add_parser("view", help=argparse.SUPPRESS)
+    p.add_argument("target")
+    p.add_argument("action", choices=["show", "do", "snap", "close"])
+    p.add_argument("rest", nargs=argparse.REMAINDER, help="show: M1 M3 | slate | C0 | tpl_6S9K_A | FILE; do: a molterm command")
     p = sub.add_parser("report", help=argparse.SUPPRESS)
     p.add_argument("target")
     p.add_argument("-o", "--out", help="write analysis.md here (default: print)")
@@ -608,6 +613,10 @@ def _main(argv: list[str] | None = None) -> int:
         models = [m.strip() for m in (args.models or "").split(",") if m.strip()]
         return _with(cfg, args.target, lambda d: relax.submit_cmd(
             cfg, d, _actor(), models or None, args.ssbond, args.bb_fc, args.sc_fc, args.dstres, args.ligand))
+    if args.cmd == "view":                                  # reads the dossier, writes nothing to it: no lock
+        from residudes import viewer
+        print(viewer.view_cmd(cfg, Dossier.load(cfg.targets_dir, args.target), args.action, args.rest))
+        return 0
     if args.cmd in ("slides", "render"):
         from residudes import slides
         if args.cmd == "slides":

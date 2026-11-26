@@ -135,12 +135,26 @@ Never run `pymol` yourself; the command guard refuses it, because the login node
 
 ## In a conversation
 
-Render into the target's dossier, next to everything else about it:
+In `residudes chat` the person is looking at your tmux window. Show the structure in a pane beside your own and
+drive it as the conversation goes; they ask in words, you run these:
 
 ```sh
-molterm --no-tui --script view.mt "$DDIR/models/model_1.cif"   # screenshot <ddir>/report/figs/...
+residudes view T show M1            # M1-M5 the slate, C0.. a cluster, tpl_6S9K_A a template, slate, or a file
+residudes view T show M1 M3         # several: superposed on the first by sequence, one colour each
+residudes view T do "color plddt"   # any molterm command in the open pane; "a; b" for several
+residudes view T snap               # a PNG of what the pane shows: read it, so you see what they see
+residudes view T close              # when they are done
 ```
 
-Then say what the picture shows and what follows from it — the figure is the evidence, the
-sentence is the claim. Record the claim with `residudes note` or `residudes evidence` as usual;
-a picture that is never referred to again did not need taking.
+"show" again replaces what the pane shows rather than opening another. Useful `do` lines: `color plddt`,
+`color chain`, `focus chain A and resi 7`, `show sticks chain B and resi 49+56+131+132`, `align M3 to M1 automap`,
+`turn y 90`, `zoom chain A`, `hbonds`, `interface on`. The pane answers on its last line, an error included - read
+what `do` returns.
+
+Then say what the picture shows and what follows from it — the figure is the evidence, the sentence is the claim.
+Record the claim with `residudes note` or `residudes evidence` as usual; a picture that is never referred to again
+did not need taking.
+
+On tmux older than 3.4 the pane draws with text (molterm's block renderer): tmux cannot pass pixels through. `snap`
+is always drawn in pixels, so look at that before describing a detail. Outside tmux there is no pane: render a
+PNG with `molterm --no-tui --script` into report/figs and describe it.

@@ -142,6 +142,7 @@ residudes consult T --kind plan|results --brief FILE --ask "..."   # open a chec
 residudes reply T C1 "..." | residudes checkpoints T C1              # the conversation
 residudes review T [--add "name: why"]                             # first-results checks
 residudes slides T [--final] | residudes render T --pml report/pml/x.pml   # the deck (molterm; --final: PyMOL, ray-traced)
+residudes view T show M1 | do "color plddt" | snap | close         # in a chat: the structure in a pane beside you
 residudes evidence T KEY JSON | residudes note T "..." | residudes decide T --type ... --evidence ... --alt ...
 residudes stage T NEXT_STAGE                                       # when the stage's goal is met
 residudes msa T --depth | --crawl --family PF… | --plm             # MSA depth; deepen a thin MSA (family crawl, OTalign)
