@@ -94,6 +94,9 @@ chain on its own sequence.
 ## Licence and setup
 
 MODELLER needs a licence key, free for academic use. It is not installed on the cluster, and the agent does not
-obtain keys. If `python -c "import modeller"` fails, ask a person with `residudes note T "NEEDS HUMAN: MODELLER licence
-key ..."`. They install it with `KEY_MODELLER=<key> uv pip install modeller` into a venv, or from conda's `salilab`
+obtain keys. **Check before you plan, not when you build:** run `python -c "import modeller"` while writing the
+hypotheses, and if it fails, say so in the plan checkpoint's question ("this variant needs a MODELLER key a person
+supplies; without one it is dropped"), so the person decides knowing it. On a clean install a reviewer approved a
+MODELLER variant at C1 and the run only found out at INPUTS_READY. If it fails when you build, ask a person with
+`residudes note T "NEEDS HUMAN: MODELLER licence key ..."`. They install it with `KEY_MODELLER=<key> uv pip install modeller` into a venv, or from conda's `salilab`
 channel, and record where it is. Until then, the dry run and the template-free variants still go ahead.
