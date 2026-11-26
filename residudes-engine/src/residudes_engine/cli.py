@@ -365,7 +365,11 @@ def cmd_env(ns: argparse.Namespace) -> int:
             d = site.af3_weights or (site.checkpoints / "af3")
             ck = next((d / f for f in ("af3.bin", "af3.bin.zst") if (d / f).is_file()), d / "af3.bin")
         line = f"  {tag:4} ckpt {'✓' if ck.exists() else '✗'} {ck}"
-        if gpu and gpu.tag:
+        if "trt" not in m.backends:                       # af3 (JAX) and ef2 (PyTorch) have no TensorRT engines
+            line += f"\n       trt  — not used ({', '.join(b for b in m.backends) or 'its own runtime'})"
+        elif gpu and gpu.tag and m.engine_dir(site.engines, gpu.tag) is None:
+            line += f"\n       trt  — no engine for this model on {gpu.tag} (it runs on {', '.join(b for b in m.backends if b != 'trt')})"
+        elif gpu and gpu.tag:
             e = m.engine_dir(site.engines, gpu.tag)
             has = bool(e and (e / 'pairformer_engine' / 'trt' / 'rank0.engine').is_file())
             mx = registry.engine_max_seq_len(e) if (e and has) else None
