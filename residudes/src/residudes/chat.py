@@ -137,7 +137,7 @@ def _rows(cfg: Config, prefer: str | None) -> list[dict]:
         s = live.get(ddir.name)
         moves = autopilot.status(cfg, ddir.name)
         if moves == "auto" and waiting.startswith("you") and d.stage != "PACKAGED":
-            waiting = "agent" + waiting[3:]                  # auto answers it: nobody waits on a person
+            waiting = "agent (decides)"                      # auto answers it: nobody waits on a person
         out.append({"target": ddir.name, "stage": d.stage, "waiting": waiting, "auto": auto,
                     "moves": moves, "live": bool(s), "age": _ago(s["created"]) if s else ""})
     return out
