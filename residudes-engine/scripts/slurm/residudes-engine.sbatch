@@ -26,6 +26,14 @@ if [ -n "${RESIDUDES_ENGINE_IMAGES:-}" ]; then
     done
     image="$RESIDUDES_ENGINE_IMAGES/residudes-engine-trt.sif"
     [ "$model" = af3 ] && image="$RESIDUDES_ENGINE_IMAGES/residudes-engine-jax.sif"
+    # ESMFold2 has its own image (python 3.12, torch and the Biohub transformers fork). Sent to the trt image it ran
+    # the host's esm conda env instead and died there; residudes-ef2.sif was pulled and never used. Its runscript is
+    # plain python, so the engine CLI is started explicitly, and the runner is pointed at the image's interpreter.
+    mode=run; cli=""; ef2_env=""
+    if [ "$model" = ef2 ] && [ -f "$RESIDUDES_ENGINE_IMAGES/residudes-ef2.sif" ]; then
+        image="$RESIDUDES_ENGINE_IMAGES/residudes-ef2.sif"; mode=exec; cli=/opt/residudes-engine/bin/residudes-engine
+        ef2_env=",RESIDUDES_ENGINE_ESM_PYTHON=/opt/venv/bin/python,RESIDUDES_ENGINE_PYTHON=/opt/venv/bin/python,RESIDUDES_ENGINE_IN_IMAGE=1"
+    fi
     binds=$(python3 - "${RESIDUDES_ENGINE_SITE_FILE:-}" "$RESIDUDES_ENGINE_ROOT" "$PWD" "$@" <<'PY'
 import re, sys
 from pathlib import Path
@@ -57,7 +65,7 @@ print(",".join(sorted(tops - {"/opt", "/usr", "/proc", "/sys", "/dev"})))
 PY
 )
     echo "▶ in image $(basename "$image") for model ${model:-?}; bound: ${binds:-none}"
-    exec apptainer run --nv ${binds:+-B "$binds"} -B "$RESIDUDES_ENGINE_ROOT:/opt/residudes-engine" \
-        --env RESIDUDES_ENGINE_VENV=/opt/venv,RESIDUDES_ENGINE_VENV_JAX=/opt/venv "$image" "$@"
+    exec apptainer "$mode" --nv ${binds:+-B "$binds"} -B "$RESIDUDES_ENGINE_ROOT:/opt/residudes-engine" \
+        --env "RESIDUDES_ENGINE_VENV=/opt/venv,RESIDUDES_ENGINE_VENV_JAX=/opt/venv$ef2_env" "$image" ${cli:+"$cli"} "$@"
 fi
 exec "$RESIDUDES_ENGINE_ROOT/bin/residudes-engine" "$@"

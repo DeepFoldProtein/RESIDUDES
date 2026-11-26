@@ -11,6 +11,8 @@ the esm package pins >=3.12,<3.13, which the main venv does not satisfy).
 """
 from __future__ import annotations
 
+import os
+
 import json
 from pathlib import Path
 
@@ -39,6 +41,21 @@ def esm_python(req: Request) -> Path:
     if not py.is_file():
         raise SiteError(f"esm env python missing: {py}. {SETUP_HELP}")
     return py
+
+
+# The Biohub transformers fork (4.57) reads biohub/ESMFold2 as of this revision. The hub's later ones (69869f73,
+# 2026-11) are written by transformers 5.16 and put `architectures` in every sub-config, which the fork rejects:
+# "DiffusionStructureHeadConfig.__init__() got an unexpected keyword argument 'architectures'". With the hub
+# reachable, a run resolved `main` to such a revision, fetched its config, and every ESMFold2 prediction on the
+# site failed from then on - in the host env and in the image alike. Runs load this snapshot, offline.
+REVISION = "e1e189d0f5fb70c2693da2332eca4443c0ccccd6"
+
+
+def pinned_snapshot(req: Request) -> Path | None:
+    """The cached snapshot of the pinned revision (RESIDUDES_ENGINE_EF2_REVISION overrides), if it is complete."""
+    rev = os.environ.get("RESIDUDES_ENGINE_EF2_REVISION") or REVISION
+    snap = weights_home(req) / "hub" / "models--biohub--ESMFold2" / "snapshots" / rev
+    return snap if (snap / "config.json").is_file() and (snap / "model.safetensors").is_file() else None
 
 
 def weights_home(req: Request) -> Path:
@@ -98,9 +115,16 @@ def plan(req: Request) -> Plan:
         # ESMFold2 calls its recycles "loops" and defaults to 3; only an explicit --num-recycles moves it.
         cmd += ["--num-loops", str(req.num_recycles)]
         notes["num_loops"] = req.num_recycles
+    snap = pinned_snapshot(req)
+    if snap is not None and "--model" not in req.extra_args:
+        cmd += ["--model", str(snap)]
+        notes["model"] = str(snap)
     cmd += req.extra_args
 
-    env = runtime_env(site, python.parent.parent, pythonpath=[], extra={"HF_HOME": str(weights_home(req))},
+    extra = {"HF_HOME": str(weights_home(req))}
+    if snap is not None:
+        extra["HF_HUB_OFFLINE"] = "1"                 # never move the cache to a revision the fork cannot read
+    env = runtime_env(site, python.parent.parent, pythonpath=[], extra=extra,
                       model_tag=req.model.tag, family=FAMILY)
     # No TensorRT plugin here, so the site's libstdc++ must not be forced ahead of the conda env's own.
     env.pop("LD_PRELOAD", None)
