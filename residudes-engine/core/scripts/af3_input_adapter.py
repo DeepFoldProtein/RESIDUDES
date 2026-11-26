@@ -617,6 +617,22 @@ def af3_to_of3(af3: dict, sidecar_dir: Optional[Path] = None,
             chain["template_alignment_file_path"] = str(a3m_path.resolve())
 
         chains.append(chain)
+
+    # OF3's precomputed pairing looks up a paired MSA for every polymer chain once any chain has one
+    # (create_paired_from_precomputed): a protein-RNA complex - the RNA never has paired rows - died with a
+    # KeyError on the RNA chain in every seed. A chain without paired rows gets a query-only paired MSA: row 0
+    # pairs the queries and OF3 pads the rest with gaps, which is what AF3 does for such a chain.
+    if pairing_mode == "precomputed" and sidecar_dir is not None \
+            and any(c.get("paired_msa_file_paths") for c in chains):
+        for c in chains:
+            if c.get("molecule_type") == "ligand" or c.get("paired_msa_file_paths") or not c.get("sequence"):
+                continue
+            tag = c["chain_ids"][0] if c.get("chain_ids") else "x"
+            d = sidecar_dir / name / f"chain_{tag}_msa"
+            d.mkdir(parents=True, exist_ok=True)
+            dst = d / "colabfold_paired.a3m"
+            dst.write_text(f">query\n{c['sequence']}\n")
+            c["paired_msa_file_paths"] = [str(dst.resolve())]
     out = {"seeds": seeds, "queries": {name: {"chains": chains}}}
 
     # Pass AF3 multimerTemplates through to OF3 so its template
@@ -726,6 +742,14 @@ def af3_to_bt2_yaml(af3: dict, sidecar_dir: Optional[Path] = None) -> str:
                     f"`smiles` nor `ccdCodes`"
                 )
             continue
+        na = seq_block.get("rna") or seq_block.get("dna")
+        if na is not None:
+            # Boltz-2 takes RNA and DNA as their own polymers (single sequence: its MSAs are protein-only). They used
+            # to be skipped: a protein-RNA complex came out as the protein alone (M1370: 50 models, ipTM 0).
+            kind = "rna" if seq_block.get("rna") is not None else "dna"
+            nid = na["id"] if isinstance(na["id"], list) else [na["id"]]
+            lines += [f"  - {kind}:", f"      id: [{', '.join(nid)}]", f'      sequence: "{na["sequence"]}"']
+            continue
         if prot is None:
             continue
         cid = prot["id"] if isinstance(prot["id"], list) else [prot["id"]]
@@ -813,7 +837,13 @@ def af3_to_bt2_yaml(af3: dict, sidecar_dir: Optional[Path] = None) -> str:
         ti = mt.get("templateIndices") or {}
         if not (cif and isinstance(qi, dict) and qi):
             continue
-        chain_list = list(qi.keys())
+        # Boltz-2 templates are protein-only ("Chain A assigned for template is not one of the protein chains" ended
+        # every seed of a protein-RNA run): a multimer template keeps its protein chains.
+        protein_ids = {i for b in af3.get("sequences", []) if b.get("protein")
+                       for i in (b["protein"]["id"] if isinstance(b["protein"]["id"], list) else [b["protein"]["id"]])}
+        chain_list = [c for c in qi.keys() if c in protein_ids]
+        if not chain_list:
+            continue
         # Walk the CIF and build (chain_name, start_global_idx, end_global_idx)
         # so we can map each query chain's templateIndices range → CIF chain.
         chain_ranges: list[tuple[str, int, int]] = []

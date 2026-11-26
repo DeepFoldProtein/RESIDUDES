@@ -260,6 +260,40 @@ class Af3DataPipeline(unittest.TestCase):
                             or (out / "_af3" / "pipeline.log").is_file())
 
 
+class NucleicChainsReachEveryRunner(unittest.TestCase):
+    """M1370 (RNA + 3C protease): Boltz-2 dropped the RNA, OpenFold3 died on its missing paired MSA, and Boltz-2
+    refused a multimer template that covered the RNA."""
+
+    def setUp(self) -> None:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "core" / "scripts"))
+        import af3_input_adapter
+        self.a = af3_input_adapter
+        self.tmp = Path(tempfile.mkdtemp())
+        for n, text in (("u", ">q\nMKTAYIAKQRN\n"), ("p", ">q\nMKTAYIAKQRN\n>x\nMKTAYIAKQRN\n"), ("r", ">q\nGGAAAC\n")):
+            (self.tmp / f"{n}.a3m").write_text(text)
+        self.af3 = {"name": "m", "modelSeeds": [1], "sequences": [
+            {"rna": {"id": "A", "sequence": "GGAAAC", "unpairedMsaPath": str(self.tmp / "r.a3m")}},
+            {"protein": {"id": "B", "sequence": "MKTAYIAKQRN", "unpairedMsaPath": str(self.tmp / "u.a3m"),
+                         "pairedMsaPath": str(self.tmp / "p.a3m"), "templates": []}}]}
+
+    def test_openfold3_gives_the_rna_a_query_only_paired_msa(self) -> None:
+        q = self.a.af3_to_of3(self.af3, self.tmp / "side", pairing_mode="precomputed")
+        rna, prot = next(iter(q["queries"].values()))["chains"]
+        self.assertEqual(rna["molecule_type"], "rna")
+        self.assertEqual(Path(rna["paired_msa_file_paths"][0]).read_text().split(), [">query", "GGAAAC"])
+        self.assertEqual(len(Path(prot["paired_msa_file_paths"][0]).read_text().split()), 4)   # its own, untouched
+
+    def test_boltz2_keeps_the_rna_and_templates_only_the_protein(self) -> None:
+        cif = self.tmp / "t.cif"
+        cif.write_text("data_t\n")
+        af3 = {**self.af3, "multimerTemplates": [{"mmcifPath": str(cif), "queryIndices": {"A": [0], "B": [0]},
+                                                 "templateIndices": {"A": [0], "B": [6]}}]}
+        y = self.a.af3_to_bt2_yaml(af3, self.tmp / "side")
+        self.assertIn('  - rna:\n      id: [A]\n      sequence: "GGAAAC"', y)
+        self.assertIn("    chain_id: [B]", y)
+        self.assertNotIn("chain_id: [A, B]", y)
+
+
 class ModificationsReachEveryRunner(unittest.TestCase):
     """A phosphoserine in the canonical AF3 input has to reach Protenix, OpenFold3 and Boltz-2 too. None of the three
     converters passed modifications on, so H1388's "phosphorylated" pt2/bt2/of3 runs wrote SER at the site."""
