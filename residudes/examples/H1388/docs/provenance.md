@@ -3,7 +3,8 @@
 ## What was edited after the run
 
 Paths, everywhere they appear (logs, `dossier.json`, `analysis.md`, notes, inputs, QA tables), are written as
-placeholders so that no one site's layout ships with the example:
+placeholders so that no one site's layout ships with the example, and so is the registration code the models were
+packaged under:
 
 | placeholder | what it stood for |
 |---|---|
@@ -13,6 +14,7 @@ placeholders so that no one site's layout ships with the example:
 | `<CHECKPOINTS>` · `<ENGINES>` | model weights and the TensorRT engines |
 | `<CONTAINERS>` · `<CASP17_UTILS>` · `<RELAX>` · `<PYMOL>` · `<KALIGN>` · `<CONDA>` | tools |
 | `<SABDAB>` · `<CASP17>` · `<SITE>` · `<STORE>` · `~` | other site paths |
+| `XXXX-XXXX-XXXX` | the team's CASP registration code, on the packaged models' `AUTHOR` line and where the run quoted it |
 
 `analysis.md` and the figures were then regenerated from the edited dossier, so the example reproduces itself.
 Not shipped: the 300 model files and the MSAs (1.2 GB; `pool.csv` lists every model with its scores), the
