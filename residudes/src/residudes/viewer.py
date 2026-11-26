@@ -99,8 +99,8 @@ def script(models: list[dict], small: tuple[str, ...], render: str | None, camer
     is a cartoon, with the receptor grey and the small chain orange, which is where the agent ended up by itself."""
     # always said: ~/.molterm/init.mt runs first and may pin a renderer (`pixel` leaves a tmux 3.2a pane black)
     lines = [f"set renderer {render or 'auto'}"]
-    for m in models:
-        lines += [f"load {m['path']}", f"rename {Path(m['path']).stem} {m['label']}"]
+    from residudes.slides import load_lines
+    lines += load_lines(models)
     first = models[0]["label"]
     lines += [f"align {m['label']} to {first} automap" for m in models[1:]]
     pixels = render is None                                  # molterm picks a pixel renderer; text ones are named

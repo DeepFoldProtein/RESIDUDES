@@ -143,3 +143,11 @@ def test_residudes_jobs_take_their_slurm_flags_from_the_config():
     assert ops.slurm_flags(False, {}) == [] and ops.slurm_flags(True, {}) == ["--gres=gpu:1"]
     flags = ops.slurm_flags(True, {"partition": "normal", "gres": "gpu:RTX4090:1", "extra": ["--exclude=ada"]})
     assert flags == ["-p", "normal", "--gres=gpu:RTX4090:1", "--exclude=ada"]
+
+
+def test_a_model_shown_twice_is_copied_not_loaded_again():
+    """molterm loads a path once; a cluster medoid that is also a slate model rendered blank."""
+    from residudes import slides
+    lines = slides.load_lines([{"path": "/r/a/model.cif", "label": "M4"}, {"path": "/r/b/model.cif", "label": "M5"},
+                               {"path": "/r/a/model.cif", "label": "C24"}])
+    assert lines == ["load /r/a/model.cif", "rename model M4", "load /r/b/model.cif", "rename model M5", "copy M4 as C24"]

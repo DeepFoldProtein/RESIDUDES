@@ -243,6 +243,22 @@ def face_camera(path: str, small: tuple[str, ...]) -> str | None:
             "rot = " + "  ".join(" ".join(f"{v:.6f}" for v in r) for r in rows) + "\n")
 
 
+def load_lines(models: list[dict]) -> list[str]:
+    """molterm lines that put each model in under its own label. molterm names an object after the file stem, and ours
+    are all `model.cif`: the second would come in as `model_1`, so each load is renamed at once, which frees the stem
+    for the next. And molterm loads a path only once: a second `load` of the same file (a cluster medoid that is also a
+    slate model) returns the first object, the rename fails and that picture was blank. A repeated path is copied."""
+    out, seen = [], {}
+    for m in models:
+        p = str(m["path"])
+        if p in seen:
+            out.append(f"copy {seen[p]} as {m['label']}")
+        else:
+            out += [f"load {p}", f"rename {Path(p).stem} {m['label']}"]
+            seen[p] = m["label"]
+    return out
+
+
 def scenes_mt(models: list[dict], small: tuple[str, ...] = (), camera: str | None = None,
               templates: list[dict] = ()) -> str:
     """One molterm script for every picture the deck uses (run from report/, writes figs/*.png).
@@ -258,10 +274,7 @@ def scenes_mt(models: list[dict], small: tuple[str, ...] = (), camera: str | Non
     the TM-score and RMSD of every superposition, which is evidence the deck can quote."""
     lines = ["# residudes scenes: written by `residudes slides`; run with `molterm --no-tui --script scenes.mt` from report/",
              *SCENE_QUALITY]
-    for m in models:
-        # molterm names an object after the file stem, and ours are all `model.cif`: the second would come in as
-        # `model_1`. Renaming straight after each load frees the stem again, so the next load is `model` once more.
-        lines += [f"load {m['path']}", f"rename {Path(m['path']).stem} {m['label']}"]
+    lines += load_lines(models)
     first = models[0]["label"] if models else None
     for m in models[1:]:
         lines.append(f"align {m['label']} to {first} automap")     # chain-aware, sequence-paired
