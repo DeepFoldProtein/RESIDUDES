@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shlex
 import shutil
 import subprocess
@@ -162,19 +163,31 @@ def active(r: dict) -> bool:
 
 
 def _slurm_state(job: str) -> str | None:
+    """One recorded run's state. A run may name several jobs (agents record a batch of seeds as one run, the ids
+    one per line or comma-separated): it is active while any of them is, and otherwise the first that did not
+    complete. Reading only the first id, and handing scancel the whole newline-joined string, left 120 dead jobs queued."""
+    ids = [x for x in re.split(r"[\s,]+", str(job).strip()) if x]
+    if not ids:
+        return None
     try:
-        q = subprocess.run(["squeue", "-h", "-j", job, "-o", "%T %r"], capture_output=True, text=True, timeout=60)
-        if q.returncode == 0 and q.stdout.strip():
-            state, _, reason = q.stdout.strip().splitlines()[0].partition(" ")
-            if state == "PENDING" and reason.strip() == "DependencyNeverSatisfied":
-                # a job chained (afterok) on one that failed can never start, and Slurm keeps it queued: counted as
-                # pending it held a clean run's target "waiting on jobs" for good (120 predictions after a failed MSA
-                # job). It is cancelled and recorded as never having run.
-                subprocess.run(["scancel", job], capture_output=True, timeout=60)
-                return "NEVER_RAN"
-            return state
-        s = subprocess.run(["sacct", "-n", "-X", "-j", job, "-o", "State"], capture_output=True, text=True, timeout=60)
-        return (s.stdout.split() or ["UNKNOWN"])[0] if s.returncode == 0 else None
+        q = subprocess.run(["squeue", "-h", "-j", ",".join(ids), "-o", "%i %T %r"], capture_output=True, text=True, timeout=60)
+        queued = [ln.split(None, 2) + ["", ""] for ln in q.stdout.splitlines() if ln.strip()] if q.returncode == 0 else []
+        # a job chained (afterok) on one that failed can never start, and Slurm keeps it queued: counted as pending
+        # it held a clean run's target "waiting on jobs" for good (120 predictions after a failed MSA job). Such
+        # jobs are cancelled and the run recorded as never having run.
+        dead = [x[0] for x in queued if x[1] == "PENDING" and x[2].strip() == "DependencyNeverSatisfied"]
+        alive = [x[1] for x in queued if x[0] not in dead]
+        if dead:
+            subprocess.run(["scancel", *dead], capture_output=True, timeout=60)
+        if alive:
+            return "RUNNING" if "RUNNING" in alive else alive[0]
+        if dead:
+            return "NEVER_RAN"
+        s = subprocess.run(["sacct", "-n", "-X", "-j", ",".join(ids), "-o", "State"], capture_output=True, text=True, timeout=60)
+        if s.returncode != 0:
+            return None
+        states = [x.rstrip("+") for x in s.stdout.split() if x != "by" and not x.isdigit()]
+        return next((x for x in states if x != "COMPLETED"), states[0] if states else "UNKNOWN")
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return None                                               # Slurm not reachable from here: keep the last state
 

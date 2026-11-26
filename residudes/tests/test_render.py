@@ -160,7 +160,25 @@ def test_a_job_whose_dependency_failed_counts_as_finished(monkeypatch):
     calls = []
     def fake(args, **k):
         calls.append(args)
-        return sp.CompletedProcess(args, 0, "PENDING DependencyNeverSatisfied\n" if args[0] == "squeue" else "", "")
+        return sp.CompletedProcess(args, 0, "350909 PENDING DependencyNeverSatisfied\n" if args[0] == "squeue" else "", "")
     monkeypatch.setattr(ops.subprocess, "run", fake)
     assert ops._slurm_state("350909") == "NEVER_RAN" and not ops.active({"state": "NEVER_RAN"})
     assert ["scancel", "350909"] in calls
+
+
+def test_a_run_of_several_jobs_is_tracked_as_a_whole(monkeypatch):
+    """An agent recorded 20 seeds as one run, the ids one per line: every id is asked about and cancelled by itself."""
+    import subprocess as sp
+    from residudes import ops
+    calls, queue = [], "1 PENDING DependencyNeverSatisfied\n2 PENDING DependencyNeverSatisfied\n"
+    def fake(args, **k):
+        calls.append(args)
+        out = queue if args[0] == "squeue" else ("COMPLETED\nFAILED\n" if args[0] == "sacct" else "")
+        return sp.CompletedProcess(args, 0, out, "")
+    monkeypatch.setattr(ops.subprocess, "run", fake)
+    assert ops._slurm_state("1\n2\n3") == "NEVER_RAN"
+    assert calls[0][:4] == ["squeue", "-h", "-j", "1,2,3"] and ["scancel", "1", "2"] in calls
+    queue = "3 RUNNING None\n"
+    assert ops._slurm_state("1,2,3") == "RUNNING"                 # one still running: the run is active
+    queue = ""
+    assert ops._slurm_state("1 2") == "FAILED"                    # all finished: the first that did not complete
