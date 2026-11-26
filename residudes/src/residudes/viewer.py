@@ -93,19 +93,22 @@ def resolve(cfg, d: Dossier, items: list[str]) -> list[dict]:
 
 def script(models: list[dict], small: tuple[str, ...], render: str | None, camera: str | None) -> str:
     """The molterm script the pane starts with: each model under its own name, superposed on the first by sequence,
-    one colour per model when there are several, chains when there is one. Slim by default, because the pane is a
-    terminal: a thin ribbon, and a small chain in ball-and-stick. Cartoon helices and a spacefill peptide filled the
-    pane and hid the pocket, and the agent thinned them itself in every chat before it could show anything."""
+    one colour per model when there are several, chains when there is one, a small chain in ball-and-stick.
+    Drawn in characters, it is slim: a thin ribbon (cartoon helices filled a text pane and hid the pocket; the agent
+    thinned them in every chat). Drawn in pixels, a thin ribbon is a speckled thread and the cartoon reads, so it
+    is a cartoon, with the receptor grey and the small chain orange, which is where the agent ended up by itself."""
     # always said: ~/.molterm/init.mt runs first and may pin a renderer (`pixel` leaves a tmux 3.2a pane black)
     lines = [f"set renderer {render or 'auto'}"]
     for m in models:
         lines += [f"load {m['path']}", f"rename {Path(m['path']).stem} {m['label']}"]
     first = models[0]["label"]
     lines += [f"align {m['label']} to {first} automap" for m in models[1:]]
-    lines += ["hide all", "show ribbon"]
+    pixels = render is None                                  # molterm picks a pixel renderer; text ones are named
+    lines += ["hide all", "show cartoon" if pixels else "show ribbon"]
     if len(models) == 1:
-        lines.append("color chain")
-        for ch in small or models[0].get("small", []):
+        smalls = list(small or models[0].get("small", []))
+        lines.append("color #BBBBBB" if pixels and smalls else "color chain")
+        for ch in smalls:
             lines += [f"show ballstick chain {ch}", f"color #D55E00 chain {ch}"]
     else:
         lines += [f"color {SLOTS[i % len(SLOTS)]} {m['label']}" for i, m in enumerate(models)]

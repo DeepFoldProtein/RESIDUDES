@@ -10,6 +10,8 @@ def test_the_pane_superposes_several_models_and_faces_a_peptide_in_one():
     assert one.startswith("set renderer block\nload /r/sep/af3/seed_20/sample_0/model.cif\nrename model M1\n")
     assert "show ribbon\ncolor chain" in one and "show ballstick chain A" in one and "spacefill" not in one   # slim
     assert "camera load /v/view.cam\nzoom M1" in one
+    px = viewer.script([{"label": "M1", "path": "/r/model.cif"}], ("A",), None, None)   # pixels: a grey cartoon
+    assert "show cartoon\ncolor #BBBBBB\nshow ballstick chain A\ncolor #D55E00 chain A" in px and "ribbon" not in px
     assert one.endswith("zoom M1\nselect clear\n")                 # no selection halo over the live picture
     two = viewer.script([{"label": "M1", "path": "/a/model.cif"}, {"label": "M3", "path": "/b/model.cif"}], (), None, None)
     assert two.startswith("set renderer auto\n")                         # not left to ~/.molterm/init.mt
