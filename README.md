@@ -43,7 +43,7 @@ Then a target. The repository carries one to start with: H1388, the input of the
 ```sh
 cd residudes
 bin/residudes target add H1388 --fasta examples/H1388/H1388.fasta --stoich A1B1
-bin/residudes chat H1388                     # talk to the agent about it; the target keeps moving meanwhile
+bin/residudes chat H1388                     # talk to the agent; with a mandate it runs on by itself (auto)
 bin/residudes agent step H1388               # or one step per stage; `daemon --target H1388` keeps going
 ```
 
@@ -51,17 +51,26 @@ bin/residudes agent step H1388               # or one step per stage; `daemon --
 so `daemon --target H1388` takes it the whole way: that run took 45 minutes and $6.81 of agent steps, with 60
 prediction jobs. For a target of your own, the same lines with its FASTA and stoichiometry.
 
+What a run hands back is a report, ray-traced at the end; here are all thirty pages of H1388's, from the target
+and what was known about it through the MSAs and templates, the pool and its clusters, the two checkpoints and
+the slate, to what the agent spent ([PDF](residudes/examples/H1388/report/report.pdf)).
+
+[![all thirty pages of the H1388 report, from the target and its priors through the pool, the checkpoints and the slate to what the agent spent](residudes/docs/figures/report-pages.jpg)](residudes/examples/H1388/report/report.pdf)
+
 `chat` opens that target's conversation: ask what it is doing, steer it, leave with `ctrl-b d`, come back to
-the same thread. The conversation also keeps the target moving: whenever it has been quiet for a minute (the
-agent idle, nothing typed), residudes types the next step into it (`[auto] Next step for H1388 ...`), and it
-pauses where the target waits for a person, until they answer. That is the default; `--no-auto` leaves the
-target to move only when asked, and `--auto` turns it back on. There is **one agent per target**: the daemon
-leaves a target on auto to its conversation rather than starting a second agent beside it, so there is one
-context and you can watch or interrupt. All of them live as windows of a single tmux session, so `tmux ls`
-stays one line, you arrive in the target you asked for, and `ctrl-b w` pages to the others (a ▶ on the tab
-marks a target on auto). `residudes` on its own lists every target: which are in conversation, which are
-waiting on a person, and whether each moves on by itself (`▶ auto`, `‖ auto, paused` for a person, `▶ daemon`)
-or only when asked (`■ manual`).
+the same thread. On **auto** the conversation also runs the target to a packaged slate without stopping for
+you: whenever it has been quiet for a minute (the agent idle, nothing typed), residudes types the next step
+into it (`[auto] Next step for H1388 ...`), and the agent answers its own checkpoints and approves the slate
+on the record, deciding from the evidence what a person would have decided. Auto has no pause, only done: it
+ends at PACKAGED (submitting stays yours), or, if several asks pass with nothing new recorded, it stops and
+says it is stuck. `--auto` turns it on and grants the mandate if the target has none; `--no-auto` takes both
+back; a plain `chat` turns it on for a target that already has a mandate (`target add` without `--review`).
+There is **one agent per target**: the daemon leaves a target on auto to its conversation rather than starting
+a second agent beside it, so there is one context and you can watch or interrupt. All of them live as windows
+of a single tmux session, so `tmux ls` stays one line, you arrive in the target you asked for, and `ctrl-b w`
+pages to the others (a ▶ on the tab marks a target on auto). `residudes` on its own lists every target: which
+are in conversation, which are waiting on a person, and what moves each on (`▶ auto`, `✓ auto done`, `✗ auto
+stuck`, `▶ daemon`, or `■ manual`: only when asked).
 
 Ask about a shape and the agent answers with the structure: it opens
 [MolTerm](https://github.com/vv137/molterm), the team's in-house terminal molecular viewer, in a pane beside
