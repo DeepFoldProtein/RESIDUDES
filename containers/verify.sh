@@ -391,7 +391,7 @@ if [ "$ALL" = 1 ] && [ -f "$IMAGES/residudes-relax.sif" ]; then
     [ -z "$missing" ] && ok "AmberTools: tleap antechamber parmchk2 reduce" || bad "AmberTools missing:$missing"
     # the pipeline itself is not in the image, by design - say where it has to come from
     # the pipeline is a site's own, so ask the configuration rather than guessing a path
-    pipeline=${MINIMIZATION:-$(sed -n 's/^minimization *= *"\(.*\)"/\1/p' \
+    pipeline=${MINIMIZATION:-$(sed -n 's/^minimization *= *"\([^"]*\)".*/\1/p' \
         "${RESIDUDES_CONFIG:-$REPO/residudes/residudes.toml}" 2>/dev/null | head -1)}
     if [ -n "$pipeline" ] && [ -x "$pipeline" ]; then
         ok "pipeline present to mount: $pipeline"
