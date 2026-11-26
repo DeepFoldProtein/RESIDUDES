@@ -149,9 +149,9 @@ residudes view T close              # when they are done
 "show" again replaces what the pane shows rather than opening another. A pane drawn in characters starts slim, a
 thin ribbon with a small chain in ball-and-stick, because it has few dots to spend; a pane drawn in pixels starts
 as a cartoon, the receptor grey and the small chain orange in ball-and-stick, since a thin ribbon there is a
-speckled thread. The cartoon is PyMOL's (`set cartoon_mode pymol`); leave its widths alone: a narrower
-`cartoon_sheet` or `cartoon_arrow_width` turns flat strands into round rods, which a person called blunt. To show
-less, hide or zoom instead. molterm's representations are `ribbon`, `cartoon`, `ballstick`, `wireframe`, `spacefill`
+speckled thread. The cartoon is PyMOL's (`set cartoon_mode pymol`), the slimmer of molterm's two; the
+`cartoon_*` widths do not change it, and narrowing them after switching back to molterm's own mode turns flat
+strands into round rods, which a person called blunt. To show less, hide or zoom instead. molterm's representations are `ribbon`, `cartoon`, `ballstick`, `wireframe`, `spacefill`
 and `backbone` (there is no `sticks`). Useful `do` lines: `color plddt`,
 `color chain`, `focus chain A and resi 7`, `show ballstick chain B and resi 49+56+131+132`, `align M3 to M1 automap`,
 `turn y 90`, `zoom chain A`, `hbonds`, `interface on`. The pane answers on its last line, an error included - read
