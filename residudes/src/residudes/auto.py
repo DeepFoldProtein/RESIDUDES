@@ -2,8 +2,8 @@
 
 The conversation's agent does what it is asked and stops when its turn ends, so a target that a person is
 chatting about only moves when someone asks for the next step. With --auto, a small driver process watches the
-conversation and, whenever it has been quiet for a minute (the agent idle, nothing typed; the first time, a few
-seconds, since the person has just turned it on), types the next step into it: "[auto] Next step for T (STAGE): ...". Same agent, same context, so whoever is attached sees it happen and
+conversation and, whenever it has been quiet for a minute (the agent idle, nothing typed), types the next step
+into it; the first ask goes the moment auto is turned on, if the conversation is free: "[auto] Next step for T (STAGE): ...". Same agent, same context, so whoever is attached sees it happen and
 can answer or interrupt; the driver waits while they do.
 
 It stops asking where the target waits for a person - a checkpoint that is theirs, the slate without a mandate,
@@ -90,11 +90,19 @@ def start(cfg: Config, target: str) -> str:
                                 stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
                                 start_new_session=True, env=env)
     since = dt.datetime.now().strftime("%Y-%m-%d %H:%M")
-    _path(cfg, target).write_text(json.dumps({"pid": proc.pid, "since": since}))
+    # the first ask goes now, if the conversation is free: the person has just asked for it to move
+    d = Dossier.load(cfg.targets_dir, target)
+    what, line = decide(d, pane(target), quiet=0)
+    asked = d.stage if what == "ask" and chat.send(target, line) else None
+    with open(ddir / "auto.log", "a") as log:
+        log.write(time.strftime("%H:%M:%S") + f" {target} " + (f"asked for the next step at {asked} (auto turned on)\n"
+                  if asked else f"turned on; first ask when free ({line})\n"))
+    _path(cfg, target).write_text(json.dumps({"pid": proc.pid, "since": since, "asked": asked}))
     _flag(target, True)
     _note(cfg, target, f"auto on: the conversation is asked for the next step whenever it is quiet for {QUIET} s "
                        "(residudes chat --no-auto stops it)")
-    return f"{target}: auto on - the conversation will be asked for each next step"
+    return (f"{target}: auto on - asked for the next step now" if asked
+            else f"{target}: auto on - it asks for the next step as soon as the conversation is free ({line})")
 
 
 def stop(cfg: Config, target: str, why: str = "turned off", remember: bool = False) -> str:
@@ -193,6 +201,9 @@ def drive(cfg: Config, target: str, quiet: float = QUIET, poll: float = POLL, ma
     log(f"driving (pid {os.getpid()}, quiet {quiet:.0f} s)")
     asked_at, idle, missing, said, first = None, 0, 0, "", True
     time.sleep(2)                                         # let `start` write the record this process checks
+    st = running(cfg, target) or {}
+    if st.get("asked"):                                   # `start` already sent the first ask
+        asked_at, first = st["asked"], False
     while True:
         st = running(cfg, target)
         if not st or int(st["pid"]) != os.getpid():
