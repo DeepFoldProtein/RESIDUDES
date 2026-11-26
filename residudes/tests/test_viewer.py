@@ -80,6 +80,7 @@ def test_do_answers_with_molterm_then_drops_the_selection(monkeypatch):
     monkeypatch.setattr(viewer, "_tmux", fake)
     monkeypatch.setattr(viewer, "here", lambda: "%0")
     monkeypatch.setattr(viewer.time, "sleep", lambda s: None)
-    assert viewer.do(None, None, "select chain A; show sticks sele") == "molterm: Selected 79 atoms"
+    assert viewer.do(None, None, "select chain A; show ballstick sele") == "molterm: Selected 79 atoms"
     typed = [a[-1] for a in sent if a[:1] == ("send-keys",) and "-l" in a]
-    assert typed == [":select chain A", ":show sticks sele", ":select clear"]   # the reply is read before the clear
+    assert typed == [":select chain A", ":show ballstick sele", ":select clear"]   # the reply is read before the clear
+    assert sent[-1][-1] == "C-l"                           # and molterm redraws, or a sixel pane is left blank

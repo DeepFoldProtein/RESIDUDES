@@ -173,6 +173,10 @@ def do(cfg, d: Dossier, commands: str) -> str:
         type_in(c)
     last = [ln for ln in _tmux("capture-pane", "-p", "-t", pane).stdout.splitlines() if ln.strip()]
     type_in("select clear")
+    # then redraw: in a sixel pane, a command that only prints a message ("Selection already empty") leaves tmux
+    # without the picture (measured: none held after it, two after ctrl-L), so the person would look at nothing
+    _tmux("send-keys", "-t", pane, "Escape")
+    _tmux("send-keys", "-t", pane, "C-l")
     return f"molterm: {last[-1].strip() if last else '(nothing)'}"
 
 
