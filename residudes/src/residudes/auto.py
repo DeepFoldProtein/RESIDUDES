@@ -2,8 +2,8 @@
 
 The conversation's agent does what it is asked and stops when its turn ends, so a target that a person is
 chatting about only moves when someone asks for the next step. With --auto, a small driver process watches the
-conversation and, whenever it has been quiet for a minute (the agent idle, nothing typed), types the next step
-into it: "[auto] Next step for T (STAGE): ...". Same agent, same context, so whoever is attached sees it happen and
+conversation and, whenever it has been quiet for a minute (the agent idle, nothing typed; the first time, a few
+seconds, since the person has just turned it on), types the next step into it: "[auto] Next step for T (STAGE): ...". Same agent, same context, so whoever is attached sees it happen and
 can answer or interrupt; the driver waits while they do.
 
 It stops asking where the target waits for a person - a checkpoint that is theirs, the slate without a mandate,
@@ -32,7 +32,8 @@ from residudes.dossier import Dossier
 
 STATE = ".auto.json"
 QUIET = 60                  # seconds without output in the window before it counts as quiet
-POLL = 20
+FIRST = 5                   # ... for the first ask: the person just turned auto on, so it starts at once
+POLL = 10
 MAX_IDLE = 5                # asks at one stage before it stops and asks for a person
 PERSONS = ("PACKAGED", "SUBMITTED", "RETROSPECTIVE")
 FLAG = "@residudes_auto"    # a window option: the tmux status line marks the target's tab with it
@@ -190,7 +191,7 @@ def drive(cfg: Config, target: str, quiet: float = QUIET, poll: float = POLL, ma
     from residudes.daemon import WAITS_FOR_JOBS, _waiting_on_jobs
     log = lambda s: print(time.strftime("%H:%M:%S"), target, s, flush=True)   # noqa: E731
     log(f"driving (pid {os.getpid()}, quiet {quiet:.0f} s)")
-    asked_at, idle, missing, said = None, 0, 0, ""
+    asked_at, idle, missing, said, first = None, 0, 0, "", True
     time.sleep(2)                                         # let `start` write the record this process checks
     while True:
         st = running(cfg, target)
@@ -213,7 +214,7 @@ def drive(cfg: Config, target: str, quiet: float = QUIET, poll: float = POLL, ma
         if d.stage in WAITS_FOR_JOBS and _waiting_on_jobs(cfg, target):
             what, why = "wait", "jobs running"
         else:
-            what, why = decide(d, pane(target), quiet)
+            what, why = decide(d, pane(target), min(quiet, FIRST) if first else quiet)
         if what == "ask":
             if asked_at == d.stage:
                 idle += 1
@@ -223,7 +224,7 @@ def drive(cfg: Config, target: str, quiet: float = QUIET, poll: float = POLL, ma
                 log(f"stopped asking: {max_idle} asks at {d.stage}")
             else:
                 chat.send(target, why)
-                asked_at = d.stage
+                asked_at, first = d.stage, False
                 log(f"asked for the next step at {d.stage}")
                 said = ""
         elif why != said:                                 # log a change of reason, not every poll
