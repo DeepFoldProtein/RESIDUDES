@@ -122,8 +122,12 @@ def _rows(cfg: Config, prefer: str | None) -> list[dict]:
         auto = bool(d.automation)
         # Who the target waits on, by the same rule the daemon follows (Dossier.agent_may_act), so the list
         # never shows a checkpoint the agent will answer under its mandate as one waiting on a person.
+        from residudes import auto as autopilot
+        from residudes.daemon import _needs_human
         if d.stage == "PACKAGED":
             waiting = "you (submit)"
+        elif _needs_human(d) and not (c and d.agents_turn(c)):
+            waiting = "you (NEEDS HUMAN)"
         elif not d.agent_may_act():
             waiting = f"you ({c['id']})" if c else ("you (approve)" if d.stage == "SLATE_PROPOSED" else "")
         elif c:
@@ -132,7 +136,7 @@ def _rows(cfg: Config, prefer: str | None) -> list[dict]:
             waiting = ""
         s = live.get(ddir.name)
         out.append({"target": ddir.name, "stage": d.stage, "waiting": waiting, "auto": auto,
-                    "live": bool(s), "age": _ago(s["created"]) if s else ""})
+                    "moves": autopilot.status(cfg, ddir.name), "live": bool(s), "age": _ago(s["created"]) if s else ""})
     return out
 
 
@@ -146,20 +150,23 @@ def list_cmd(cfg: Config, prefer: str | None = None) -> int:
         return 0
     live = sum(r["live"] for r in rows)
     yours = [r["target"] for r in rows if r["waiting"].startswith("you")]
+    moving = sum(bool(r["moves"]) and not r["waiting"].startswith("you") for r in rows)
     print()
-    print("  " + bold("RESIDUDES") + dim(f" · {len(rows)} targets · {live} in conversation"))
+    print("  " + bold("RESIDUDES") + dim(f" · {len(rows)} targets · {live} in conversation · ")
+          + (green(f"{moving} moving on by themselves") if moving else dim("none moving on by themselves")))
     print()
     w = max(8, max(len(r["target"]) for r in rows))
+    ww = max(14, max(len(r["waiting"]) for r in rows))
     # pad first, colour second: an escape sequence has width in the format spec but not on screen
-    print("  " + dim(f"{'':2}{'target':{w}}  {'stage':16}  {'waiting on':14}  since"))
-    print("  " + dim("─" * (w + 42)))
+    print("  " + dim(f"{'':2}{'target':{w}}  {'stage':16}  {'waiting on':{ww}}  {'moves on':14}  since"))
+    print("  " + dim("─" * (w + ww + 56)))
     for r in rows:
         dot = green("●") if r["live"] else dim("·")
         name = bold(f"{r['target']:{w}}")
         stage = f"{r['stage']:16}"
-        wait_text = f"{r['waiting'] or '—':14}"
+        wait_text = f"{r['waiting'] or '—':{ww}}"
         wait = yellow(wait_text) if r["waiting"].startswith("you") else dim(wait_text)
-        print(f"  {dot} {name}  {stage}  {wait}  {dim(r['age'])}")
+        print(f"  {dot} {name}  {stage}  {wait}  {_moves(r)}  {dim(r['age'])}")
     print()
     if yours:
         print("  " + yellow("waiting on you: ") + ", ".join(yours))
@@ -168,8 +175,20 @@ def list_cmd(cfg: Config, prefer: str | None = None) -> int:
         print("  " + dim("with human checkpoints: ") + ", ".join(reviewed))
     print("  " + dim("join: ") + "residudes chat <target>" + dim("    leave: ") + LEAVE
           + dim("    end: ") + "--stop")
+    print("  " + dim("▶ asks for each next step when the conversation goes quiet (on with chat)    by hand: ")
+          + "residudes chat <target> --no-auto")
     print()
     return 0
+
+
+def _moves(r: dict) -> str:
+    """The 'moves on' cell: ▶ when something will take the next step without being asked, ‖ when that something
+    is waiting on a person, ■ when nothing will."""
+    if not r["moves"]:
+        return dim(f"{'■ manual':14}")
+    if r["waiting"].startswith("you"):
+        return yellow(f"{'‖ ' + r['moves'] + ', paused':14}")
+    return green(f"{'▶ ' + r['moves']:14}")
 
 
 BRIEF = """You are the RESIDUDES campaign agent, in a conversation about {target} with the person who
@@ -181,8 +200,14 @@ the work they agree to - recording it the usual way (`residudes note|evidence|de
 because the dossier is what survives this session. If a decision belongs on the record for a person
 to answer, open a checkpoint (`residudes consult`) rather than deciding it here.
 
-You never approve a slate, resolve a checkpoint or submit anything: those are the person's, and the
-stage machine refuses them from you.
+You never submit anything. Approving the slate and resolving a checkpoint are the person's too, unless the
+target's mandate gives them to you (`residudes automate {target} --show`); the stage machine refuses them from
+you otherwise.
+
+Lines that begin with [auto] are residudes keeping the target moving while nobody types: take the step they name
+as if the person had asked. A question left only in this conversation gets the next [auto] step as its answer,
+so when you need the person, write `residudes note {target} "NEEDS HUMAN: ..."` (or open a checkpoint) and stop;
+that pauses auto until they answer.
 
 The person is looking at this tmux window. When the conversation turns on a shape - they ask to see a model, a
 site, a template, a comparison, or a structure would answer them better than a sentence - put it in the pane
@@ -215,6 +240,13 @@ def _banner(cfg: Config, target: str, new: bool) -> None:
     if nxt:
         first = nxt.split(":")[0] if ":" in nxt[:60] else nxt
         print(dim(f" next: {first[:width - 8]}"))
+    from residudes import auto as autopilot
+    moves = autopilot.status(cfg, target)
+    if moves:
+        print(green(f" ▶ moves on by itself ({moves}): the next step is asked for whenever this goes quiet")
+              + dim(" · --no-auto to drive it by hand"))
+    elif autopilot.by_hand(cfg, target):
+        print(dim(f" ■ moves on when asked (set by hand) · `residudes chat {target} --auto` keeps it moving"))
     print(dim(f" {LEAVE} leaves it running · `residudes chat {target} --stop` ends it"))
     print(dim("─" * width))
 
@@ -294,8 +326,8 @@ def _dress_session() -> None:
                           ("status-left-length", "16"),
                           ("status-right", f" {SWITCH} targets · {LEAVE} leave "),
                           ("status-right-length", "40"),
-                          ("window-status-format", " #W "),
-                          ("window-status-current-format", "#[reverse] #W #[default]"),
+                          ("window-status-format", " #W#{?@residudes_auto, ▶,} "),
+                          ("window-status-current-format", "#[reverse] #W#{?@residudes_auto, ▶,} #[default]"),
                           ("status-style", "bg=colour236 fg=colour250"),
                           ("base-index", "1")):
         _tmux("set-option", "-t", SESSION, option, value)
@@ -317,13 +349,19 @@ def archive_window(cfg: Config, target: str) -> Path | None:
 
 
 def chat_cmd(cfg: Config, target: str | None, harness: str | None, prefer: str | None = None,
-             stop: bool = False, archive: bool = False) -> int:
+             stop: bool = False, archive: bool = False, auto: bool | None = None) -> int:
     if target is None:
         return list_cmd(cfg)
     if not have_tmux():
         return _no_tmux()
+    from residudes import auto as autopilot
     where = f"{SESSION}:{target}"
     ddir = Path(cfg.targets_dir) / target
+    if auto is False:                              # --no-auto: by hand, remembered; the conversation stays as it is
+        print(autopilot.stop(cfg, target, "set to move by hand", remember=True))
+        return 0
+    if stop:
+        autopilot.stop(cfg, target, "the conversation was ended")
     if stop or archive:
         saved = archive_window(cfg, target)
         if saved:
@@ -352,6 +390,10 @@ def chat_cmd(cfg: Config, target: str | None, harness: str | None, prefer: str |
         if not ensure(cfg, target, harness):
             print("could not open the window")
             return 1
+    # auto is the default: a registered target runs to a packaged slate, and opening its conversation should not
+    # stall it. A target set to move by hand (--no-auto) stays so until --auto.
+    if auto or (auto is None and not autopilot.by_hand(cfg, target) and not autopilot.running(cfg, target)):
+        print(autopilot.start(cfg, target))
     _dress_session()
     _tmux("select-window", "-t", where)            # arrive in this target, not wherever you left
     inside = bool(os.environ.get("TMUX"))          # switch-client inside tmux, attach outside it

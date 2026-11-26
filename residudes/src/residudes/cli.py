@@ -271,6 +271,12 @@ def _main(argv: list[str] | None = None) -> int:
                    help="save the conversation into the dossier and end it")
     p.add_argument("--archive", action="store_true",
                    help="save the conversation into the dossier and leave it running")
+    p.add_argument("--auto", action="store_true", default=None,
+                   help="keep the target moving (the default; turns it back on after --no-auto): the conversation is "
+                        "asked for the next step whenever it goes quiet, until the target waits for a person")
+    p.add_argument("--no-auto", dest="auto", action="store_false",
+                   help="the target moves only when asked; remembered until --auto")
+    p.add_argument("--drive", action="store_true", help=argparse.SUPPRESS)   # the --auto driver's own loop
 
     p = sub.add_parser("sessions", help="the target conversations running on this machine")
 
@@ -512,8 +518,12 @@ def _main(argv: list[str] | None = None) -> int:
         return 0
     if args.cmd in ("chat", "sessions"):
         from residudes import chat
+        if getattr(args, "drive", False):
+            from residudes import auto
+            return auto.drive(cfg, args.target)
         return chat.chat_cmd(cfg, getattr(args, "target", None), getattr(args, "harness", None),
-                             None, getattr(args, "stop", False), getattr(args, "archive", False))
+                             None, getattr(args, "stop", False), getattr(args, "archive", False),
+                             getattr(args, "auto", None))
     if args.cmd == "automate":
         if args.show or not (args.on or args.off):
             d = Dossier.load(cfg.targets_dir, args.target)

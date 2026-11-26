@@ -5,7 +5,9 @@ Each round, for every dossier (or the ones named):
     checkpoint waiting for a person and the slate; with one (the default from `target add`) the agent answers those
     itself, and only PACKAGED (submission is a person's act) and SUBMITTED stop it. RETROSPECTIVE: skip
   - an open checkpoint where a person wrote last: run an agent step so the agent answers (back and forth)
-  - a chat session open for that target: skip, because a person is working on it there
+  - a target on auto (`residudes chat T --auto`): skip; its driver asks the conversation for each step, so the
+    conversation a person talks to is the one agent working on it (an open conversation without auto does not
+    stop the daemon: its steps run as their own agent, beside it)
   - a "NEEDS HUMAN" note newer than the last step: skip until a person writes a newer note
   - at RUNNING / POOL_READY with recorded jobs (Slurm or local pueue) not finished: refresh their state, skip
     (other stages go on while jobs run; e.g. a QA job submitted early does not hold up input design)
@@ -58,30 +60,13 @@ def api_error(res: dict) -> str | None:
     return None                     # error_max_turns / error_max_budget_usd are limits, not errors: an idle step
 
 
-def _step_through_conversation(cfg: Config, d: Dossier) -> str:
-    """Ask the target's session to take the next step.
-
-    One session per target: the agent that works on it and the conversation a person joins are
-    the same agent, so there is one context and a person can watch or interrupt. The cost is the
-    accounting - a step asked this way has no turn count, no price and no structured result,
-    because tmux reports none of that. The dossier is the record, which is where the work belongs.
-    """
-    from residudes import chat
-    if not chat.ensure(cfg, d.target):
-        return f"{d.target}: no session and none could be started (tmux? an agent CLI?)"
-    goal, skill = d.next_step()
-    ask = (f"Next step for {d.target} ({d.stage}): {goal}"
-           + (f" Follow the {skill} skill." if skill else "")
-           + " Record what you find and decide in the dossier as usual.")
-    if chat.send(d.target, ask):
-        return f"{d.target}: asked the open conversation to take the next step"
-    return f"{d.target}: in conversation, but it did not accept the step"
-
-
 def _round_target(cfg: Config, d: Dossier, budget: float | None, max_idle_steps: int, idle: dict,
                   ) -> str:
     if d.stage == "RETROSPECTIVE":
         return f"{d.target}: {d.stage} (waiting for a person)"
+    from residudes import auto
+    if auto.running(cfg, d.target):                         # one agent per target: its conversation is driving it
+        return f"{d.target}: moved on by its conversation (auto)"
     c = d.open_checkpoint()
     if not d.agent_may_act():                                # the dossier decides, mandate included
         if c and not d.agents_turn(c):
@@ -151,7 +136,10 @@ def run(cfg: Config, targets: list[str] | None, interval: int, once: bool, budge
         print(f"another residudes daemon is running on {cfg.targets_dir.parent} ({lock.read().strip() or 'pid unknown'}); not starting a second one",
               flush=True)
         return 1
-    lock.seek(0); lock.truncate(); lock.write(f"pid {os.getpid()} since {time.strftime('%H:%M:%S')}"); lock.flush()
+    # which targets it covers, so the target list can say a target moves on by itself ("▶ daemon")
+    lock.seek(0); lock.truncate()
+    lock.write(f"pid {os.getpid()} since {time.strftime('%H:%M:%S')} targets {','.join(targets) if targets else 'all'}")
+    lock.flush()
     while True:
         lines = round_once(cfg, targets, budget, max_idle_steps, idle)
         for line in lines:
