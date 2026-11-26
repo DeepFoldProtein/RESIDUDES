@@ -157,6 +157,8 @@ def check(cmd: str, mandate_for: str | None = None) -> str | None:
         if rx.search(cmd):
             if name == "approve" and mandate_for and re.search(rf"\b{re.escape(mandate_for)}\b", cmd):
                 continue
+            if name == "approve" and re.search(r"(^|\s)(-h|--help)(\s|$)", cmd):
+                continue                       # usage only: refusing it left M1370's agent unable to see the flags
             return why
     for toks in _segments(cmd):
         prog = os.path.basename(toks[0])

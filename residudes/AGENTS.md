@@ -52,7 +52,8 @@ and a reader of the dossier should not be able to tell from its quality who it w
   - Any trigger means a results checkpoint with the options: proceed to the slate, `loop:RUNNING` (more sampling) or
     `loop:HYPOTHESES` (new variants, another copy number). Under the mandate you choose, with the reasons on record.
 - **The slate.** Under the mandate, read it against the gates and the decisions once more, then `residudes approve
-  T "<why these five>"` and move to APPROVED; without one, a person approves it.
+  T --why "<why these five>"`, which approves the latest slate and moves the target to APPROVED; without one, a
+  person approves it.
 
 Three things hold under any mandate:
 - **Submission is a person's.** You stop at PACKAGED; the stage machine refuses SUBMITTED from you in every case.
@@ -186,9 +187,9 @@ clusters and plots the pool. Both sit next to this folder in the RESIDUDES repo.
   - poll faster than once a minute;
   - cancel other people's jobs;
   - force-push.
-- **Never act outward.** Do not submit to CASP, do not run `residudes approve` or `residudes resolve`, and do not
-  change `RESIDUDES_ACTOR`. A
-  person approves the slate and submits it. In the SDK runner a guard enforces this. In Claude Code,
+- **Never act outward.** Do not submit to CASP, do not run `residudes approve` or `residudes resolve` unless a
+  person's mandate covers the target (`residudes automate T --on`, the default at registration), and do not
+  change `RESIDUDES_ACTOR`. Without a mandate a person approves the slate; submitting is always a person's. In the SDK runner a guard enforces this. In Claude Code,
   `.claude/settings.json` sets `RESIDUDES_ACTOR=agent` and denies `approve`.
 - **Record as you go.** A step ends when its USD budget runs out, wherever it has got to. Write each finding with
   `residudes evidence` when you make it: a step that ends early is normal, a finding that was never recorded is lost.

@@ -352,8 +352,9 @@ class Dossier:
         if self.stage == "SLATE_PROPOSED" and mandate:
             return (f"automation is on (granted by {by}): approve the slate as a person would - read it against the "
                     "structural gates and the decisions once more (`residudes slate T --show`, `residudes gate T --show`), "
-                    f"then `residudes approve {self.target} \"<why these five>\"` and `residudes stage {self.target} "
-                    "APPROVED`. Write NEEDS HUMAN instead if a gate fails on model 1 or the slate contradicts a decision",
+                    f"then `residudes approve {self.target} --why \"<why these five>\"`, which approves the latest slate "
+                    "and moves the target to APPROVED. Write NEEDS HUMAN instead if a gate fails on model 1 or the slate "
+                    "contradicts a decision",
                     "residudes-selection")
         if self.stage == "PLAN_REVIEW":
             if self._agreed("plan"):

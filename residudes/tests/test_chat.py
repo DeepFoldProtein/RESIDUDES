@@ -163,3 +163,16 @@ def test_a_step_may_not_start_a_background_watcher():
     assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert "end the step" in out["hookSpecificOutput"]["permissionDecisionReason"]
     assert asyncio.run(hook({"tool_name": "Bash", "tool_input": {"command": "ls"}}, None, None)) == {}
+
+
+def test_the_mandate_says_how_to_approve_and_the_guard_lets_the_usage_through():
+    """M1370: told `approve T "<why>"` (no such argument), then refused even `residudes approve -h`."""
+    from residudes import guard
+    from residudes.dossier import Dossier
+    d = Dossier(target="T7", stage="SLATE_PROPOSED")
+    d.automation = {"on": True, "by": "a-person", "up_to": "PACKAGED"}
+    goal, _ = d.next_step()
+    assert 'residudes approve T7 --why "' in goal and "residudes stage" not in goal
+    assert guard.check("residudes approve -h", None) is None
+    assert guard.check("residudes approve T7 --why x", None) is not None          # no mandate: still refused
+    assert guard.check("residudes approve T7 --why x", "T7") is None
