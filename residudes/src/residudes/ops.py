@@ -58,7 +58,10 @@ def pool_cmd(cfg: Config, d: Dossier, explicit: str | None, actor: str, refresh:
     return "\n".join(lines)
 
 
-def _sbatch(cmd: str, name: str, log: Path, gpu: bool, hours: int, after: list[str] | None = None, cpus: int = 8) -> str:
+def _sbatch(cmd: str, name: str, log: Path, gpu: bool, hours: int, after: list[str] | None = None, cpus: int = 8,
+            wait: bool = False) -> str:
+    """Submit `cmd` and return the job id. With wait, block until the job ends (sbatch --wait) and raise if it failed:
+    for work the caller needs before it can go on, such as the final deck's pictures."""
     if not shutil.which("sbatch"):
         raise FileNotFoundError("sbatch not found: this needs a Slurm host (gates also run here with --local, up to 100 models)")
     args = ["sbatch", "--parsable", "-p", "normal", "-c", str(cpus), "-t", f"{hours:02d}:00:00", "-J", name, "-o", str(log)]
@@ -66,10 +69,15 @@ def _sbatch(cmd: str, name: str, log: Path, gpu: bool, hours: int, after: list[s
         args += ["--gres=gpu:1"]
     if after:
         args += [f"--dependency=afterok:{':'.join(after)}"]
-    r = subprocess.run(args + ["--wrap", cmd], capture_output=True, text=True)
+    if wait:
+        args += ["--wait"]
+    r = subprocess.run(args + ["--wrap", cmd], capture_output=True, text=True,
+                       timeout=hours * 3600 + 1800 if wait else None)     # the queue wait comes on top of the limit
+    job = r.stdout.strip().split(";")[0].splitlines()[0] if r.stdout.strip() else ""
     if r.returncode != 0:
-        raise ValueError(f"sbatch failed: {r.stderr.strip()}")
-    return r.stdout.strip().split(";")[0]
+        raise ValueError(f"sbatch {'job ' + job + ' ' if job else ''}failed: {r.stderr.strip()[-500:]}"
+                         + (f" (log: {str(log).replace('%j', job)})" if job else ""))
+    return job
 
 
 def qa_cmd(cfg: Config, d: Dossier, sto: str, what: str, variants: str | None, actor: str, mode: str = "ppi",

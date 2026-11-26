@@ -327,7 +327,9 @@ def _main(argv: list[str] | None = None) -> int:
     p.add_argument("--read", action="store_true", help="read the finished runs: geometry before and after, how far it moved")
     p = sub.add_parser("slides", help=argparse.SUPPRESS)
     p.add_argument("target")
-    p.add_argument("--no-render", action="store_true", help="do not submit the PyMOL render job")
+    p.add_argument("--final", action="store_true",
+                   help="the final deck: ray-trace every picture with PyMOL (sbatch, waited for), the agent's report/pml/*.pml too")
+    p.add_argument("--no-render", action="store_true", help="compile only: draw no pictures")
     p.add_argument("--with-retro", action="store_true")
     p = sub.add_parser("render", help=argparse.SUPPRESS)
     p.add_argument("target")
@@ -609,7 +611,8 @@ def _main(argv: list[str] | None = None) -> int:
     if args.cmd in ("slides", "render"):
         from residudes import slides
         if args.cmd == "slides":
-            return _with(cfg, args.target, lambda d: slides.slides_cmd(cfg, d, _actor(), not args.no_render, args.with_retro))
+            return _with(cfg, args.target, lambda d: slides.slides_cmd(cfg, d, _actor(), not args.no_render, args.with_retro,
+                                                                          args.final))
         return _with(cfg, args.target, lambda d: slides.render_cmd(cfg, d, Path(args.pml), _actor()))
     if args.cmd == "report":
         from residudes import report

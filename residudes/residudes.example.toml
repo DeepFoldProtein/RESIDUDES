@@ -30,7 +30,7 @@ minimization = "/data/casp17/gromacs/relax/minimization.sh"   # the GROMACS+Rose
 casp17_utils = "/data/casp17/casp17-utils"                    # writes CASP submission files
 openstructure = "/data/containers/openstructure.sif"
 molterm = ""                                                  # empty: use PATH (the renderer the deck uses)
-pymol = ""                                                    # empty: use PATH (fallback, through sbatch)
+pymol = ""                                                    # empty: use PATH; ray-traces the final deck (sbatch)
 plmmsa = ""                                                   # a site's plmMSA submit script
 
 # AlphaFold 3's genetic databases, if they are not under [databases] af3_db.

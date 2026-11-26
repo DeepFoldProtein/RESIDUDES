@@ -7,12 +7,13 @@ dossier, so it can be rebuilt at any stage:
   (renders of the slate, or of the best model per stoichiometry before there is a slate) · the slate
   · the agent's own slides (report/agent.typ, included as written) · agent cost per stage.
 
-Structure pictures come from report/scenes.mt, written here and rendered by molterm at report quality (300 dpi,
-full geometry) in the time the command takes - seconds, so no job to wait for. Where molterm is absent the old
-path still works: report/scenes.pml, rendered by PyMOL through sbatch, never on the login node. The agent adds
-its own PyMOL scenes with `residudes render T --pml report/pml/x.pml`.
+Two renderers, for two moments. While the run goes on - a checkpoint, a conversation, a quick look - the pictures
+come from report/scenes.mt, drawn by molterm in the time the command takes. The final report, once the slate is
+approved, is ray-traced: `--final` writes report/scenes.pml and has PyMOL render it, with the agent's own scenes in
+report/pml/*.pml, through sbatch (never on the login node) and waits for it. molterm rasterises - flat shading, no
+anti-aliasing, no shadows - and on H1388's peptide comparison no setting of it came near the ray-traced picture.
 
-  residudes slides T [--no-render] [--with-retro]
+  residudes slides T [--final] [--no-render] [--with-retro]
   residudes render T --pml FILE
 """
 from __future__ import annotations
@@ -20,9 +21,11 @@ from __future__ import annotations
 import csv
 import json
 import re
+import shlex
 import shutil
 import statistics
 import subprocess
+import time
 from pathlib import Path
 
 from residudes import report
@@ -143,8 +146,104 @@ SCENE_QUALITY = ["set lod_medium 400000", "set lod_low 400000",   # full geometr
 FIG_SIZE = "1800 1350 300"                                        # 6x4.5 in at 300 dpi
 FIG_WIDE = "2400 1700 300"                                        # the overlay, which carries more structure
 
+# The final report's settings. Ray-traced with shadows and ambient occlusion, anti-aliased, and outlined like the
+# molterm pictures before it, so the deck does not change style at the end; the sizes are the molterm ones.
+PML_QUALITY = ["bg_color white", "set ray_opaque_background, 1", "set antialias, 2",
+               "set ray_trace_mode, 1", "set ray_trace_color, 0x404040",
+               "set ray_shadows, 1", "set ambient_occlusion_mode, 1", "set specular, 0.25",
+               "set depth_cue, 1", "set fog_start, 0.55",
+               "set cartoon_fancy_helices, 1", "set stick_radius, 0.22"]
 
-def scenes_mt(models: list[dict], small: tuple[str, ...] = ()) -> str:
+# Where a small chain (a peptide, a ligand-sized subunit) meets the rest, look at it from outside. `orient` points
+# the camera along the chain's own shortest axis, which on H1388 put the 14-3-3 helices between the camera and
+# the peptide in the groove. `face` puts the camera on the side of the chain away from the atoms it touches, with
+# the chain's long axis across the picture. It runs inside the scene, so it needs nothing but PyMOL.
+PML_FACE = """python
+import numpy as _np
+def face(on, partner, zoom_on="", buffer=4):
+    p = cmd.get_coords(on)
+    r = cmd.get_coords(f"({partner}) within 10 of ({on})")
+    if p is None or r is None:
+        cmd.orient(zoom_on or on)
+        return
+    z = p.mean(0) - r.mean(0)
+    z /= _np.linalg.norm(z)
+    x = _np.linalg.svd(p - p.mean(0))[2][0]
+    x -= x.dot(z) * z
+    if _np.linalg.norm(x) < 1e-6:
+        x = _np.cross(z, [1.0, 0, 0] if abs(z[0]) < 0.9 else [0, 1.0, 0])
+    x /= _np.linalg.norm(x)
+    v = list(cmd.get_view())
+    v[0:9] = _np.array([x, _np.cross(z, x), z]).T.flatten().tolist()
+    cmd.set_view(v)
+    cmd.zoom(zoom_on or f"({on}) or ({partner})", float(buffer))
+cmd.extend("face", face)
+python end"""
+
+
+def _png(spec: str) -> str:
+    """molterm's `W H DPI` as PyMOL's png arguments."""
+    w, h, dpi = spec.split()
+    return f"width={w}, height={h}, dpi={dpi}, ray=1"
+
+
+def face_rows(on: list, near: list) -> list[list[float]] | None:
+    """The rotation PML_FACE computes, for molterm, which cannot compute one: rows are the screen x, y and z axes
+    in model coordinates, z pointing at the viewer (molterm's `camera` convention, checked against a render).
+    Plain Python, so it costs no dependency: a handful of atoms per residue is all it reads."""
+    def mean(ps):
+        return [sum(c) / len(ps) for c in zip(*ps)]
+
+    def dot(a, b):
+        return sum(x * y for x, y in zip(a, b))
+
+    def unit(a):
+        n = dot(a, a) ** 0.5
+        return [x / n for x in a] if n > 1e-9 else None
+
+    def cross(a, b):
+        return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+
+    if not on or not near:
+        return None
+    z = unit([a - b for a, b in zip(mean(on), mean(near))])
+    if z is None:
+        return None
+    c = mean(on)
+    q = [[a - b for a, b in zip(p, c)] for p in on]
+    cov = [[sum(p[i] * p[j] for p in q) for j in range(3)] for i in range(3)]
+    x = [1.0, 0.31, 0.17]
+    for _ in range(60):                                        # power iteration: the chain's long axis
+        x = unit([dot(r, x) for r in cov]) or x
+    x = unit([a - dot(x, z) * b for a, b in zip(x, z)]) or unit(cross(z, [1.0, 0, 0] if abs(z[0]) < 0.9 else [0, 1.0, 0]))
+    return [x, cross(z, x), z]
+
+
+def face_camera(path: str, small: tuple[str, ...]) -> str | None:
+    """A molterm camera file that looks at the small chains of one model from outside the chains they touch, or
+    None when there is nothing to face (no small chain, nothing within 10 A of it, an unreadable file)."""
+    try:
+        import gemmi
+        st = gemmi.read_structure(str(path))
+    except (ImportError, OSError, RuntimeError, ValueError):
+        return None
+    on, rest = [], []
+    for ch in st[0]:
+        for res in ch:
+            a = res.find_atom("CA", "*") or res.find_atom("P", "*") or (res[0] if len(res) else None)
+            if a is not None:
+                (on if ch.name in small else rest).append([a.pos.x, a.pos.y, a.pos.z])
+    near = [r for r in rest if any(sum((u - v) ** 2 for u, v in zip(r, p)) < 100.0 for p in on)]
+    rows = face_rows(on, near)
+    if rows is None:
+        return None
+    c = [sum(v) / len(on) for v in zip(*on)]
+    return ("# molterm camera v1: written by `residudes slides`, the small chains seen from outside their partners\n"
+            f"center = {c[0]:.4f} {c[1]:.4f} {c[2]:.4f}\nzoom = 1.0\npan = 0.0 0.0\n"
+            "rot = " + "  ".join(" ".join(f"{v:.6f}" for v in r) for r in rows) + "\n")
+
+
+def scenes_mt(models: list[dict], small: tuple[str, ...] = (), camera: str | None = None) -> str:
     """One molterm script for every picture the deck uses (run from report/, writes figs/*.png).
 
     The same two rules as the PyMOL scenes it replaces. Every model is superposed on the first and drawn from one
@@ -166,8 +265,11 @@ def scenes_mt(models: list[dict], small: tuple[str, ...] = ()) -> str:
     for m in models[1:]:
         lines.append(f"align {m['label']} to {first} automap")     # chain-aware, sequence-paired
     lines.append("show cartoon")
+    # One view for every picture: they are comparable. With a small chain, the view that faces it (face_camera);
+    # `zoom` after `camera load` refits the frame and keeps the rotation.
+    view = [f"camera load {camera}", f"zoom {first}"] if camera else [f"orient {first}"]
     if first:
-        lines.append(f"orient {first}")                            # one view for every picture: they are comparable
+        lines += view
     for m in models:
         lab = m["label"]
         # A colour scheme takes no selection in molterm (`color chain af3_s1` is refused); it paints every object.
@@ -183,33 +285,36 @@ def scenes_mt(models: list[dict], small: tuple[str, ...] = ()) -> str:
         for i, m in enumerate(same):
             slot = "#" + SLOT_COLOURS[i % len(SLOT_COLOURS)][2:]   # 0x0072B2 (PyMOL) -> #0072B2 (molterm)
             lines += [f"enable {m['label']}", f"color {slot} {m['label']}"]
-        lines += [f"orient {first}", f"screenshot figs/overlay.png {FIG_WIDE}"]
+        lines += [*view, f"screenshot figs/overlay.png {FIG_WIDE}"]
     return "\n".join(lines) + "\n"
 
 
 def scenes_pml(models: list[dict], small: tuple[str, ...] = ()) -> str:
-    """One PyMOL script for every picture the deck uses (run from report/, writes figs/*.png).
+    """One PyMOL script for every picture the final deck uses (run from report/, writes figs/*.png), ray-traced.
 
-    Two rules the pictures live by. Every model is superposed on the first and drawn from one view, because the
-    question these pictures answer is how they differ, and a picture that re-orients each model answers nothing.
-    And a chain short enough to vanish at this scale (a peptide, a ligand-sized subunit) is drawn as sticks in the
-    accent colour: on H1388 the whole target is where an 11-residue peptide sits on a 233-residue groove, and in
-    plain cartoon all eight cluster medoids looked like the same blue blob."""
-    lines = ["# residudes scenes: written by `residudes slides`; run with `pymol -cq scenes.pml` from report/",
-             "reinitialize", "bg_color white", "set ray_opaque_background, 1", "set antialias, 2", "set ray_shadows, 0",
-             "set cartoon_fancy_helices, 1", "set ray_trace_mode, 1", "set ray_trace_color, 0x404040",
+    The same rules as the molterm scenes before it, at the same sizes. Every model is superposed on the first and
+    drawn from one view, because the question these pictures answer is how they differ. A chain short enough to
+    vanish at this scale (a peptide, a ligand-sized subunit) is drawn as spheres in the accent colour, and the view
+    faces it from outside the chains it touches (PML_FACE): on H1388 the whole target is where an 11-residue peptide
+    sits on a 233-residue groove, and in plain cartoon all eight cluster medoids looked like the same blue blob."""
+    lines = ["# residudes scenes: written by `residudes slides --final`; ray-traced with `pymol -cq scenes.pml` from report/",
+             "reinitialize", *PML_QUALITY,
              "set_color plddt_vh, [0.000, 0.325, 0.839]", "set_color plddt_h, [0.396, 0.796, 0.953]",
              "set_color plddt_l, [1.000, 0.859, 0.075]", "set_color plddt_vl, [1.000, 0.490, 0.271]"]
     for m in models:
         lines.append(f"load {m['path']}, {m['label']}")
     lines += ["remove solvent", "remove hydro", "hide everything", "show cartoon"]
     first = models[0]["label"] if models else None
-    for i, m in enumerate(models):
+    for m in models:
         lab = m["label"]
         if first and lab != first:
             lines.append(f"super {lab} and name CA, {first} and name CA")
-    if first:
-        lines += [f"orient {first}", f"zoom {first}, 4"]     # one view for every picture: they are comparable
+    sel = "+".join(small)
+    if first and small:
+        lines += [PML_FACE, f"face {first} and chain {sel}, {first} and not chain {sel}, {first}, 0"]
+    elif first:
+        # zoom fits a sphere around the model, which already leaves margins on a 4:3 frame: no buffer on top
+        lines += [f"orient {first}", f"zoom {first}, 0"]
     for m in models:
         lab = m["label"]
         lines += ["disable all", f"enable {lab}", f"util.cbc {lab}"]
@@ -218,16 +323,19 @@ def scenes_pml(models: list[dict], small: tuple[str, ...] = ()) -> str:
                       f"show spheres, {lab} and chain {ch} and not hydro",
                       f"set sphere_scale, 0.45, {lab} and chain {ch}",
                       f"set cartoon_transparency, 0.45, {lab} and not chain {ch}"]
-        lines += [f"png figs/{lab}_chains.png, width=1000, height=750, dpi=120, ray=1",
+        lines += [f"png figs/{lab}_chains.png, {_png(FIG_SIZE)}",
                   f"color plddt_vl, {lab}", f"color plddt_l, {lab} and b > 50", f"color plddt_h, {lab} and b > 70",
                   f"color plddt_vh, {lab} and b > 90",
-                  f"png figs/{lab}_plddt.png, width=1000, height=750, dpi=120, ray=1"]
+                  f"png figs/{lab}_plddt.png, {_png(FIG_SIZE)}"]
     same = [m for m in models if m.get("sto") == models[0].get("sto")] if models else []
     if len(same) > 1:                                  # superpose only models of one stoichiometry (the first's)
         lines.append("disable all")
         for i, m in enumerate(same):
-            lines += [f"enable {m['label']}", f"color {SLOT_COLOURS[i % len(SLOT_COLOURS)]}, {m['label']}"]
-        lines += [f"orient {first}", "png figs/overlay.png, width=1200, height=850, dpi=120, ray=1"]
+            # `(M1)`, not `M1`: a bare object name sets the object-level value, which the atom-level transparency
+            # set above overrides - and thirteen overlapping translucent models, shadowed, did not finish in 25 min.
+            lines += [f"enable {m['label']}", f"color {SLOT_COLOURS[i % len(SLOT_COLOURS)]}, {m['label']}",
+                      f"hide spheres, {m['label']}", f"set cartoon_transparency, 0, ({m['label']})"]
+        lines += [f"png figs/overlay.png, {_png(FIG_WIDE)}"]
     return "\n".join(lines) + "\n"
 
 
@@ -301,6 +409,48 @@ def render_cmd(cfg, d: Dossier, pml: Path, actor: str) -> str:
     return f"job {job}: PyMOL {pml.name} -> {rep / 'figs'}"
 
 
+def render_final(cfg, d: Dossier, rep: Path, actor: str) -> str:
+    """Ray-trace the final deck: report/scenes.pml and the agent's own report/pml/*.pml, in one PyMOL job, waited for.
+
+    Through sbatch where there is one - PyMOL never runs on a login node - and in place where there is not (the agent
+    image, a workstation). PyMOL carries on past a bad line and exits 0, so success is judged the way render_mt
+    judges molterm: every `png` a scene names must have been written by this run."""
+    from residudes import ops
+    pymol = tool(cfg, "pymol")
+    if not pymol:
+        raise FileNotFoundError('PyMOL not found: set [tools] pymol = "/path/to/pymol" in residudes.toml')
+    scenes = [s for s in [rep / "scenes.pml", *sorted((rep / "pml").glob("*.pml"))] if s.exists()]
+    if not scenes:
+        return "no PyMOL scenes to render"
+    (rep / "figs").mkdir(parents=True, exist_ok=True)
+    want = sorted({m for s in scenes for m in re.findall(r"^\s*png\s+(figs/[^,\s]+)", s.read_text(), re.M)})
+    run = " && ".join(f"{shlex.quote(pymol)} -cq {shlex.quote(str(s.relative_to(rep)))}" for s in scenes)
+    # the JPEGs the deck embeds, made with PyMOL's own interpreter where it has Pillow
+    py = Path(pymol).resolve().with_name("python")
+    jpg = (f" && ({shlex.quote(str(py))} -c \"import glob,PIL.Image as I; [I.open(f).convert('RGB').save(f[:-4] + '.jpg', "
+           f"quality=90) for f in glob.glob('figs/*.png')]\" || true)") if py.exists() else ""
+    cmd = f"cd {shlex.quote(str(rep))} && {run}{jpg}"
+    t0 = time.time() - 120                       # compute-node clocks and NFS mtimes drift by seconds
+    if shutil.which("sbatch"):
+        job = ops._sbatch(cmd, f"residudes-render-{d.target}", rep / "render.%j.log", gpu=False, hours=1, wait=True)
+        where = f"job {job}"
+    else:
+        r = subprocess.run(["sh", "-c", cmd], capture_output=True, text=True, timeout=3600)
+        if r.returncode != 0:
+            raise ValueError(f"PyMOL failed here (no sbatch):\n{(r.stdout + r.stderr)[-1500:]}")
+        job, where = None, "here (no sbatch on this host)"
+    stale = [w for w in want if not (rep / w).exists() or (rep / w).stat().st_mtime < t0]
+    _to_jpeg(rep / "figs")
+    d.runs.append({"time": now(), "by": actor, "job": job, "scheduler": "slurm" if job else "local",
+                   "what": "render: final deck (PyMOL, ray-traced)", "state": "done", "out": str(rep / "figs")})
+    if stale:
+        d.note(actor, f"final render: {len(stale)} of {len(want)} figures not written ({', '.join(stale[:3])})")
+        return (f"PyMOL {where}: {len(stale)} of {len(want)} figures were not written ({', '.join(stale[:3])}), so those "
+                "pictures are not the final ones - read report/render.*.log")
+    d.note(actor, f"final render: {len(want)} ray-traced figures ({where})")
+    return f"PyMOL {where}: {len(want)} ray-traced figures in {rep / 'figs'}"
+
+
 # ----------------------------------------------------------------------------------------------- the deck
 def _heat(v: float | None) -> str:
     if v is None:
@@ -311,11 +461,12 @@ def _heat(v: float | None) -> str:
 
 
 def _pic(figs: Path, stem: str) -> str | None:
-    """figs/<stem>.jpg when the render job made one (smaller in the PDF), else the PNG, else None."""
-    for ext in (".jpg", ".png"):
-        if (figs / f"{stem}{ext}").exists():
-            return f"figs/{stem}{ext}"
-    return None
+    """figs/<stem>.jpg when it is at least as new as the PNG (smaller in the PDF), else the PNG, else None. A JPEG
+    left from an earlier render must not stand in for the picture drawn after it - the final deck's, say."""
+    jpg, png = figs / f"{stem}.jpg", figs / f"{stem}.png"
+    if jpg.exists() and (not png.exists() or jpg.stat().st_mtime >= png.stat().st_mtime):
+        return f"figs/{stem}.jpg"
+    return f"figs/{stem}.png" if png.exists() else None
 
 
 def _fit(svg: Path, with_caption: bool) -> str:
@@ -650,27 +801,43 @@ def build_typ(d: Dossier, ddir: Path, with_retro: bool = False) -> str:
     return "\n".join(L) + "\n"
 
 
-def slides_cmd(cfg, d: Dossier, actor: str, render: bool = True, with_retro: bool = False) -> str:
+def slides_cmd(cfg, d: Dossier, actor: str, render: bool = True, with_retro: bool = False, final: bool = False) -> str:
     ddir = Dossier.path(cfg.targets_dir, d.target).parent
     rep = ddir / "report"
     (rep / "figs").mkdir(parents=True, exist_ok=True)
     out = []
     models = figure_models(d, ddir) + cluster_models(ddir)
+    use_mt, has_pymol = bool(tool(cfg, "molterm")), bool(tool(cfg, "pymol"))
+    # The final deck is ray-traced (PyMOL, waited for); every deck before it is molterm's, drawn here in seconds.
+    # Without molterm, PyMOL is the only renderer, sent to sbatch without waiting, as before.
+    pymol_final = final and has_pymol
+    if final and not has_pymol:
+        out.append("final deck drawn by molterm: PyMOL not found, so the pictures are not ray-traced ([tools] pymol)")
     if models:
         chains = report._chains(d)
         small = tuple(chain_letter(i) for i, (_, seq) in enumerate(chains) if len(seq) <= 40)
-        # molterm draws the deck here in seconds; PyMOL is the fallback, and still goes through sbatch.
-        use_mt = bool(tool(cfg, "molterm"))
-        scenes = rep / ("scenes.mt" if use_mt else "scenes.pml")
-        text = scenes_mt(models, small) if use_mt else scenes_pml(models, small)
+        with_pml = pymol_final or not use_mt
+        scenes = rep / ("scenes.pml" if with_pml else "scenes.mt")
+        camera = None
+        if not with_pml and small:
+            cam = face_camera(models[0]["path"], small)
+            if cam:
+                (rep / "view.cam").write_text(cam)
+                camera = "view.cam"
+        text = scenes_pml(models, small) if with_pml else scenes_mt(models, small, camera)
         changed = not scenes.exists() or scenes.read_text() != text
         scenes.write_text(text)
         missing = [m for m in models if not _pic(rep / "figs", f"{m['label']}_chains")]
-        if render and (changed or missing):
+        if render and not pymol_final and (changed or missing):
             try:
                 out.append(render_mt(cfg, d, scenes, actor) if use_mt else render_cmd(cfg, d, scenes, actor))
             except (FileNotFoundError, ValueError, subprocess.TimeoutExpired) as exc:
                 out.append(f"no render: {exc}")
+    if render and pymol_final:
+        try:
+            out.append(render_final(cfg, d, rep, actor))
+        except (FileNotFoundError, ValueError, subprocess.TimeoutExpired) as exc:
+            out.append(f"no final render: {exc}")
     typ = rep / "report.typ"
     typ.write_text(build_typ(d, ddir, with_retro))
     typst = tool(cfg, "typst")
@@ -681,7 +848,10 @@ def slides_cmd(cfg, d: Dossier, actor: str, render: bool = True, with_retro: boo
     if r.returncode != 0:
         raise ValueError(f"typst failed on {typ}:\n{r.stderr[-2000:]}")
     d.evidence.setdefault("report", []).append({"time": now(), "by": actor, "value": {"pdf": str(rep / "report.pdf"),
-                                                "with_retro": with_retro,
+                                                "with_retro": with_retro, "final": final,
+                                                # no renderer when nothing was drawn (--no-render keeps the pictures there)
+                                                "renderer": (("pymol" if pymol_final or not use_mt else "molterm")
+                                                             if render else None),
                                                 "figures": sorted(p.name for p in (rep / "figs").glob("*.jpg"))}})
     out.append(f"wrote {rep / 'report.pdf'} ({len(list((rep / 'figs').glob('*.png')))} pictures)")
     return "\n".join(out)

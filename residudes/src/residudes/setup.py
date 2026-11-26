@@ -59,7 +59,8 @@ PICTURE_TOOLS = [
     ("molterm", "renders the deck and shows structures in a conversation", "npm install -g molterm-mcp, or use the agent image"),
     ("USalign", "every molterm superposition shells out to it", "build from github.com/pylelab/USalign, or use the agent image"),
     ("typst", "compiles the slide report", "github.com/typst/typst/releases, or use the agent image"),
-    ("pymol", "the renderer molterm replaced; still used for a scene it cannot draw", "optional"),
+    ("pymol", "ray-traces the final report (`residudes slides T --final`); without it the final deck is molterm's",
+     "uv tool install --python 3.11 pymol-open-source==3.1.0a0 (glibc 2.34; newer glibc: pymol-open-source), or use the agent image"),
 ]
 
 

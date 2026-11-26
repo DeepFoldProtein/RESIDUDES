@@ -108,18 +108,27 @@ The analysis is also a slide deck, `report/report.pdf`, built with `residudes sl
 - the agent's cost.
 
 Rebuild it before every checkpoint and when you propose the slate, and point the person to it in the brief.
+Those decks are drawn by molterm, in seconds. **The final deck, once the slate is approved, is ray-traced:**
+`residudes slides T --final` has PyMOL render every picture through sbatch and waits for it. molterm rasterises -
+flat shading, no anti-aliasing, no shadows - which is right for a quick look and not for the report.
 - **Add what the standard deck does not show** as your own slides in `report/agent.typ`, in touying syntax: a
   `== Title` line starts a slide, and pictures go in with `#image("figs/x.jpg", height: 70%)` (the render writes a JPEG next to every PNG; with molterm's flat-shaded figures the two embed within about 10% of each other, so either works). Examples: an interface
   close-up, two architectures side by side, a template against a model.
-- **Write the scene for molterm** in `report/mt/<name>.mt`: one command per line, absolute model paths, writing
-  `figs/<name>.png`. Render it with `molterm --no-tui --script report/mt/<name>.mt` from `report/` and **check the
+- **While the run goes on, write the scene for molterm** in `report/mt/<name>.mt`: one command per line, absolute
+  model paths, writing `figs/<name>.png`. Render it with `molterm --no-tui --script report/mt/<name>.mt` from `report/` and **check the
   exit code** - molterm carries on after a failed command, so a screenshot taken after a failed `color` is written
   with the old colouring. For report quality, open `report/scenes.mt` and copy its `set` block: it raises the
   level-of-detail thresholds (the default drops to reduced geometry above 5,000 atoms, and every complex here is
   bigger), fixes a white background, and renders at 300 dpi. This runs in seconds and needs no job.
-- **PyMOL** remains for a scene molterm cannot draw. Write it in `report/pml/<name>.pml`, render with
-  `residudes render T --pml report/pml/<name>.pml`, which goes through sbatch; never run PyMOL on the login node.
-- Then run `residudes slides T --no-render` to compile.
+- **For the final deck, write the same scene for PyMOL** in `report/pml/<name>.pml`, writing the same
+  `figs/<name>.png`: `residudes slides T --final` ray-traces it with the deck's own scenes and replaces the molterm
+  picture. The settings to copy, and a `face` command that looks at a peptide or a ligand from outside its partner,
+  are in `report/scenes.pml` after a final build and in the residudes-structure-view skill. Never run PyMOL
+  yourself: the login node is not for it.
+- **Look at every picture before it goes in** (read the PNG). Five models superposed in one file, all atoms as
+  sticks, viewed from behind the receptor, is a picture of nothing; the skill says what makes one readable.
+- Then run `residudes slides T` to compile. Not `--no-render`: that skips the deck's own pictures of the models,
+  and H1388's run shipped a deck without one because every build used it. molterm draws them in seconds.
 
 ## Commands
 
@@ -128,7 +137,7 @@ residudes target show T | residudes next T | residudes report T        # read
 residudes consult T --kind plan|results --brief FILE --ask "..."   # open a checkpoint with a person
 residudes reply T C1 "..." | residudes checkpoints T C1              # the conversation
 residudes review T [--add "name: why"]                             # first-results checks
-residudes slides T | residudes render T --pml report/pml/x.pml       # the slide report (molterm); a PyMOL scene (sbatch)
+residudes slides T [--final] | residudes render T --pml report/pml/x.pml   # the deck (molterm; --final: PyMOL, ray-traced)
 residudes evidence T KEY JSON | residudes note T "..." | residudes decide T --type ... --evidence ... --alt ...
 residudes stage T NEXT_STAGE                                       # when the stage's goal is met
 residudes msa T --depth | --crawl --family PF… | --plm             # MSA depth; deepen a thin MSA (family crawl, OTalign)

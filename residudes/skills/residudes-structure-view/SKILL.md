@@ -59,8 +59,32 @@ and a figure-shaped file.
 
 ## For the report
 
-The deck's own figures are written by `residudes slides T` into `report/scenes.mt` and rendered at report
-quality. When you write a scene of your own for the deck, copy that file's `set` block rather than the defaults:
+Two renderers, for two moments. **While the run goes on** - the decks for the checkpoints and the slate - pictures
+are molterm's, drawn in seconds. **The final deck**, after approval, is ray-traced by PyMOL: `residudes slides T
+--final`. molterm rasterises (flat shading, no anti-aliasing, no shadows); it is the quick look, not the report.
+
+### What makes a picture readable
+
+These come from a deck figure that failed all of them (H1388, five predictors' peptides on 14-3-3):
+
+- **One object per model.** Superpose models as separate files, never merged into one: secondary structure is
+  computed per object, and copies that overlap in one file pair up into β-bridges that do not exist, drawn as
+  flat slabs.
+- **Sticks for the residue the slide is about,** not every atom of every model. Five overlapping peptides in full
+  ball-and-stick are a tangle; their backbones as tubes, with the phosphoserine and the pocket residues as sticks,
+  answer the question.
+- **Look at a small chain from outside its partner.** `orient` looks along the selection's shortest axis, which
+  for a peptide in a groove usually puts the receptor between the camera and the peptide. In PyMOL use `face`
+  (below); in molterm, `turn y 180` until it is in front, or `camera load view.cam` (scenes run from `report/`),
+  which `residudes slides` writes for the deck's own small chains.
+- **Context, quietly.** The partner in light grey cartoon, not hidden: without it, "the peptide sits 7 Å off" has
+  nothing to sit on.
+- **Read the PNG before it goes in.**
+
+### While the run goes on: molterm
+
+The deck's own figures are written by `residudes slides T` into `report/scenes.mt`. When you write a scene of your
+own, copy that file's `set` block rather than the defaults:
 
 ```
 set lod_medium 400000      # full geometry: the default drops detail above 5,000 atoms, and every complex is bigger
@@ -73,6 +97,41 @@ screenshot figs/x.png 1800 1350 300        # 6 x 4.5 in at 300 dpi; up to 8192 x
 ```
 
 A picture for the conversation does not need any of this - the defaults are made for a terminal, and are faster.
+
+### The final deck: PyMOL, ray-traced
+
+`residudes slides T --final` writes `report/scenes.pml`, ray-traces it and every `report/pml/*.pml` in one sbatch
+job, and waits. Write each of your report scenes there under the name of its molterm figure, so the ray-traced
+picture replaces it. Start from the deck's settings, and use `face` for a peptide or ligand on its partner
+(`report/scenes.pml` defines it after a final build; copy the `python ... python end` block):
+
+```
+reinitialize
+bg_color white
+set ray_opaque_background, 1
+set antialias, 2
+set ray_trace_mode, 1
+set ray_trace_color, 0x404040
+set ray_shadows, 1
+set ambient_occlusion_mode, 1
+set specular, 0.25
+set depth_cue, 1
+set fog_start, 0.55
+set cartoon_fancy_helices, 1
+set stick_radius, 0.22
+load /abs/path/af3_s20.cif, af3_pS
+load /abs/path/pt2_s5.cif, pt2
+super pt2 and name CA, af3_pS and name CA
+hide everything
+show cartoon
+color 0xDADADA, chain B
+show sticks, chain B and resi 49+56+131+132 and not name N+C+O
+show sticks, chain A and resi 7 and not name N+C+O
+face chain A, chain B, chain A, 6          # look at A from outside B, zoom on A with 6 A around it
+png figs/pep_split.png, width=1800, height=1350, dpi=300, ray=1
+```
+
+Never run `pymol` yourself; the command guard refuses it, because the login node is not for ray tracing.
 
 ## In a conversation
 

@@ -49,7 +49,9 @@ PLAYBOOK = {
     "APPROVED": ("package the approved slate: `residudes package T --server|--human` (geometry checks, polymer-only TS files "
                  "through casp17-utils); read package/checks.md and report anything a person should look at. If the checks "
                  "show clashes or non-proline cis peptides, `residudes relax T` repairs them under restraints and says what "
-                 "changed - a person decides whether to submit the relaxed file", "residudes-selection"),
+                 "changed - a person decides whether to submit the relaxed file. Then the final report: write your own "
+                 "report scenes as PyMOL in report/pml/ and run `residudes slides T --final`, which ray-traces every "
+                 "picture through sbatch and waits for it", "residudes-selection"),
     "PACKAGED": ("a person submits; record it with `residudes stage T SUBMITTED`", None),
     "SUBMITTED": ("wait for the native structure; on a stage-2 reissue go back to HYPOTHESES", None),
     "RETROSPECTIVE": ("score each recorded decision against the native and write the lessons", None),
