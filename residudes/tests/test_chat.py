@@ -31,7 +31,7 @@ def test_auto_types_only_into_a_quiet_conversation():
     what, text = auto.decide(d, quiet)
     assert what == "ask" and text.startswith("[auto] Next step for T1234 (NEW)") and "\n" not in text
     for change, why in ((dict(busy=True), "working"), (dict(dialog=True), "dialog"), (dict(typed="hm"), "typing"),
-                        (dict(quiet=5.0), "recent")):
+                        (dict(quiet=5.0), "recent"), (dict(ready=False), "starting")):
         assert why in auto.decide(d, {**quiet, **change})[1]
     assert auto.decide(Dossier(target="T1234", stage="PACKAGED"), quiet) == ("done", "PACKAGED")
     d.note("agent", "NEEDS HUMAN: two stoichiometries the pool cannot separate")

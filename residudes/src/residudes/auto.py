@@ -190,7 +190,10 @@ def pane(target: str) -> dict:
     plain = _ESC.sub("", screen)
     act = chat._tmux("display", "-p", "-t", where, "#{window_activity}").stdout.strip()
     return {"busy": "esc to interrupt" in plain,
-            "dialog": "Enter to confirm" in plain or "Esc to cancel" in plain,
+            "dialog": "Enter to confirm" in plain or "Esc to cancel" in plain or "Esc to reject" in plain,
+            # the input line drawn: an agent CLI that is still starting has drawn nothing yet, and an ask typed then
+            # lands in whatever comes up first (a clean run's first ask went in ahead of the trust-this-folder prompt)
+            "ready": "❯" in plain,
             "typed": typed(screen),
             "quiet": time.time() - int(act) if act.isdigit() else 0.0}
 
@@ -215,6 +218,8 @@ def decide(d: Dossier, p: dict, quiet: float = QUIET) -> tuple[str, str]:
         return "done", d.stage
     if not d.agent_may_act():                             # the mandate stops short of here
         return "done", f"the mandate ends before {d.stage}"
+    if not p.get("ready", True):
+        return "wait", "the conversation is still starting"
     if p["busy"] or p["dialog"]:
         return "wait", "the agent is working" if p["busy"] else "a dialog is open"
     if p["typed"]:
