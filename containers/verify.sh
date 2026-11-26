@@ -330,26 +330,34 @@ if [ "$GPU" = 1 ] || [ "$ALL" = 1 ]; then
         # an editable install pointing nowhere, AF3's CCD tables, no C compiler for Triton, no libXrender for RDKit),
         # none of them reachable by an import. So each model predicts once inside its image, with the image's own
         # interpreter: a 20-residue chain, no MSA, one recycle, one sample.
+        # the site the engine itself would use (config.resolve_site_path): one named in the environment, else one
+        # whose hosts match, else sites/local.toml. Matching hosts only skipped this check on every compute node of a
+        # cluster whose local.toml names the login node (`residudes-engine setup site` writes hosts = [this host])
         binds=$(python3 - "$REPO/residudes-engine/sites" <<'PY'
-import fnmatch, socket, sys, tomllib
+import fnmatch, os, socket, sys, tomllib
 from pathlib import Path
-host = socket.gethostname().split(".")[0]
-for f in sorted(Path(sys.argv[1]).glob("*.toml")):
-    s = tomllib.loads(f.read_text())
-    if not any(fnmatch.fnmatch(host, h) for h in s.get("site", {}).get("hosts", [])):
-        continue
-    paths = []
+d = Path(sys.argv[1]); host = socket.gethostname().split(".")[0]
+files = [f for f in sorted(d.glob("*.toml")) if not f.name.endswith(".example.toml")]
+named = os.environ.get("RESIDUDES_ENGINE_SITE_FILE") or os.environ.get("RESIDUDES_ENGINE_SITE")
+pick = None
+if named:
+    p = Path(named)
+    pick = p if p.suffix == ".toml" and p.is_file() else (d / f"{named}.toml" if (d / f"{named}.toml").is_file() else None)
+pick = pick or next((f for f in files if any(fnmatch.fnmatch(host, h)
+                     for h in tomllib.loads(f.read_text()).get("site", {}).get("hosts", []))), None)
+pick = pick or (d / "local.toml" if (d / "local.toml").is_file() else None)
+if pick:
+    s = tomllib.loads(pick.read_text()); paths = []
     for sec in ("site", "msa"):
         for v in s.get(sec, {}).values():
             for x in (v if isinstance(v, list) else [v]):
                 if isinstance(x, str) and x.startswith("/"):
                     paths.append("/" + x.split("/")[1])
     print(",".join(sorted(set(paths))))
-    break
 PY
 )
         if [ -z "$binds" ]; then
-            note "no residudes-engine site file names this host: the engines were not made to predict"
+            note "no residudes-engine site for this host (none matches it, no sites/local.toml): the engines were not made to predict"
         else
             tiny=$(mktemp -d)
             printf '%s\n' '{"name":"verify","dialect":"alphafold3","version":3,"modelSeeds":[1],"sequences":[{"protein":{"id":"A","sequence":"NLYIQWLKDGGPSSGRPPPS","unpairedMsa":">q\nNLYIQWLKDGGPSSGRPPPS\n","pairedMsa":">q\nNLYIQWLKDGGPSSGRPPPS\n","templates":[]}}]}' > "$tiny/in.json"
