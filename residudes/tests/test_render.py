@@ -185,3 +185,14 @@ def test_a_run_of_several_jobs_is_tracked_as_a_whole(monkeypatch):
     assert ops._slurm_state("1,2,3") == "RUNNING"                 # one still running: the run is active
     queue["out"] = ""
     assert ops._slurm_state("1 2") == "FAILED"                    # all finished: the first that did not complete
+
+
+def test_relax_without_a_pipeline_says_so_instead_of_submitting(monkeypatch):
+    """Path("") exists (it is the current directory): an unset [tools] minimization submitted the model path as a command."""
+    import pytest
+    from residudes import relax
+    cfg = type("C", (), {"extra": {"tools": {"minimization": ""}}})()
+    monkeypatch.setattr(relax, "MINIMIZATION", "")
+    monkeypatch.setattr("shutil.which", lambda name: None)
+    with pytest.raises(FileNotFoundError, match="no relaxation pipeline configured"):
+        relax.script(cfg)

@@ -33,12 +33,16 @@ MINIMIZATION = ""                             # [tools] minimization in residude
 def script(cfg) -> str:
     from residudes.msa import tool
     p = (cfg.extra.get("tools", {}) if cfg else {}).get("minimization") or MINIMIZATION
-    if Path(p).exists():
-        return p
+    if p and Path(p).is_file():          # not just exists(): Path("") is the current directory, so an unset tool
+        return p                         # submitted jobs whose command was the model path (R81: both failed in 0 s)
     found = tool(cfg, "minimization.sh")
     if not found:
-        raise FileNotFoundError(f"relaxation pipeline not found at {p}: set [tools] minimization in residudes.toml "
-                                "(gromacs/relax/minimization.sh, which runs grelax and rrelax)")
+        raise FileNotFoundError(
+            (f"relaxation pipeline not found at {p}" if p else "no relaxation pipeline configured ([tools] minimization "
+             "in residudes.toml is empty)")
+            + ": it is the CASP17 GROMACS+Rosetta recipe (gromacs/relax/minimization.sh, which runs grelax and rrelax). "
+            "No image carries it - Rosetta is licence-gated - so a site that has it points [tools] minimization there; "
+            "without it, nothing was submitted: report the clashes or cis peptides for a person to decide")
     return found
 
 
