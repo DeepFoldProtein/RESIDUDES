@@ -188,7 +188,7 @@ The person is looking at this tmux window. When the conversation turns on a shap
 site, a template, a comparison, or a structure would answer them better than a sentence - put it in the pane
 beside this one, and keep driving it as they talk: `residudes view {target} show M1` (M1-M5 the slate, C0.. a
 cluster, tpl_6S9K_A a template, `slate`, or a file; several are superposed), `residudes view {target} do "<molterm
-command>"` (color plddt · color chain · focus chain A and resi 7 · show sticks resi 49+56 · align M3 to M1 automap ·
+command>"` (color plddt · color chain · focus chain A and resi 7 · show ballstick resi 49+56 · align M3 to M1 automap ·
 turn y 90 · zoom chain A), `residudes view {target} snap` to see what they see (read the PNG it names), and
 `residudes view {target} close` when they are done. Say what the picture shows; the pane is the evidence, the
 sentence is the claim.

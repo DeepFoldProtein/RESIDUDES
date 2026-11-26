@@ -93,18 +93,20 @@ def resolve(cfg, d: Dossier, items: list[str]) -> list[dict]:
 
 def script(models: list[dict], small: tuple[str, ...], render: str | None, camera: str | None) -> str:
     """The molterm script the pane starts with: each model under its own name, superposed on the first by sequence,
-    one colour per model when there are several, chains when there is one, a small chain as spheres."""
+    one colour per model when there are several, chains when there is one. Slim by default, because the pane is a
+    terminal: a thin ribbon, and a small chain in ball-and-stick. Cartoon helices and a spacefill peptide filled the
+    pane and hid the pocket, and the agent thinned them itself in every chat before it could show anything."""
     # always said: ~/.molterm/init.mt runs first and may pin a renderer (`pixel` leaves a tmux 3.2a pane black)
     lines = [f"set renderer {render or 'auto'}"]
     for m in models:
         lines += [f"load {m['path']}", f"rename {Path(m['path']).stem} {m['label']}"]
     first = models[0]["label"]
     lines += [f"align {m['label']} to {first} automap" for m in models[1:]]
-    lines += ["hide all", "show cartoon"]
+    lines += ["hide all", "show ribbon"]
     if len(models) == 1:
         lines.append("color chain")
         for ch in small or models[0].get("small", []):
-            lines += [f"show spacefill chain {ch}", f"color #D55E00 chain {ch}"]
+            lines += [f"show ballstick chain {ch}", f"color #D55E00 chain {ch}"]
     else:
         lines += [f"color {SLOTS[i % len(SLOTS)]} {m['label']}" for i, m in enumerate(models)]
     lines += [f"camera load {camera}", f"zoom {first}"] if camera else [f"orient {first}"]
@@ -157,7 +159,7 @@ def show(cfg, d: Dossier, items: list[str]) -> str:
 def do(cfg, d: Dossier, commands: str) -> str:
     """Type molterm commands into the open pane, as a person would: Escape, `:command`, Enter. Returns the pane's
     last line, which is where molterm answers - an error included. Then $sele is dropped: the live pane rings every
-    selected atom, and a `select ... ; show sticks sele` left the picture covered in them (named selections stay)."""
+    selected atom, and a `select ... ; show ballstick sele` left the picture covered in them (named selections stay)."""
     anchor = here()
     pane = viewer_pane(anchor) if anchor else None
     if not pane:

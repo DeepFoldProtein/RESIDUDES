@@ -146,8 +146,10 @@ residudes view T snap               # a PNG of what the pane shows: read it, so 
 residudes view T close              # when they are done
 ```
 
-"show" again replaces what the pane shows rather than opening another. Useful `do` lines: `color plddt`,
-`color chain`, `focus chain A and resi 7`, `show sticks chain B and resi 49+56+131+132`, `align M3 to M1 automap`,
+"show" again replaces what the pane shows rather than opening another. The pane starts slim, a thin ribbon with a
+small chain in ball-and-stick, because a terminal has few dots to spend; molterm's representations are `ribbon`,
+`cartoon`, `ballstick`, `wireframe`, `spacefill` and `backbone` (there is no `sticks`). Useful `do` lines: `color plddt`,
+`color chain`, `focus chain A and resi 7`, `show ballstick chain B and resi 49+56+131+132`, `align M3 to M1 automap`,
 `turn y 90`, `zoom chain A`, `hbonds`, `interface on`. The pane answers on its last line, an error included - read
 what `do` returns. `$sele` is cleared after each `do` (the live pane rings every selected atom), so put a `select`
 and what uses it in one call, or name it: `select pocket = chain B and resi 49+56+131+132`.
