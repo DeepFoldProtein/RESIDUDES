@@ -78,6 +78,17 @@ class Specs(unittest.TestCase):
 
 
 class AssemblyJson(unittest.TestCase):
+    def test_a_monomer_with_only_an_unpaired_msa_gets_an_empty_paired_one(self) -> None:
+        """AlphaFold 3 rejects unpaired without paired ("missing paired MSA"); every af3 job of a clean monomer run failed."""
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            (d / "unpaired_A.a3m").write_text(">m\nMKTAYIAKQRN\n")
+            asm = inputs.Assembly(name="t", chains=[msa.Chain("A", "m", "MKTAYIAKQRN", 1)], unpaired={"A": d / "unpaired_A.a3m"})
+            prot = asm.build(d)["sequences"][0]["protein"]
+            self.assertTrue(prot["unpairedMsaPath"].endswith("unpaired_A.a3m"))
+            self.assertEqual(prot["pairedMsa"], "")
+            self.assertNotIn("pairedMsaPath", prot)
+
     def test_ids_msas_glycan_contact(self) -> None:
         chains = [msa.Chain("A", "heavy", "MKTAYIAKQRN", 2), msa.Chain("B", "light", "GGGSTT", 1)]
         with tempfile.TemporaryDirectory() as d:

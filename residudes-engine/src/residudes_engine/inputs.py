@@ -199,6 +199,10 @@ class Assembly:
                 body["unpairedMsaPath"] = str(self.unpaired[ch.letter].resolve())
             if ch.letter in self.paired:
                 body["pairedMsaPath"] = str(self.paired[ch.letter].resolve())
+            elif ch.letter in self.unpaired:
+                # AlphaFold 3 refuses an unpaired MSA without a paired one ("Protein chain 1 is missing paired MSA"):
+                # every af3 job of a clean monomer run failed in 18 s. An empty paired MSA says there is none.
+                body["pairedMsa"] = ""
             body["templates"] = list(self.templates.get(ch.letter, []))
             sequences.append({"protein": body})
 
