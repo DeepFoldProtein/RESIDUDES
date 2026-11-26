@@ -7,7 +7,7 @@ targets_root = ""                      # an existing residudes-engine prediction
 residudes_engine = "../residudes-engine"
 residudes_qa = "../residudes-qa"
 
-[budgets]
+[budget]
 agent_usd_per_step = 3.0
 gpu_hours_per_target = 400.0
 
