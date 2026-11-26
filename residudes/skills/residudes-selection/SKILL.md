@@ -69,7 +69,9 @@ reference structure for a rigid part, a binding site from the literature.
      {"name": "interpenetration", "type": "clash", "cutoff": 1.0, "max": 20}]}
    ```
    Gate a stoichiometry on what you know, not on what you hope. Every gate cites the evidence it comes from in the
-   selection decision. For a fibril hypothesis, `stacking` checks cross-β spacing (about 4.8 Å); it tests that hypothesis, not correctness.
+   selection decision. When a checkpoint answer changes a gate (a person drops one, or replaces it with another), edit
+   the spec and rerun `residudes gate` before proposing the slate: a gate judged by hand and written as evidence is
+   not what `residudes approve` checks, and it then reports slots failing a gate the decision already removed. For a fibril hypothesis, `stacking` checks cross-β spacing (about 4.8 Å); it tests that hypothesis, not correctness.
 
    Effect in CASP17, DockQ of the pick from the same pool:
 

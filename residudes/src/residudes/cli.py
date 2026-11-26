@@ -591,6 +591,8 @@ def _main(argv: list[str] | None = None) -> int:
             lines = [f"approved: {args.what}",
                      f"note: slate v{prop.get('version')} has models that fail the structural gates it was made with:"]
             lines += [f"  slot {models.index(m) + 1} {m}: {', '.join(g)}" for m, g in fails.items()]
+            lines.append("  (judged by the recorded gate results: if a checkpoint changed these gates, rerun `residudes gate` "
+                         "with the new spec and propose the slate again, so the check and the decision agree)")
             d.note(_actor(), "approved with gate failures in the slate: " + "; ".join(f"{m} ({', '.join(g)})" for m, g in fails.items()))
             return "\n".join(lines)
         return _with(cfg, args.target, approve)
