@@ -16,4 +16,47 @@ if [ -z "$PY" ]; then
 fi
 [ -n "$PY" ] || { echo "residudes-engine: need Python >= 3.11 on PATH (or set RESIDUDES_ENGINE_PYTHON)" >&2; exit 2; }
 export PYTHONPATH="$RESIDUDES_ENGINE_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
+
+# The image route without a venv here: the commands that need the runtime (building inputs, `run`) go into the jax
+# image, which carries AlphaFold 3's data pipeline, gemmi and the rest - as the Slurm wrapper does for predictions.
+# Without this a clean image-only install could predict but not build what it predicts from.
+if [ -n "${RESIDUDES_ENGINE_IMAGES:-}" ] && [ -z "${RESIDUDES_ENGINE_IN_IMAGE:-}" ] \
+   && [ ! -x "$RESIDUDES_ENGINE_ROOT/core/.venv/bin/python" ] && [ -z "${RESIDUDES_ENGINE_VENV:-}" ]; then
+    case "${1:-}" in inputs|run)
+        image="$RESIDUDES_ENGINE_IMAGES/residudes-engine-jax.sif"
+        [ -f "$image" ] || { echo "residudes-engine: no venv here and no $image" >&2; exit 2; }
+        site=$("$PY" -c 'from residudes_engine.config import resolve_site_path; print(resolve_site_path())' 2>/dev/null || true)
+        binds=$("$PY" - "$site" "$PWD" "$@" <<'PY'
+import re, sys
+from pathlib import Path
+tops = set()
+def add(x):
+    if isinstance(x, str) and x.startswith("/") and len(x) > 1 and Path("/" + x.split("/")[1]).exists():
+        tops.add("/" + x.split("/")[1])
+def uncomment(line):
+    out, quote = [], None
+    for ch in line:
+        if quote:
+            quote = None if ch == quote else quote
+        elif ch in "\"'":
+            quote = ch
+        elif ch == "#":
+            break
+        out.append(ch)
+    return "".join(out)
+if sys.argv[1] and Path(sys.argv[1]).is_file():
+    for x in re.findall(r'"(/[^"]+)"', "\n".join(uncomment(l) for l in Path(sys.argv[1]).read_text().splitlines())):
+        add(x)
+    add(sys.argv[1])
+for a in sys.argv[2:]:
+    add(a.split("=", 1)[-1])
+print(",".join(sorted(tops - {"/opt", "/usr", "/proc", "/sys", "/dev"})))
+PY
+)
+        echo "▶ residudes-engine $1 in image $(basename "$image"); bound: ${binds:-none}" >&2
+        exec apptainer run ${binds:+-B "$binds"} -B "$RESIDUDES_ENGINE_ROOT:/opt/residudes-engine" \
+            --env "RESIDUDES_ENGINE_VENV=/opt/venv,RESIDUDES_ENGINE_VENV_JAX=/opt/venv,RESIDUDES_ENGINE_IN_IMAGE=1${site:+,RESIDUDES_ENGINE_SITE_FILE=$site}" \
+            "$image" "$@" ;;
+    esac
+fi
 exec "$PY" -m residudes_engine "$@"
