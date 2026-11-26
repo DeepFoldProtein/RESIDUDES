@@ -1,0 +1,50 @@
+{
+ "files": {
+  "<WORK>/targets/H1388/msas/colabfold/msa/paired_A.a3m": [
+   29,
+   1795625528
+  ],
+  "<WORK>/targets/H1388/msas/colabfold/msa/unpaired_A.a3m": [
+   29,
+   1795625528
+  ],
+  "<WORK>/targets/H1388/msas/colabfold/msa/paired_B.a3m": [
+   251,
+   1795625528
+  ],
+  "<WORK>/targets/H1388/msas/colabfold/msa/unpaired_B.a3m": [
+   3127272,
+   1795625528
+  ]
+ },
+ "query_only": [
+  "A (colabfold)"
+ ],
+ "neff_identity": 0.8,
+ "panels": [
+  {
+   "source": "colabfold",
+   "chain": "B",
+   "length": 233,
+   "n": 10377,
+   "neff": 5965.8,
+   "neff_estimated": true,
+   "groups": [
+    {
+     "name": "UniRef",
+     "n": 3775,
+     "n_cov50": 3197,
+     "neff": 1686.9,
+     "neff_estimated": true
+    },
+    {
+     "name": "environmental",
+     "n": 6602,
+     "n_cov50": 4908,
+     "neff": 4627.1,
+     "neff_estimated": true
+    }
+   ]
+  }
+ ]
+}

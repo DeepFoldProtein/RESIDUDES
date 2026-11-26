@@ -73,10 +73,22 @@
 #align(center)[#image("figs/motif.svg", width: 92%)]
 #text(size: 11pt)[#"pS-X-P on A: S7"]
 
-== MSA depth and coverage
+== MSA depth by source
 
-#align(center)[#image("figs/msa_coverage.svg", width: 92%)]
-#text(size: 12pt)[#"A": 0 sequences, 0 ≥50% coverage · #"B": 10,377 sequences, 8,105 ≥50% coverage]
+#align(center)[#image("figs/msa_depth.svg", height: 76%)]
+#text(size: 11pt)[#"B: 10,377 sequences, Neff ≈5,966 - UniRef 3,775 (Neff ≈1,687), environmental 6,602 (Neff ≈4,627) · query alone: A (colabfold) (Neff at 80% identity; ≈ estimated from a 2,000-sequence sample)"]
+
+== Templates: the closest structures, and what they have bound
+
+#grid(columns: 3, gutter: 6pt,
+  figure(image("figs/tpl_6BYJ_F.jpg", height: 33%), caption: text(size: 10pt)[#"6BYJ F → B · 100% identity · 2.90 Å · used: base, sep"]),
+  figure(image("figs/tpl_6S9K_A.jpg", height: 33%), caption: text(size: 10pt)[#"6S9K A → B · 100% identity · 1.60 Å · used: base, sep · + B (22 aa)"]),
+  figure(image("figs/tpl_6Y6B_B.jpg", height: 33%), caption: text(size: 10pt)[#"6Y6B B → B · 100% identity · 3.08 Å · used: base, sep · + D (8 aa)"]),
+  figure(image("figs/tpl_7V9B_A.jpg", height: 33%), caption: text(size: 10pt)[#"7V9B A → B · 65% identity · 1.85 Å · used: base, sep · + B (8 aa + 323)"]),
+  figure(image("figs/tpl_6BZD_B.jpg", height: 33%), caption: text(size: 10pt)[#"6BZD B → B · 99% identity · 2.67 Å · + K (11 aa + NAG)"]),
+  figure(image("figs/tpl_6ZC9_A.jpg", height: 33%), caption: text(size: 10pt)[#"6ZC9 A → B · 100% identity · 1.90 Å · + E (7 aa)"]),
+)
+#text(size: 11pt)[Template chain blue, what it has bound orange (peptides) or grey, ligands as sticks.]
 
 == The pool: confidence per stoichiometry and predictor
 

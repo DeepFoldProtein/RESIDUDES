@@ -1,0 +1,145 @@
+{
+ "templates": [
+  {
+   "label": "tpl_6BYJ_F",
+   "pdb": "6BYJ",
+   "chain": "F",
+   "for": "B",
+   "used": [
+    "base",
+    "sep"
+   ],
+   "identity": 1.0,
+   "coverage": 0.996,
+   "resolution": 2.9,
+   "method": "x-ray diffraction",
+   "partners": [],
+   "path": "<WORK>/targets/H1388/report/templates/6BYJ_F.cif",
+   "small": []
+  },
+  {
+   "label": "tpl_6S9K_A",
+   "pdb": "6S9K",
+   "chain": "A",
+   "for": "B",
+   "used": [
+    "base",
+    "sep"
+   ],
+   "identity": 0.996,
+   "coverage": 0.979,
+   "resolution": 1.6,
+   "method": "x-ray diffraction",
+   "partners": [
+    {
+     "chain": "B",
+     "residues": 22,
+     "ligands": []
+    }
+   ],
+   "path": "<WORK>/targets/H1388/report/templates/6S9K_A.cif",
+   "small": [
+    "B"
+   ]
+  },
+  {
+   "label": "tpl_6Y6B_B",
+   "pdb": "6Y6B",
+   "chain": "B",
+   "for": "B",
+   "used": [
+    "base",
+    "sep"
+   ],
+   "identity": 0.996,
+   "coverage": 1.0,
+   "resolution": 3.08,
+   "method": "x-ray diffraction",
+   "partners": [
+    {
+     "chain": "D",
+     "residues": 8,
+     "ligands": []
+    }
+   ],
+   "path": "<WORK>/targets/H1388/report/templates/6Y6B_B.cif",
+   "small": [
+    "D"
+   ]
+  },
+  {
+   "label": "tpl_7V9B_A",
+   "pdb": "7V9B",
+   "chain": "A",
+   "for": "B",
+   "used": [
+    "base",
+    "sep"
+   ],
+   "identity": 0.654,
+   "coverage": 0.991,
+   "resolution": 1.85,
+   "method": "x-ray diffraction",
+   "partners": [
+    {
+     "chain": "B",
+     "residues": 8,
+     "ligands": [
+      "323"
+     ]
+    }
+   ],
+   "path": "<WORK>/targets/H1388/report/templates/7V9B_A.cif",
+   "small": [
+    "B"
+   ]
+  },
+  {
+   "label": "tpl_6BZD_B",
+   "pdb": "6BZD",
+   "chain": "B",
+   "for": "B",
+   "used": [],
+   "identity": 0.991,
+   "coverage": 1.0,
+   "resolution": 2.67,
+   "method": "x-ray diffraction",
+   "partners": [
+    {
+     "chain": "K",
+     "residues": 11,
+     "ligands": [
+      "NAG"
+     ]
+    }
+   ],
+   "path": "<WORK>/targets/H1388/report/templates/6BZD_B.cif",
+   "small": [
+    "K"
+   ]
+  },
+  {
+   "label": "tpl_6ZC9_A",
+   "pdb": "6ZC9",
+   "chain": "A",
+   "for": "B",
+   "used": [],
+   "identity": 1.0,
+   "coverage": 0.987,
+   "resolution": 1.9,
+   "method": "x-ray diffraction",
+   "partners": [
+    {
+     "chain": "E",
+     "residues": 7,
+     "ligands": []
+    }
+   ],
+   "path": "<WORK>/targets/H1388/report/templates/6ZC9_A.cif",
+   "small": [
+    "E"
+   ]
+  }
+ ],
+ "skipped": []
+}

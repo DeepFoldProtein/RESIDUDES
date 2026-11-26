@@ -290,3 +290,74 @@ color 0x009E73, C9
 hide spheres, C9
 set cartoon_transparency, 0, (C9)
 png figs/overlay.png, width=2400, height=1700, dpi=300, ray=1
+load <WORK>/targets/H1388/report/templates/6BYJ_F.cif, tpl_6BYJ_F
+disable all
+enable tpl_6BYJ_F
+hide everything, tpl_6BYJ_F
+show cartoon, tpl_6BYJ_F
+color 0xBBBBBB, tpl_6BYJ_F
+color 0x5B8DB8, tpl_6BYJ_F and chain F
+show sticks, tpl_6BYJ_F and organic
+orient tpl_6BYJ_F
+zoom tpl_6BYJ_F, 0
+png figs/tpl_6BYJ_F.png, width=1800, height=1350, dpi=300, ray=1
+load <WORK>/targets/H1388/report/templates/6S9K_A.cif, tpl_6S9K_A
+disable all
+enable tpl_6S9K_A
+hide everything, tpl_6S9K_A
+show cartoon, tpl_6S9K_A
+color 0xBBBBBB, tpl_6S9K_A
+color 0x5B8DB8, tpl_6S9K_A and chain A
+show sticks, tpl_6S9K_A and organic
+color 0xD55E00, tpl_6S9K_A and chain B
+show sticks, tpl_6S9K_A and chain B and not name N+C+O
+face tpl_6S9K_A and chain B, tpl_6S9K_A and chain A, tpl_6S9K_A, 0
+png figs/tpl_6S9K_A.png, width=1800, height=1350, dpi=300, ray=1
+load <WORK>/targets/H1388/report/templates/6Y6B_B.cif, tpl_6Y6B_B
+disable all
+enable tpl_6Y6B_B
+hide everything, tpl_6Y6B_B
+show cartoon, tpl_6Y6B_B
+color 0xBBBBBB, tpl_6Y6B_B
+color 0x5B8DB8, tpl_6Y6B_B and chain B
+show sticks, tpl_6Y6B_B and organic
+color 0xD55E00, tpl_6Y6B_B and chain D
+show sticks, tpl_6Y6B_B and chain D and not name N+C+O
+face tpl_6Y6B_B and chain D, tpl_6Y6B_B and chain B, tpl_6Y6B_B, 0
+png figs/tpl_6Y6B_B.png, width=1800, height=1350, dpi=300, ray=1
+load <WORK>/targets/H1388/report/templates/7V9B_A.cif, tpl_7V9B_A
+disable all
+enable tpl_7V9B_A
+hide everything, tpl_7V9B_A
+show cartoon, tpl_7V9B_A
+color 0xBBBBBB, tpl_7V9B_A
+color 0x5B8DB8, tpl_7V9B_A and chain A
+show sticks, tpl_7V9B_A and organic
+color 0xD55E00, tpl_7V9B_A and chain B
+show sticks, tpl_7V9B_A and chain B and not name N+C+O
+face tpl_7V9B_A and chain B, tpl_7V9B_A and chain A, tpl_7V9B_A, 0
+png figs/tpl_7V9B_A.png, width=1800, height=1350, dpi=300, ray=1
+load <WORK>/targets/H1388/report/templates/6BZD_B.cif, tpl_6BZD_B
+disable all
+enable tpl_6BZD_B
+hide everything, tpl_6BZD_B
+show cartoon, tpl_6BZD_B
+color 0xBBBBBB, tpl_6BZD_B
+color 0x5B8DB8, tpl_6BZD_B and chain B
+show sticks, tpl_6BZD_B and organic
+color 0xD55E00, tpl_6BZD_B and chain K
+show sticks, tpl_6BZD_B and chain K and not name N+C+O
+face tpl_6BZD_B and chain K, tpl_6BZD_B and chain B, tpl_6BZD_B, 0
+png figs/tpl_6BZD_B.png, width=1800, height=1350, dpi=300, ray=1
+load <WORK>/targets/H1388/report/templates/6ZC9_A.cif, tpl_6ZC9_A
+disable all
+enable tpl_6ZC9_A
+hide everything, tpl_6ZC9_A
+show cartoon, tpl_6ZC9_A
+color 0xBBBBBB, tpl_6ZC9_A
+color 0x5B8DB8, tpl_6ZC9_A and chain A
+show sticks, tpl_6ZC9_A and organic
+color 0xD55E00, tpl_6ZC9_A and chain E
+show sticks, tpl_6ZC9_A and chain E and not name N+C+O
+face tpl_6ZC9_A and chain E, tpl_6ZC9_A and chain A, tpl_6ZC9_A, 0
+png figs/tpl_6ZC9_A.png, width=1800, height=1350, dpi=300, ray=1

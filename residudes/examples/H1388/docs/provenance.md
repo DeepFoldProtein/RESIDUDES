@@ -51,3 +51,7 @@ sbatch job (29 figures, 8 min 43 s with the queue). The agent's two scenes were 
 [`report/pml/`](../report/pml/) by a person, following the guidance that now ships in residudes-structure-view;
 its molterm scenes stay in [`report/mt/`](../report/mt/). Its caption on the peptide slide said the receptor was
 hidden, and now says grey. The deck's pictures ship at 1200 px (rendered at 1800 × 1350); `report.pdf` embeds those.
+
+Two slides that deck has and the run's did not, drawn by the same build from files the run had written: the MSAs
+by source as ColabFold draws them, with Neff (`figs/msa_depth.svg`, from `msas/`, which is not shipped), and the
+six templates as structures (`figs/tpl_*.jpg`): the four the inputs used and two search hits at ≥ 50 % identity.
