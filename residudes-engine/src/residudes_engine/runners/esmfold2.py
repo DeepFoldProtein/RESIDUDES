@@ -124,6 +124,8 @@ def plan(req: Request) -> Plan:
     extra = {"HF_HOME": str(weights_home(req))}
     if snap is not None:
         extra["HF_HUB_OFFLINE"] = "1"                 # never move the cache to a revision the fork cannot read
+        if (snap / "ccd.pkl").is_file():              # the input builder fetches it from `main` otherwise, offline or not
+            extra["ESMCFOLD_CCD_PATH"] = str(snap / "ccd.pkl")
     env = runtime_env(site, python.parent.parent, pythonpath=[], extra=extra,
                       model_tag=req.model.tag, family=FAMILY)
     # No TensorRT plugin here, so the site's libstdc++ must not be forced ahead of the conda env's own.
