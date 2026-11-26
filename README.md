@@ -58,11 +58,12 @@ can watch or interrupt. All of them live as windows of a single tmux session, so
 one line, you arrive in the target you asked for, and `ctrl-b w` pages to the others. `residudes`
 on its own lists every target, which are in conversation and which are waiting on a person.
 
-Ask about a shape and the agent answers with the structure: it opens molterm in a pane beside the
-conversation, drives it as you talk (colours, labels, distances, another model on top) and closes it
-when you are done. Here it was asked how H1388's phosphoserine sits in the 14-3-3 pocket. With a tmux built
-with sixel (3.4 or later) and a terminal that shows images (in VS Code, `terminal.integrated.enableImages`)
-the pane draws pixels, as here; otherwise it draws with characters, slim by default. The agent reads its own
+Ask about a shape and the agent answers with the structure: it opens
+[MolTerm](https://github.com/vv137/molterm), the team's in-house terminal molecular viewer, in a pane beside
+the conversation, drives it as you talk (colours, labels, distances, another model on top) and closes it when
+you are done. Here it was asked how H1388's phosphoserine sits in the 14-3-3 pocket. With a tmux built with
+sixel (3.4 or later) and a terminal that shows images (in VS Code, `terminal.integrated.enableImages`) the
+pane draws pixels, as here; otherwise it draws with characters, slim by default. The agent reads its own
 full-resolution snapshot either way.
 
 [![a residudes chat window: the conversation on the left, molterm on the right with the phosphoserine, the pocket residues and their distances](docs/figures/chat-molterm.png)](docs/figures/chat-molterm.png)
@@ -99,6 +100,11 @@ environments, the MSA databases, and the three components that must be obtained 
 [![a prediction pool to a ranked one: interface scores, clustering, plots](residudes-qa/docs/figures/overview.png)](residudes-qa/docs/figures/overview.svg)
 
 `residudes-qa`: scoring, clustering and visualisation of a prediction pool.
+
+[MolTerm](https://github.com/vv137/molterm): the team's in-house terminal molecular viewer (C++, MIT licence), with
+a vim-like command line, text or pixel rendering (Sixel, Kitty, iTerm2) and PyMOL export. It draws every deck
+before the final one and the structure pane in a conversation; its MCP server,
+[`molterm-mcp`](https://www.npmjs.com/package/molterm-mcp), is how an agent drives it.
 
 [![the residudes-decoy site: a predicted structure beside that target's models, each with its predictor, input variant, seed and confidence](docs/figures/residudes-decoy-home.png)](https://residudes-decoy.deepfold.org)
 
