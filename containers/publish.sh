@@ -73,11 +73,11 @@ for name in $IMAGES; do
         # publishing it is a decision, not a default.
         if [ "$name" = residudes-engine-jax ] && [ "${PUBLISH_JAX:-0}" != 1 ]; then
             echo "  not pushed: it contains CC BY-NC-SA AlphaFold 3 code (PUBLISH_JAX=1 to push it anyway)"
-            continue
+        else
+            docker tag "$name:$TAG" "$REGISTRY/$name:$TAG"
+            docker push "$REGISTRY/$name:$TAG"
+            echo "  pushed $REGISTRY/$name:$TAG"
         fi
-        docker tag "$name:$TAG" "$REGISTRY/$name:$TAG"
-        docker push "$REGISTRY/$name:$TAG"
-        echo "  pushed $REGISTRY/$name:$TAG"
     fi
     # 10-24 GB each; do not keep five around. Both tags: the registry one alone keeps the image.
     docker image rm -f "$name:$TAG" "$REGISTRY/$name:$TAG" >/dev/null 2>&1 || true
