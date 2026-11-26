@@ -51,7 +51,9 @@ The instructions below are residudes/AGENTS.md, shared with Claude Code, Codex a
             + (f" Use the `{skill}` skill." if skill else " Nothing for the agent to do at this stage unless the dossier says otherwise.")
             + f" Budget: {cfg.agent_usd_per_step} USD of agent time; GPU budget {cfg.gpu_hours_per_target} h for the target."
             + " Record each finding with `residudes evidence` as you make it, not at the end: the step stops when the"
-            " budget runs out, and a step that ends early is normal, while a finding that was never recorded is lost.")
+            " budget runs out, and a step that ends early is normal, while a finding that was never recorded is lost."
+            + " Do not wait for jobs inside the step (no background watchers, no sleep loops): submit, record, and end"
+            " it; the daemon runs the next step when the jobs finish.")
     return system, user
 
 

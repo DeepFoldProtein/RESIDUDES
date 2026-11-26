@@ -174,6 +174,14 @@ def hook(mandate_for: str | None = None):
     async def pre_tool_use(input_data: dict, tool_use_id, context) -> dict:
         if input_data.get("tool_name") != "Bash":
             return {}
+        if input_data.get("tool_input", {}).get("run_in_background"):
+            # A step is one unattended agent run: nobody is left to hear a background watcher report, and while it
+            # polls, the step's process stays alive and holds the daemon - every other target - until the job ends
+            # (M1370's step "picked this up when the watcher reports" and the daemon sat behind a queued QA job).
+            return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                    "permissionDecisionReason": "residudes guard: no background commands in a step. Submit the job, "
+                    "record it (`residudes run-record` or the command's own record), and end the step: the daemon "
+                    "refreshes the jobs and runs the next step when they finish."}}
         why = check(str(input_data.get("tool_input", {}).get("command", "")), mandate_for)
         if not why:
             return {}

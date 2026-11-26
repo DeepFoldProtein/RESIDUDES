@@ -151,3 +151,15 @@ def test_a_note_can_come_from_stdin_or_a_file(tmp_path, monkeypatch):
     assert cli.main(["note", "T9", f"@{tmp_path / 'n.txt'}"]) == 0
     notes = [x["note"] for x in Dossier.load(tmp_path / "work" / "targets", "T9").log]
     assert "the `pocket` evidence: $HOME stays" in notes and "from a file" in notes
+
+
+def test_a_step_may_not_start_a_background_watcher():
+    """A step's background watcher kept its process, and the daemon, waiting on a queued job."""
+    import asyncio
+    from residudes import guard
+    hook = guard.hook(None)
+    out = asyncio.run(hook({"tool_name": "Bash", "tool_input": {"command": "while squeue -j 1; do sleep 60; done",
+                                                                  "run_in_background": True}}, None, None))
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "end the step" in out["hookSpecificOutput"]["permissionDecisionReason"]
+    assert asyncio.run(hook({"tool_name": "Bash", "tool_input": {"command": "ls"}}, None, None)) == {}
