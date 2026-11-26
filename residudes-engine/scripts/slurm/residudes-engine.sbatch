@@ -32,10 +32,24 @@ from pathlib import Path
 tops = set()
 def add(x):
     if isinstance(x, str) and x.startswith("/") and len(x) > 1:
-        tops.add("/" + x.split("/")[1])
+        top = "/" + x.split("/")[1]
+        if Path(top).exists():               # a bind whose source is missing stops the container from starting
+            tops.add(top)
+def uncomment(line):                         # the template's commented examples ("/data/af3") are not paths in use
+    out, quote = [], None
+    for ch in line:
+        if quote:
+            quote = None if ch == quote else quote
+        elif ch in "\"'":
+            quote = ch
+        elif ch == "#":
+            break
+        out.append(ch)
+    return "".join(out)
 site = sys.argv[1]
 if site and Path(site).is_file():            # every quoted absolute path; no TOML parser on a 3.9 system python
-    for x in re.findall(r'"(/[^"]+)"', Path(site).read_text()):
+    text = "\n".join(uncomment(ln) for ln in Path(site).read_text().splitlines())
+    for x in re.findall(r'"(/[^"]+)"', text):
         add(x)
 for a in sys.argv[2:]:
     add(a.split("=", 1)[-1])
