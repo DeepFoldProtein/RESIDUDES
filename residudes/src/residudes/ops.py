@@ -139,7 +139,8 @@ def qa_cmd(cfg: Config, d: Dossier, sto: str, what: str, variants: str | None, a
 
 TERMINAL = {"COMPLETED", "FAILED", "CANCELLED", "TIMEOUT", "OUT_OF_MEMORY", "NODE_FAIL", "BOOT_FAIL", "DEADLINE",
             "UNKNOWN", "done", "failed", "cancelled",
-            "NEVER_RAN"}           # UNKNOWN = purged from sacct; NEVER_RAN = its dependency failed; the rest is active
+            "BLOCKED"}             # UNKNOWN = purged from sacct; BLOCKED = its dependency failed; the rest is active
+REFRESHED = {"BLOCKED"}    # not active, but asked about again: re-pointed with `scontrol update dependency=`, it runs
 
 
 def scheduler(r: dict) -> str:
@@ -165,24 +166,23 @@ def active(r: dict) -> bool:
 def _slurm_state(job: str) -> str | None:
     """One recorded run's state. A run may name several jobs (agents record a batch of seeds as one run, the ids
     one per line or comma-separated): it is active while any of them is, and otherwise the first that did not
-    complete. Reading only the first id, and handing scancel the whole newline-joined string, left 120 dead jobs queued."""
+    complete. Reading only the first id took a batch's state from one job."""
     ids = [x for x in re.split(r"[\s,]+", str(job).strip()) if x]
     if not ids:
         return None
     try:
         q = subprocess.run(["squeue", "-h", "-j", ",".join(ids), "-o", "%i %T %r"], capture_output=True, text=True, timeout=60)
         queued = [ln.split(None, 2) + ["", ""] for ln in q.stdout.splitlines() if ln.strip()] if q.returncode == 0 else []
-        # a job chained (afterok) on one that failed can never start, and Slurm keeps it queued: counted as pending
-        # it held a clean run's target "waiting on jobs" for good (120 predictions after a failed MSA job). Such
-        # jobs are cancelled and the run recorded as never having run.
+        # A job chained (afterok) on one that failed can never start, and Slurm keeps it queued: counted as pending
+        # it held a clean run's target "waiting on jobs" for good (120 predictions after a failed MSA job). It is
+        # BLOCKED: not active, so the agent gets a step, and left queued - M1370's agent resubmitted the MSA job
+        # and re-pointed all 120 at it with scontrol, which beats cancelling and resubmitting them.
         dead = [x[0] for x in queued if x[1] == "PENDING" and x[2].strip() == "DependencyNeverSatisfied"]
         alive = [x[1] for x in queued if x[0] not in dead]
-        if dead:
-            subprocess.run(["scancel", *dead], capture_output=True, timeout=60)
         if alive:
             return "RUNNING" if "RUNNING" in alive else alive[0]
         if dead:
-            return "NEVER_RAN"
+            return "BLOCKED"
         s = subprocess.run(["sacct", "-n", "-X", "-j", ",".join(ids), "-o", "State"], capture_output=True, text=True, timeout=60)
         if s.returncode != 0:
             return None
@@ -215,13 +215,15 @@ def jobs_cmd(d: Dossier) -> str:
     lines, pueue = [], None
     for r in d.runs:
         job, sch = str(r.get("job", "")), scheduler(r)
-        if tracked(r) and active(r):
+        if tracked(r) and (active(r) or state_of(r) in REFRESHED):
             if sch == "slurm":
                 r["state"] = _slurm_state(job) or r.get("state")
             else:
                 pueue = _pueue_states() if pueue is None else pueue
                 r["state"] = (pueue or {}).get(job, r.get("state") if r.get("state") not in (None, "submitted") else "pueue-unknown")
-        lines.append(f"  {job:>8s} {sch:6s} {str(r.get('state')):12s} {r.get('what')}")
+        ids = [x for x in re.split(r"[\s,]+", job.strip()) if x]
+        shown = ids[0] + (f" +{len(ids) - 1}" if len(ids) > 1 else "") if ids else ""   # a batch: its first id and how many more
+        lines.append(f"  {shown:>8s} {sch:6s} {str(r.get('state')):12s} {str(r.get('what')).splitlines()[0] if r.get('what') else ''}")
     return "\n".join(lines) or "no runs recorded"
 
 

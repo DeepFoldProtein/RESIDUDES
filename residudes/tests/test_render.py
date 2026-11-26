@@ -153,32 +153,35 @@ def test_a_model_shown_twice_is_copied_not_loaded_again():
     assert lines == ["load /r/a/model.cif", "rename model M4", "load /r/b/model.cif", "rename model M5", "copy M4 as C24"]
 
 
-def test_a_job_whose_dependency_failed_counts_as_finished(monkeypatch):
-    """Slurm keeps a job queued after its afterok dependency failed; counted as pending, the target waited for good."""
+def test_a_job_whose_dependency_failed_is_blocked_not_active(monkeypatch):
+    """Slurm keeps a job queued after its afterok dependency failed; counted as pending, the target waited for good.
+    It is left queued (the agent may re-point it) and asked about again, so a re-pointed run is active once more."""
     import subprocess as sp
     from residudes import ops
-    calls = []
+    calls, queue = [], {"out": "350909 PENDING DependencyNeverSatisfied\n"}
     def fake(args, **k):
         calls.append(args)
-        return sp.CompletedProcess(args, 0, "350909 PENDING DependencyNeverSatisfied\n" if args[0] == "squeue" else "", "")
+        return sp.CompletedProcess(args, 0, queue["out"] if args[0] == "squeue" else "", "")
     monkeypatch.setattr(ops.subprocess, "run", fake)
-    assert ops._slurm_state("350909") == "NEVER_RAN" and not ops.active({"state": "NEVER_RAN"})
-    assert ["scancel", "350909"] in calls
+    assert ops._slurm_state("350909") == "BLOCKED" and not ops.active({"state": "BLOCKED"})
+    assert not any(c[0] == "scancel" for c in calls)
+    queue["out"] = "350909 PENDING Dependency\n"                      # re-pointed at a live job
+    assert ops._slurm_state("350909") == "PENDING"
 
 
 def test_a_run_of_several_jobs_is_tracked_as_a_whole(monkeypatch):
-    """An agent recorded 20 seeds as one run, the ids one per line: every id is asked about and cancelled by itself."""
+    """An agent recorded 20 seeds as one run, the ids one per line: every id is asked about."""
     import subprocess as sp
     from residudes import ops
-    calls, queue = [], "1 PENDING DependencyNeverSatisfied\n2 PENDING DependencyNeverSatisfied\n"
+    calls, queue = [], {"out": "1 PENDING DependencyNeverSatisfied\n2 PENDING DependencyNeverSatisfied\n"}
     def fake(args, **k):
         calls.append(args)
-        out = queue if args[0] == "squeue" else ("COMPLETED\nFAILED\n" if args[0] == "sacct" else "")
+        out = queue["out"] if args[0] == "squeue" else ("COMPLETED\nFAILED\n" if args[0] == "sacct" else "")
         return sp.CompletedProcess(args, 0, out, "")
     monkeypatch.setattr(ops.subprocess, "run", fake)
-    assert ops._slurm_state("1\n2\n3") == "NEVER_RAN"
-    assert calls[0][:4] == ["squeue", "-h", "-j", "1,2,3"] and ["scancel", "1", "2"] in calls
-    queue = "3 RUNNING None\n"
+    assert ops._slurm_state("1\n2\n3") == "BLOCKED"
+    assert calls[0][:4] == ["squeue", "-h", "-j", "1,2,3"]
+    queue["out"] = "3 RUNNING None\n"
     assert ops._slurm_state("1,2,3") == "RUNNING"                 # one still running: the run is active
-    queue = ""
+    queue["out"] = ""
     assert ops._slurm_state("1 2") == "FAILED"                    # all finished: the first that did not complete
