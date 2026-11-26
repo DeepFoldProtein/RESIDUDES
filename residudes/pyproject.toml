@@ -11,6 +11,7 @@ authors = [{ name = "DeepFold team" }]
 dependencies = [
     "claude-agent-sdk==0.2.187",
     "gemmi==0.6.5",
+    "numpy>=1.26,<3",             # the deck's MSA picture: identity per row, and Neff (pairwise, so not in pure Python)
 ]
 
 [dependency-groups]

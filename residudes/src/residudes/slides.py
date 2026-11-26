@@ -243,7 +243,8 @@ def face_camera(path: str, small: tuple[str, ...]) -> str | None:
             "rot = " + "  ".join(" ".join(f"{v:.6f}" for v in r) for r in rows) + "\n")
 
 
-def scenes_mt(models: list[dict], small: tuple[str, ...] = (), camera: str | None = None) -> str:
+def scenes_mt(models: list[dict], small: tuple[str, ...] = (), camera: str | None = None,
+              templates: list[dict] = ()) -> str:
     """One molterm script for every picture the deck uses (run from report/, writes figs/*.png).
 
     The same two rules as the PyMOL scenes it replaces. Every model is superposed on the first and drawn from one
@@ -286,10 +287,43 @@ def scenes_mt(models: list[dict], small: tuple[str, ...] = (), camera: str | Non
             slot = "#" + SLOT_COLOURS[i % len(SLOT_COLOURS)][2:]   # 0x0072B2 (PyMOL) -> #0072B2 (molterm)
             lines += [f"enable {m['label']}", f"color {slot} {m['label']}"]
         lines += [*view, f"screenshot figs/overlay.png {FIG_WIDE}"]
+    lines += _template_scene_mt(templates)
     return "\n".join(lines) + "\n"
 
 
-def scenes_pml(models: list[dict], small: tuple[str, ...] = ()) -> str:
+def _template_scene_mt(templates: list[dict]) -> list[str]:
+    """One picture per template (views.template_entries): its chain blue, a bound peptide orange, ligands as balls
+    and sticks, each from its own view - facing what it has bound when there is a small chain to face."""
+    lines = []
+    for x in templates:
+        lab, stem = x["label"], Path(x["path"]).stem
+        lines += [f"load {x['path']}", f"rename {stem} {lab}", "disable all", f"enable {lab}", "show cartoon",
+                  "color #BBBBBB", f"color #5B8DB8 chain {x['chain']}", "show ballstick ligand"]
+        for s in x.get("small", []):
+            lines += [f"show spacefill chain {s}", f"color #D55E00 chain {s}"]
+        lines += ([f"camera load {x['camera']}", f"zoom obj {lab}"] if x.get("camera") else [f"orient obj {lab}"])
+        lines.append(f"screenshot figs/{lab}.png {FIG_SIZE}")
+    return lines
+
+
+def _template_scene_pml(templates: list[dict]) -> list[str]:
+    lines = []
+    for x in templates:
+        lab, ch, sm = x["label"], x["chain"], "+".join(x.get("small", []))
+        lines += [f"load {x['path']}, {lab}", "disable all", f"enable {lab}", f"hide everything, {lab}",
+                  f"show cartoon, {lab}", f"color 0xBBBBBB, {lab}", f"color 0x5B8DB8, {lab} and chain {ch}",
+                  f"show sticks, {lab} and organic"]
+        if sm:
+            lines += [f"color 0xD55E00, {lab} and chain {sm}",
+                      f"show sticks, {lab} and chain {sm} and not name N+C+O",
+                      f"face {lab} and chain {sm}, {lab} and chain {ch}, {lab}, 0"]
+        else:
+            lines += [f"orient {lab}", f"zoom {lab}, 0"]
+        lines.append(f"png figs/{lab}.png, {_png(FIG_SIZE)}")
+    return lines
+
+
+def scenes_pml(models: list[dict], small: tuple[str, ...] = (), templates: list[dict] = ()) -> str:
     """One PyMOL script for every picture the final deck uses (run from report/, writes figs/*.png), ray-traced.
 
     The same rules as the molterm scenes before it, at the same sizes. Every model is superposed on the first and
@@ -310,8 +344,10 @@ def scenes_pml(models: list[dict], small: tuple[str, ...] = ()) -> str:
         if first and lab != first:
             lines.append(f"super {lab} and name CA, {first} and name CA")
     sel = "+".join(small)
+    if (first and small) or any(x.get("small") for x in templates):
+        lines.append(PML_FACE)
     if first and small:
-        lines += [PML_FACE, f"face {first} and chain {sel}, {first} and not chain {sel}, {first}, 0"]
+        lines += [f"face {first} and chain {sel}, {first} and not chain {sel}, {first}, 0"]
     elif first:
         # zoom fits a sphere around the model, which already leaves margins on a 4:3 frame: no buffer on top
         lines += [f"orient {first}", f"zoom {first}, 0"]
@@ -336,6 +372,7 @@ def scenes_pml(models: list[dict], small: tuple[str, ...] = ()) -> str:
             lines += [f"enable {m['label']}", f"color {SLOT_COLOURS[i % len(SLOT_COLOURS)]}, {m['label']}",
                       f"hide spheres, {m['label']}", f"set cartoon_transparency, 0, ({m['label']})"]
         lines += [f"png figs/overlay.png, {_png(FIG_WIDE)}"]
+    lines += _template_scene_pml(templates)
     return "\n".join(lines) + "\n"
 
 
@@ -458,6 +495,18 @@ def _heat(v: float | None) -> str:
     v = max(0.0, min(1.0, v))
     r, g, b = (int(255 - (255 - c) * v) for c in (0, 114, 178))              # white -> residudes-engine blue
     return f'rgb({r}, {g}, {b})'
+
+
+def _json(path: Path) -> dict | None:
+    try:
+        return json.loads(path.read_text())
+    except (OSError, ValueError):
+        return None
+
+
+def _neff(x: dict) -> str:
+    v = x.get("neff") or 0
+    return ("≈" if x.get("neff_estimated") else "") + (f"{v:,.0f}" if v >= 10 else f"{v:.1f}")
 
 
 def _pic(figs: Path, stem: str) -> str | None:
@@ -612,14 +661,37 @@ def build_typ(d: Dossier, ddir: Path, with_retro: bool = False) -> str:
     # one page per figure `residudes report` drew from this dossier, each with the numbers behind it underneath
     L += figure_pages(d, ddir, ("chain_map", "literature", "sites", "motif"))
 
-    # MSA coverage (residudes msa --depth draws it)
-    if (figs / "msa_coverage.svg").exists() and "msa_depth" in ev:
+    # MSA depth by source, as ColabFold draws it (views.msa_figure, from the a3m files); the older coverage plot
+    # that `residudes msa --depth` draws is the fallback for a dossier drawn before it
+    md = _json(figs / "msa_depth.json")
+    if (figs / "msa_depth.svg").exists() and md:
+        parts = []
+        for pn in md.get("panels", []):
+            groups = ", ".join(f"{g['name']} {g['n']:,} (Neff {_neff(g)})" for g in pn["groups"])
+            parts.append(f"{pn['chain']}: {pn['n']:,} sequences, Neff {_neff(pn)} - {groups}")
+        if md.get("query_only"):
+            parts.append("query alone: " + ", ".join(md["query_only"]))
+        L += ["== MSA depth by source", "", f'#align(center)[#image("figs/msa_depth.svg", {_fit(figs / "msa_depth.svg", True)})]',
+              "#text(size: 11pt)[" + _s(" · ".join(parts) + f" (Neff at {md.get('neff_identity', 0.8):.0%} identity; ≈ estimated "
+                                         "from a 2,000-sequence sample)") + "]", ""]
+    elif (figs / "msa_coverage.svg").exists() and "msa_depth" in ev:
         rows = report._msa_rows(ev["msa_depth"][-1]["value"])        # per file, or per chain and database
         keep = ("sequences", "≥50% coverage")                        # a slide wants the two that decide the run
         line = " · ".join(f"{_s(label)}: " + ", ".join(f"{counts[k]:,} {k}" for k in keep if isinstance(counts.get(k), int))
                           for label, counts in rows if any(isinstance(counts.get(k), int) for k in keep))
         L += ["== MSA depth and coverage", "", '#align(center)[#image("figs/msa_coverage.svg", width: 92%)]']
         L += (["#text(size: 12pt)[" + line + "]", ""] if line else [""])
+
+    # the templates, drawn: the ones the inputs used, then the search's close hits (views.template_entries)
+    tp = [x for x in (_json(figs / "templates.json") or {}).get("templates", []) if _pic(figs, x["label"])]
+    if tp:
+        from residudes.views import template_caption
+        L += ["== Templates: the closest structures, and what they have bound", "",
+              f"#grid(columns: {min(len(tp), 3)}, gutter: 6pt,"]
+        for x in tp[:6]:
+            L.append(f'  figure(image("{_pic(figs, x["label"])}", height: {33 if len(tp) > 3 else 52}%), '
+                     f'caption: text(size: 10pt)[{_s(template_caption(x))}]),')
+        L += [")", "#text(size: 11pt)[Template chain blue, what it has bound orange (peptides) or grey, ligands as sticks.]", ""]
 
     # n-sweep heat table
     pc = ddir / "pool.csv"
@@ -813,21 +885,38 @@ def slides_cmd(cfg, d: Dossier, actor: str, render: bool = True, with_retro: boo
     pymol_final = final and has_pymol
     if final and not has_pymol:
         out.append("final deck drawn by molterm: PyMOL not found, so the pictures are not ray-traced ([tools] pymol)")
-    if models:
+    # what the deck shows before the models: the MSAs by source, and the templates as structures (views.py)
+    from residudes import views
+    try:
+        views.msa_figure(ddir, d, rep / "figs" / "msa_depth.svg")
+    except Exception as exc:                                 # a picture is never worth failing the deck for
+        out.append(f"no MSA picture: {type(exc).__name__}: {exc}")
+    templates: list[dict] = []
+    try:
+        templates = views.template_entries(cfg, d, ddir)
+    except Exception as exc:
+        out.append(f"no template pictures: {type(exc).__name__}: {exc}")
+    if models or templates:
         chains = report._chains(d)
         small = tuple(chain_letter(i) for i, (_, seq) in enumerate(chains) if len(seq) <= 40)
         with_pml = pymol_final or not use_mt
         scenes = rep / ("scenes.pml" if with_pml else "scenes.mt")
         camera = None
-        if not with_pml and small:
+        if not with_pml and small and models:
             cam = face_camera(models[0]["path"], small)
             if cam:
                 (rep / "view.cam").write_text(cam)
                 camera = "view.cam"
-        text = scenes_pml(models, small) if with_pml else scenes_mt(models, small, camera)
+        for x in templates if not with_pml else []:          # molterm cannot compute a view; PyMOL's `face` can
+            cam = face_camera(x["path"], tuple(x["small"])) if x.get("small") else None
+            if cam:
+                (rep / f"{x['label']}.cam").write_text(cam)
+                x["camera"] = f"{x['label']}.cam"
+        text = scenes_pml(models, small, templates) if with_pml else scenes_mt(models, small, camera, templates)
         changed = not scenes.exists() or scenes.read_text() != text
         scenes.write_text(text)
-        missing = [m for m in models if not _pic(rep / "figs", f"{m['label']}_chains")]
+        missing = ([m for m in models if not _pic(rep / "figs", f"{m['label']}_chains")]
+                   + [x for x in templates if not _pic(rep / "figs", x["label"])])
         if render and not pymol_final and (changed or missing):
             try:
                 out.append(render_mt(cfg, d, scenes, actor) if use_mt else render_cmd(cfg, d, scenes, actor))

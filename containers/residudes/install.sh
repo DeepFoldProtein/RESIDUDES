@@ -18,7 +18,7 @@ rm -rf /var/lib/apt/lists/*
 
 # the agent's own dependencies, at the versions residudes/pyproject.toml pins
 "$PY" -m pip install --no-cache-dir --root-user-action=ignore \
-    "claude-agent-sdk==0.2.187" "gemmi==0.6.5"
+    "claude-agent-sdk==0.2.187" "gemmi==0.6.5" "numpy>=1.26,<3"
 
 # PyMOL ray-traces the final deck (`residudes slides T --final`); molterm, below, draws everything before it. The
 # open-source build from Schrodinger's repository (a permissive licence: the notice travels in its dist-info), and

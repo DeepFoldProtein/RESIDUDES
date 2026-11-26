@@ -101,6 +101,10 @@ Decisions rest on the priors you collected, and they say which ones:
 
 The analysis is also a slide deck, `report/report.pdf`, built with `residudes slides T` from the dossier. It covers:
 - the target and its priors;
+- the MSAs, per chain and by source, as ColabFold draws them (identity to the query per row, coverage per position),
+  with the count and Neff of each source;
+- the templates as structures: the ones the inputs used, then the search's hits at ≥ 50 % identity, each trimmed to
+  the template chain and what it has bound;
 - the pool's confidence per stoichiometry and predictor, as a heat table;
 - the decisions and the priors they rest on;
 - the checkpoint conversations and the first-results review;
