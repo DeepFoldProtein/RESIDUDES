@@ -115,7 +115,11 @@ place on it (71 → 73 Å) where they were; template weight 4 made both arms wor
 (ipTM 0.14). AlphaFold 3 was trained with protein templates. To carry a
 deposited protein-nucleic complex into the pool, build it as a template-derived
 model (the `residudes-modeller` skill) rather than relying on the template.
-Boltz-2 receives only the protein chains of a multimer template.
+Boltz-2 receives only the protein chains of a multimer template. AlphaFold 3 is
+installed non-editable, so a host venv built before then takes the change with
+`uv sync --reinstall-package alphafold3` in `core/jaxenv`, then
+`bash core/jaxenv/build.sh` (which rebuilds AF3's CCD tables); the jax image
+carries it from its 2026-11-27 build.
 
 ## 3. Ligands, glycans, constraints
 
