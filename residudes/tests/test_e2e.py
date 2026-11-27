@@ -55,7 +55,8 @@ def test_the_command_chain(tmp_path, monkeypatch, capsys):
     fasta = tmp_path / "T9.fasta"
     fasta.write_text(f">s1\n{PEP}\n>s2\n{PROT}\n")
     cfgf = tmp_path / "residudes.toml"
-    cfgf.write_text(f'[paths]\nwork_root = "{tmp_path / "work"}"\n')
+    # the engine tree is the configured targets_root: an agent imports only that, its own runs, or a named pool (F21)
+    cfgf.write_text(f'[paths]\nwork_root = "{tmp_path / "work"}"\ntargets_root = "{tmp_path / "engine"}"\n')
     monkeypatch.setenv("RESIDUDES_CONFIG", str(cfgf))
     monkeypatch.setenv("RESIDUDES_ACTOR", "agent")
     run = lambda *a: (cli.main(list(a)), capsys.readouterr().out)[1]
