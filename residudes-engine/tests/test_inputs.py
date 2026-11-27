@@ -328,3 +328,49 @@ class ModificationsReachEveryRunner(unittest.TestCase):
         self.af3["sequences"][0]["protein"]["modifications"] = [{"ptmType": "CCD_SEP", "ptmPosition": 7}]
         job = self.a.af3_to_pt2(self.af3, self.tmp)
         self.assertEqual(job[0]["sequences"][0]["proteinChain"]["modifications"][0]["ptmType"], "CCD_SEP")
+
+
+class TemplateToolsKeepsNucleotides(unittest.TestCase):
+    """F31: template_tools read only amino acids, so a protein-RNA multimer template lost its RNA (the M1370 agent
+    wrote its own builder, whose RNA indices were then off by one)."""
+
+    def setUp(self) -> None:
+        try:
+            import gemmi  # noqa: F401
+        except ImportError:
+            self.skipTest("gemmi is in the runtime venv, not the CLI's")
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "core" / "scripts"))
+        import template_tools
+        self.tt = template_tools
+
+    @staticmethod
+    def _pdb(path: Path, rna: str, protein: str) -> None:
+        lines, n = [], 1
+        for ch, seq, names in (("R", rna, ("P", "C4'", "C1'")), ("P", protein, ("N", "CA", "C"))):
+            three = {"A": "ALA", "G": "GLY", "S": "SER", "K": "LYS"}
+            for i, aa in enumerate(seq, start=1):
+                res = aa if ch == "R" else three[aa]
+                for k, a in enumerate(names):
+                    x, y, z = 3.8 * i + k, 10.0 if ch == "R" else 0.0, 0.0
+                    lines.append(f"ATOM  {n:5d} {a:<4s} {res:>3s} {ch}{i:4d}    {x:8.3f}{y:8.3f}{z:8.3f}  1.00 50.00           {a[0]}")
+                    n += 1
+            lines.append("TER")
+        path.write_text("\n".join(lines) + "\nEND\n")
+
+    def test_multimer_template_keeps_the_rna_chain(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            cif = Path(d) / "t.pdb"
+            self._pdb(cif, "GGAUCCGAUC", "AGSKAGSKAGSK")
+            ns = mock.Mock(map="A=R,B=P", sequences="A=GAUCCGAUC,B=AGSKAGSKAGSK", cif=str(cif), out=str(Path(d) / "o.cif"))
+            out = self.tt.cmd_multimer(ns)
+            st = self.tt.read_structure(Path(out["mmcifPath"]))
+            seqs = [self.tt.chain_sequence(c)[0] for c in st[0]]
+        self.assertEqual(seqs, ["GGAUCCGAUC", "AGSKAGSKAGSK"])
+        # the query lacks the template's extra 5' G: query 0 pairs template 1, and the protein follows the 10 nt
+        self.assertEqual(out["queryIndices"]["A"], list(range(9)))
+        self.assertEqual(out["templateIndices"]["A"], list(range(1, 10)))
+        self.assertEqual(out["templateIndices"]["B"], list(range(10, 22)))
+
+    def test_nucleotides_align_as_nucleotides(self) -> None:
+        pairs = self.tt.global_align("GAUCCGAUCU", "GGAUCCGAUCU")
+        self.assertEqual(pairs, [(i, i + 1) for i in range(10)])

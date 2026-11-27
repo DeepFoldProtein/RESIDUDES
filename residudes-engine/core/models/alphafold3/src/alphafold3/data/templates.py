@@ -873,27 +873,48 @@ def get_polymer_features(
 
   chain_iter = list(chain.polymer_auth_asym_id_to_label_asym_id().items())
   auth_chain_id, label_chain_id = chain_iter[0]
-  if num_polymer_chains > 1 and _allow_cross_chain:
-    # Multi-chain template: build chain_sequence across all polymer chains
-    # in CIF order so it aligns with res_arrays.atom_positions / atom_mask
-    # (which already span every polymer residue across chains).
-    chain_sequence = ''.join(
-        chain.chain_single_letter_sequence()[lid] for _, lid in chain_iter
-    )
+  if (num_polymer_chains > 1 or allow_multi_chain) and _allow_cross_chain:
+    # Multi-chain template: every polymer chain in CIF order, each read with
+    # its own polymer type - protein in atom37 order, RNA/DNA in ATOM29 order
+    # within the same 37 slots (data3.fix_template_features maps both to the
+    # dense layout). Reading the whole template as protein, as before, left
+    # the nucleotides of a protein-RNA complex with all-zero atom masks.
+    chain_types = {c['chain_id']: c['chain_type'] for c in chain.iter_chains()}
+    num_atom_types = _POLYMERS[mmcif_names.PROTEIN_CHAIN].num_atom_types
+    pos_parts, mask_parts, seq_parts, aatype_parts = [], [], [], []
+    for _, lid in chain_iter:
+      ctype = chain_types.get(lid, mmcif_names.PROTEIN_CHAIN)
+      if ctype not in _POLYMERS:
+        ctype = mmcif_names.PROTEIN_CHAIN
+      arr = chain.filter(chain_id=lid).to_res_arrays(
+          include_missing_residues=True, atom_order=_POLYMERS[ctype].atom_order
+      )
+      pad = num_atom_types - arr.atom_positions.shape[1]
+      pos_parts.append(np.pad(arr.atom_positions, ((0, 0), (0, pad), (0, 0))))
+      mask_parts.append(np.pad(arr.atom_mask, ((0, 0), (0, pad))))
+      seq = chain.chain_single_letter_sequence()[lid]
+      seq_parts.append(seq)
+      aatype_parts.extend(_encode_restype(ctype, seq))
+    positions = np.concatenate(pos_parts, axis=0)
+    positions_mask = np.concatenate(mask_parts, axis=0)
+    chain_sequence = ''.join(seq_parts)
+    hit_aatype = aatype_parts
   else:
     chain_sequence = chain.chain_single_letter_sequence()[label_chain_id]
+    polymer = _POLYMERS[chain_poly_type]
+    num_atom_types = polymer.num_atom_types
+    res_arrays = chain.to_res_arrays(
+        include_missing_residues=True, atom_order=polymer.atom_order
+    )
+    positions = res_arrays.atom_positions
+    positions_mask = res_arrays.atom_mask
+    hit_aatype = None
 
-  polymer = _POLYMERS[chain_poly_type]
-  res_arrays = chain.to_res_arrays(
-      include_missing_residues=True, atom_order=polymer.atom_order
-  )
-  positions = res_arrays.atom_positions
-  positions_mask = res_arrays.atom_mask
   template_all_atom_positions = np.zeros(
-      (query_sequence_length, polymer.num_atom_types, 3), dtype=np.float64
+      (query_sequence_length, num_atom_types, 3), dtype=np.float64
   )
   template_all_atom_masks = np.zeros(
-      (query_sequence_length, polymer.num_atom_types), dtype=np.int64
+      (query_sequence_length, num_atom_types), dtype=np.int64
   )
 
   template_sequence = ['-'] * query_sequence_length
@@ -903,7 +924,15 @@ def get_polymer_features(
     template_sequence[query_index] = chain_sequence[template_index]
 
   template_sequence = ''.join(template_sequence)
-  template_aatype = _encode_restype(chain_poly_type, template_sequence)
+  if hit_aatype is None:
+    template_aatype = _encode_restype(chain_poly_type, template_sequence)
+  else:
+    gap = residue_names.POLYMER_TYPES_ORDER_WITH_UNKNOWN_AND_GAP[
+        residue_names.GAP
+    ]
+    template_aatype = [gap] * query_sequence_length
+    for query_index, template_index in query_to_hit_mapping.items():
+      template_aatype[query_index] = hit_aatype[template_index]
   template_name = f'{chain.name.lower()}_{auth_chain_id}'
   release_date = chain.release_date.strftime('%Y-%m-%d')
   return {

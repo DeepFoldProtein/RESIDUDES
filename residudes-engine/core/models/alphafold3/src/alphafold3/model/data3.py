@@ -58,9 +58,9 @@ def fix_template_features(
         for x in template_features['template_release_date']
     ]
 
-    # Convert from atom37 to dense atom
+    # Convert from atom37 (protein) / ATOM29 (nucleic) to dense atom
     dense_atom_indices = np.take(
-        protein_data_processing.PROTEIN_AATYPE_DENSE_ATOM_TO_ATOM37,
+        protein_data_processing.AATYPE_DENSE_ATOM_TO_TEMPLATE_ATOM,
         template_features['template_aatype'],
         axis=0,
     )

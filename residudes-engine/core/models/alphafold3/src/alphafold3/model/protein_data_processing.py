@@ -124,3 +124,25 @@ def _make_aatype_dense_atom_to_atom37():
 
 
 PROTEIN_AATYPE_DENSE_ATOM_TO_ATOM37 = _make_aatype_dense_atom_to_atom37()
+
+
+def _make_aatype_dense_atom_to_template_atom():
+  """PROTEIN_AATYPE_DENSE_ATOM_TO_ATOM37 with the nucleic rows filled in.
+
+  Template features hold a protein residue's atoms in atom37 order and a
+  nucleic residue's in ATOM29 order (the first 29 of the 37 slots), as
+  templates.get_polymer_features writes them for a multi-chain template. The
+  protein rows are unchanged; the nucleic rows were dummies, which turned the
+  RNA of a protein-RNA multimer template into all-zero atom masks.
+  """
+  table = _make_aatype_dense_atom_to_atom37().copy()
+  for nanum, resname in enumerate(residue_names.NUCLEIC_TYPES):
+    atom_names = list(atom_types.DENSE_ATOM[resname])
+    atom_names.extend([''] * (NUM_DENSE - len(atom_names)))
+    table[nanum + NUM_AA_WITH_UNK_AND_GAP] = [
+        (atom_types.ATOM29_ORDER[name] if name else 0) for name in atom_names
+    ]
+  return table
+
+
+AATYPE_DENSE_ATOM_TO_TEMPLATE_ATOM = _make_aatype_dense_atom_to_template_atom()

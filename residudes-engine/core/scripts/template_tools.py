@@ -33,6 +33,8 @@ THREE_TO_ONE = {
     "ILE": "I", "LEU": "L", "LYS": "K", "MET": "M", "PHE": "F", "PRO": "P", "SER": "S", "THR": "T", "TRP": "W",
     "TYR": "Y", "VAL": "V", "MSE": "M", "SEC": "C", "PYL": "K",
 }
+NUCLEOTIDE_TO_ONE = {"A": "A", "C": "C", "G": "G", "U": "U", "DA": "A", "DC": "C", "DG": "G", "DT": "T", "N": "N", "DN": "N"}
+NUCLEIC_LETTERS = set("ACGUTN")
 
 # BLOSUM62 (standard 20 aa; everything else scores -4 like a mismatch to a rare residue)
 _B62_ROWS = """
@@ -63,10 +65,20 @@ _cols = _lines[0]
 BLOSUM62 = {(r[0], c): int(v) for r in _lines[1:] for c, v in zip(_cols, r[1:])}
 
 
-def global_align(q: str, t: str, gap_open: int = -10, gap_ext: int = -1) -> list[tuple[int, int]]:
-    """Needleman–Wunsch with affine gaps; returns aligned (query_index, template_index) pairs (0-based)."""
+def _nucleic_score(a: str, b: str) -> int:
+    return 5 if a == b or {a, b} == {"U", "T"} else -4
+
+
+def global_align(q: str, t: str, gap_open: int = -10, gap_ext: int = -1, nucleic: bool | None = None,
+                 ) -> list[tuple[int, int]]:
+    """Needleman–Wunsch with affine gaps; returns aligned (query_index, template_index) pairs (0-based).
+    Protein pairs score BLOSUM62; nucleotide sequences (both all ACGUTN) match +5 / mismatch -4, since BLOSUM62
+    reads A, C, G as amino acids and scores U against U as a mismatch."""
     if q == t:
         return [(i, i) for i in range(len(q))]
+    if nucleic is None:
+        nucleic = bool(q) and bool(t) and set(q.upper()) <= NUCLEIC_LETTERS and set(t.upper()) <= NUCLEIC_LETTERS
+    score = _nucleic_score if nucleic else (lambda a, b: BLOSUM62.get((a, b), -4))
     n, m = len(q), len(t)
     NEG = -10 ** 9
     M = [[NEG] * (m + 1) for _ in range(n + 1)]
@@ -80,7 +92,7 @@ def global_align(q: str, t: str, gap_open: int = -10, gap_ext: int = -1) -> list
     for i in range(1, n + 1):
         qi = q[i - 1]
         for j in range(1, m + 1):
-            s = BLOSUM62.get((qi, t[j - 1]), -4)
+            s = score(qi, t[j - 1])
             M[i][j] = max(M[i - 1][j - 1], X[i - 1][j - 1], Y[i - 1][j - 1]) + s
             X[i][j] = max(M[i - 1][j] + gap_open, X[i - 1][j] + gap_ext, Y[i - 1][j] + gap_open)
             Y[i][j] = max(M[i][j - 1] + gap_open, Y[i][j - 1] + gap_ext, X[i][j - 1] + gap_open)
@@ -90,7 +102,7 @@ def global_align(q: str, t: str, gap_open: int = -10, gap_ext: int = -1) -> list
     while i > 0 or j > 0:
         if state == "M":
             pairs.append((i - 1, j - 1))
-            s = BLOSUM62.get((q[i - 1], t[j - 1]), -4)
+            s = score(q[i - 1], t[j - 1])
             prev = M[i][j] - s
             i, j = i - 1, j - 1
             state = "M" if M[i][j] == prev else "X" if X[i][j] == prev else "Y"
@@ -126,17 +138,31 @@ def chain_sequence(chain: gemmi.Chain) -> tuple[str, list[gemmi.Residue]]:
 
     Only the chain's polymer span counts: bound amino-acid ligands (a free ASN
     next to chain B of 12AS, for instance) are HETATM groups in their own
-    subchain and would otherwise be mistaken for a polymer residue."""
+    subchain and would otherwise be mistaken for a polymer residue. An RNA or
+    DNA chain keeps its nucleotides (A C G U / A C G T; a modified one as its
+    parent, else N): they used to be dropped, which left the RNA out of a
+    protein-RNA multimer template."""
     seq, residues = [], []
     span = chain.get_polymer()
     source = list(span) if len(span) else [r for r in chain if r.het_flag != "H" or r.name in ("MSE", "SEC", "PYL")]
+    nucleic = len(span) > 0 and span.check_polymer_type() in (
+        gemmi.PolymerType.Rna, gemmi.PolymerType.Dna, gemmi.PolymerType.DnaRnaHybrid)
     for res in source:
-        code = THREE_TO_ONE.get(res.name)
-        if code is None:
-            info = gemmi.find_tabulated_residue(res.name)
-            if info is None or not info.is_amino_acid():
-                continue
-            code = info.one_letter_code.upper() if info.one_letter_code.strip() else "X"
+        if nucleic:
+            code = NUCLEOTIDE_TO_ONE.get(res.name)
+            if code is None:
+                info = gemmi.find_tabulated_residue(res.name)
+                if info is None or not info.is_nucleic_acid():
+                    continue
+                code = info.one_letter_code.upper() if info.one_letter_code.strip() else "N"
+                code = code if code in NUCLEIC_LETTERS else "N"
+        else:
+            code = THREE_TO_ONE.get(res.name)
+            if code is None:
+                info = gemmi.find_tabulated_residue(res.name)
+                if info is None or not info.is_amino_acid():
+                    continue
+                code = info.one_letter_code.upper() if info.one_letter_code.strip() else "X"
         seq.append(code)
         residues.append(res)
     return "".join(seq), residues

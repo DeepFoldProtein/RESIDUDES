@@ -103,6 +103,20 @@ Template sequences need not be identical to the query: chains are aligned
 globally (BLOSUM62) and only aligned positions are mapped; a multimer
 template chain below 30 % identity is rejected as a probable wrong mapping.
 
+RNA and DNA chains of a multimer template are kept and aligned as nucleotides,
+and AlphaFold 3 now receives them with their own atoms: before 2026-11-27 the
+whole template was read as protein, so the nucleotides of a protein-RNA complex
+arrived typed as amino acids with empty atom masks (M1370 with 9U5Q: 0 of 81
+RNA tokens carried atoms, now 73, every mapped nucleotide). Whether
+AlphaFold 3 follows them is a different matter. On M1370 (81-nt cloverleaf + 3C
+protease, three seeds per arm) the RNA rows raised ipTM from 0.56 to 0.67 but
+left the RNA fold (C4' RMSD to the template 15.4 → 15.5 Å) and the protease's
+place on it (71 → 73 Å) where they were; template weight 4 made both arms worse
+(ipTM 0.14). AlphaFold 3 was trained with protein templates. To carry a
+deposited protein-nucleic complex into the pool, build it as a template-derived
+model (the `residudes-modeller` skill) rather than relying on the template.
+Boltz-2 receives only the protein chains of a multimer template.
+
 ## 3. Ligands, glycans, constraints
 
 ```sh

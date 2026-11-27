@@ -29,6 +29,14 @@ description: Build the whole assembly with MODELLER on the target's own sequence
   multimer templates. With `AF3_TPL_WEIGHT=4.0`, one seed gave ranking 0.89 / ipTM 0.83 on all five samples. That beat
   the best of 32 seeds at weight 1.0 (0.86 / 0.80).
 
+## Protein-RNA complexes: the model itself, not the template
+
+AF3 multimer templates carry RNA chains (since 2026-11-27), but AF3 does not follow them. On M1370 (81-nt RNA + 3C
+protease, the complex deposited as 9U5Q) the template left the RNA 15 Å and the protease 73 Å from the deposit, at
+weight 1 and worse at weight 4. The deposit trimmed and renumbered to the target's chains, with the template-derived
+model's B-factors and PARENT set by `residudes package`, is the way to bring it into the pool; predict around it as
+usual and let the gates decide.
+
 ## Why a MODELLER model beats the homolog's own assembly
 
 **Same sequence, so a 1:1 mapping.** `combine.py --multimer-template model.cif` maps every query chain to a template
