@@ -11,7 +11,9 @@ if [ -n "${RESIDUDES_QA_IMAGE:-}" ]; then
     binds=""
     # the paths in the arguments, and those named by this tool's own variables: RESIDUDES_QA_SOURCE_TREE (where
     # `data fetch --source local` copies from) and EMA_* overrides would otherwise not exist inside the image
-    envpaths=$(env | sed -n 's/^\(RESIDUDES_QA_[A-Z_]*\|EMA_[A-Z0-9_]*\)=\(\/.*\)$/\2/p' | grep -v "^$RESIDUDES_QA_IMAGE\$")
+    # (`|| true`: with only RESIDUDES_QA_IMAGE set, grep -v has nothing to print and exits 1, which set -e and pipefail
+    # turned into a silent exit 1 before anything ran)
+    envpaths=$(env | sed -n 's/^\(RESIDUDES_QA_[A-Z_]*\|EMA_[A-Z0-9_]*\)=\(\/.*\)$/\2/p' | grep -v "^$RESIDUDES_QA_IMAGE\$" || true)
     for a in "$PWD" "$@" $envpaths; do
         a=${a#*=}
         case "$a" in /?*) top="/$(echo "$a" | cut -d/ -f2)"
